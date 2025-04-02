@@ -8,10 +8,10 @@ class Account:
         Register Number is the primary key.
         Since a club member has to be a student of SASTRA, class Member inherits Account.
     """
-    name = models.CharField(max_length=50, required=True)
+    name = models.CharField(max_length=50)
     register_no = models.PositiveIntegerField(max_length=9, unique=True)
-    sastra_email = models.EmailField(required=True)
-    branch = models.CharField(max_length=100,required=True)
+    sastra_email = models.EmailField()
+    branch = models.CharField(max_length=100)
     batch = models.PositiveIntegerField(max_length=4)
     posts = models.CharField(max_length=1000000, default="[0]")
     # posts stores list of post_id as a json string. will dump and load whenever necessary.
@@ -55,7 +55,7 @@ class Post:
     post_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=50)
     content = models.CharField(max_length=1000000000)
-    author_reg_no = models.PositiveIntegerField(max_length=9,unique=True)
+    author_reg_no = models.PositiveIntegerField(max_length=9, unique=True)
     date = models.DateTimeField(default=dt.datetime.now())
     verified = models.BooleanField(default=False)
     verified_by = models.PositiveIntegerField(max_length=9)
