@@ -2,7 +2,7 @@ from django.db import models
 import datetime as dt
 
 
-class Account:
+class Account(models.Model):
     """
         Public population of SASTRA will be given an account each
         Register Number is the primary key.
@@ -23,7 +23,7 @@ class Account:
         self.batch=batch
 
 
-class Member(Account):
+class Member(Account,models.Model):
     """
         Class for Permanent Members of SALVO.
         Roles = {Member, Coordinator, Lead}
@@ -44,7 +44,7 @@ class Member(Account):
         post.verified = True
 
 
-class Post:
+class Post(models.Model):
     """
         Class for Storage of Posted Contents.
         Verification done by members only.
@@ -62,8 +62,8 @@ class Post:
     likes = models.IntegerField(default=0)
 
     def __init__(self,title,content,regno):
-        self.title=title
-        self.content=content
-        self.author_reg_no=regno
+        self.title = title
+        self.content = content
+        self.author_reg_no = regno
 
 
