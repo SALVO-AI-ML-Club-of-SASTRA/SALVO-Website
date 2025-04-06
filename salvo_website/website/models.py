@@ -34,7 +34,7 @@ class Member(models.Model):
     posts = models.CharField(max_length=1000000, default="[0]")
     password = models.CharField(max_length=20)
     club_role = models.CharField(max_length=40)
-    join_date = models.DateField(default=timezone.now)
+    join_date = models.DateField(timezone.now)
     contribution_score = models.FloatField(default=0.0)
     attendance_percentage = models.FloatField(default=0.0)
 
