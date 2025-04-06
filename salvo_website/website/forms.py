@@ -1,38 +1,27 @@
 from django import forms
-from django.contrib.auth.hashers import make_password
-from .models import Account, Member
 
 
-class AccountRegistrationForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-
-    class Meta:
-        model = Account
-        fields = ['name', 'register_no', 'sastra_email', 'branch', 'batch', 'password']
-
-    def save(self, commit=True):
-        account = super().save(commit=False)
-        account.password = make_password(self.cleaned_data['password'])
-        if commit:
-            account.save()
-        return account
+class MemberSignupForm(forms.Form):
+    name = forms.CharField(max_length=50)
+    register_no = forms.IntegerField(min_value=100000000, max_value=300000000)
+    sastra_email = forms.EmailField()
+    branch = forms.CharField(max_length=100)
+    batch = forms.IntegerField(min_value=2023)
+    club_role = forms.CharField(max_length=40)
+    password = forms.CharField(max_length=20)
+    password2 = forms.CharField(max_length=20)
 
 
-class MemberRegistrationForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-
-    class Meta:
-        model = Member
-        fields = ['name', 'register_no', 'sastra_email', 'branch', 'batch', 'password', 'club_role']
-
-    def save(self, commit=True):
-        member = super().save(commit=False)
-        member.password = make_password(self.cleaned_data['password'])
-        if commit:
-            member.save()
-        return member
-
+class AccountSignupForm(forms.Form):
+    name = forms.CharField(max_length=50)
+    register_no = forms.IntegerField(min_value=100000000, max_value=300000000)
+    sastra_email = forms.EmailField()
+    branch = forms.CharField(max_length=100)
+    batch = forms.IntegerField(min_value=2023)
+    password = forms.CharField(max_length=20)
+    password2 = forms.CharField(max_length=20)
 
 class LoginForm(forms.Form):
-    register_no = forms.IntegerField()
-    password = forms.CharField(widget=forms.PasswordInput)
+    register_no = forms.IntegerField(min_value=100000000, max_value=300000000)
+    password = forms.CharField(max_length=20)
+
