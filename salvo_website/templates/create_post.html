@@ -1,0 +1,8 @@
+<h1>Share Your Thoughts</h1>
+<form method="POST">
+  {% csrf_token %}
+  <input type="text" name="title" placeholder="Post Title" required><br>
+  <textarea name="content" placeholder="Content" required></textarea><br>
+  <button type="submit">Submit Post</button>
+</form>
+<a href="/home">Logout</a>

@@ -34,7 +34,7 @@ class Member(models.Model):
     posts = models.CharField(max_length=1000000, default="[0]")
     password = models.CharField(max_length=20)
     club_role = models.CharField(max_length=40)
-    join_date = models.DateField(timezone.now)
+    join_date = models.DateField(default=timezone.now)
     contribution_score = models.FloatField(default=0.0)
     attendance_percentage = models.FloatField(default=0.0)
 
@@ -50,8 +50,32 @@ class Post(models.Model):
     post_id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=50)
     content = models.CharField(max_length=1000000000)
-    author_reg_no = models.PositiveIntegerField(unique=True)
+    author_reg_no = models.PositiveIntegerField()
     date = models.DateTimeField(default=dt.datetime.now())
     verified = models.BooleanField(default=False)
-    verified_by = models.PositiveIntegerField()
+    verified_by = models.PositiveIntegerField(blank=True, null=True)
     likes = models.IntegerField(default=0)
+
+
+class JoinRequest(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    reason_to_join = models.TextField()
+    why_recruit = models.TextField()
+    other_clubs = models.TextField()
+    resume = models.FileField(upload_to='resumes/', null=True, blank=True)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending')
+    upvotes = models.ManyToManyField(Member, blank=True)
+
+class PostLike(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    register_no = models.PositiveIntegerField()  # from Account or Member
+
+    class Meta:
+        unique_together = ('post', 'register_no')

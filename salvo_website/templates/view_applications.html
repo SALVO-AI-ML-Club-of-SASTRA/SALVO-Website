@@ -1,0 +1,24 @@
+<h2>Join Requests</h2>
+{% for app in applications %}
+  <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+    <p><strong>From:</strong> {{ app.account.name }} ({{ app.account.register_no }})</p>
+    <p><strong>Reason:</strong> {{ app.reason_to_join }}</p>
+    <p><strong>Why Recruit:</strong> {{ app.why_recruit }}</p>
+    <p><strong>Other Clubs:</strong> {{ app.other_clubs }}</p>
+    <p><strong>Status:</strong> {{ app.status }}</p>
+    <p><strong>Upvotes:</strong> {{ app.upvotes.count }}</p>
+
+    {% if member not in app.upvotes.all %}
+      <a href="{% url 'upvote_application' app.id %}">Upvote</a>
+    {% else %}
+      <span>You upvoted</span>
+    {% endif %}
+
+    {% if member.club_role == 'Lead' or member.club_role == 'Coordinator' %}
+      {% if app.status == "Pending" %}
+        <a href="{% url 'update_application_status' app.id 'accept' %}">Accept</a> |
+        <a href="{% url 'update_application_status' app.id 'reject' %}">Reject</a>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endfor %}
