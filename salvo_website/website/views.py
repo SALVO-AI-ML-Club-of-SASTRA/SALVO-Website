@@ -1,97 +1,222 @@
-from django.shortcuts import render,redirect
-from website.models import Account,Member,Post
-from website.forms import LoginForm,MemberSignupForm,AccountSignupForm
-
-# Create your views here.
+from django.shortcuts import render, redirect, HttpResponse
+from django.contrib.auth.hashers import check_password
+from django.contrib import messages
+from django.db import models
+from .models import Account, Member, Post, JoinRequest, PostLike
+from .forms import AccountRegistrationForm, MemberRegistrationForm, LoginForm, JoinRequestForm
 
 
 def home(request):
-    return render(request,'home.html')
+    return render(request, 'home.html')
 
 
-def member_home(request,member):
-    return render(request,'memberhome.html')
-
-
-def account_home(request,account):
-    return render(request,'accounthome.html')
-
-
-def member_signup(request):
-    """
-    reinforce this function with a list of all current members so that everyone can't register as a member.
-    """
-    msg = ''
-    mem_form = MemberSignupForm()
+def register_account(request):
     if request.method == 'POST':
-        mem_form = MemberSignupForm(request.POST)
-        if mem_form.is_valid():
-            name = mem_form.cleaned_data['name']
-            regno = mem_form.cleaned_data['register_no']
-            sastra_email = mem_form.cleaned_data['sastra_email']
-            branch = mem_form.cleaned_data['branch']
-            batch = mem_form.cleaned_data['batch']
-            club_role = mem_form.cleaned_data['club_role']
-            password = mem_form.cleaned_data['password']
-            password2 = mem_form.cleaned_data['password2']
-            if password == password2:
-                mem = Member(name=name, register_no=regno, sastra_email=sastra_email, branch=branch, batch=batch, club_role = club_role)
-                mem.save()
-                msg = 'Member Account created Successfully :)'
-            else:
-                msg = 'Passwords do not match, Please Re-enter them.'
-                return render(request, 'member_signup.html', {'msg': msg, 'form': mem_form})
-            return redirect(login(request))
-    return render(request, 'member_signup.html', {'msg': msg, 'form': mem_form})
+        form = AccountRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Account registered successfully!")
+            return redirect(login)
+    else:
+        form = AccountRegistrationForm()
+    return render(request, 'register_account.html', {'form': form})
 
-
-def account_signup(request):
-    msg=''
-    acc_form=AccountSignupForm()
-    if request.method == 'POST':
-        acc_form=AccountSignupForm(request.POST)
-        if acc_form.is_valid():
-            name = acc_form.cleaned_data['name']
-            regno = acc_form.cleaned_data['register_no']
-            sastra_email = acc_form.cleaned_data['sastra_email']
-            branch = acc_form.cleaned_data['branch']
-            batch = acc_form.cleaned_data['batch']
-            password = acc_form.cleaned_data['password']
-            password2 = acc_form.cleaned_data['password2']
-            if password==password2:
-                acc = Account(name=name, register_no=regno, sastra_email=sastra_email, branch=branch, batch=batch)
-                acc.save()
-                msg='Account created Successfully :)'
-            else:
-                msg = 'Passwords do not match, Please Re-enter them.'
-                return render(request,'account_signup.html',{'msg':msg,'form':acc_form})
-            return redirect(login(request))
-    return render(request,'account_signup.html',{'msg':msg,'form':acc_form})
 
 def login(request):
-    msg = ''
-    loginform = LoginForm()
     if request.method == 'POST':
-        loginform = LoginForm(request.POST)
-        if loginform.is_valid():
-            regno = loginform.cleaned_data['register_no']
-            password = loginform.cleaned_data['password']
-            acc = Account.objects.get(register_no=regno)
-            mem = Member.objects.get(register_no=regno)
-            if mem:
-                if mem.password == password:
-                    redirect(member_home(request, mem))
-                else:
-                    msg = 'Wrong password entered :('
-                    return render(request, 'login.html', {'msg': msg, 'form': loginform})
-            elif acc:
-                if acc.password == password:
-                    redirect(account_home(request, acc))
-                else:
-                    msg = 'Wrong password entered :('
-                    return render(request, 'login.html', {'msg': msg, 'form': loginform})
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            register_no = form.cleaned_data['register_no']
+            password = form.cleaned_data['password']
+
+            user = Account.objects.filter(register_no=register_no).first()
+            member = Member.objects.filter(register_no=register_no).first()
+
+            if user and check_password(password, user.password):
+                request.session['user_type'] = 'account'
+                request.session['register_no'] = user.register_no
+                return redirect(account_dashboard)
+            elif member and check_password(password, member.password):
+                request.session['user_type'] = 'member'
+                request.session['register_no'] = member.register_no
+                return redirect(member_dashboard)
             else:
-                msg = 'Account Doesnt Exist! Sign up before Logging in !'
-                return render(request, 'login.html', {'msg': msg, 'form': loginform})
-    return render(request, 'login.html', {'msg': msg, 'form': loginform})
+                messages.error(request, "Invalid credentials")
+    else:
+        form = LoginForm()
+    return render(request, 'login.html', {'form': form})
+
+
+def register_member(request):
+    if request.method == 'POST':
+        form = MemberRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Member registered successfully!")
+            return redirect(login)
+    else:
+        form = MemberRegistrationForm()
+    return render(request, 'register_member.html', {'form': form})
+
+
+def account_dashboard(request):
+    if request.session.get('user_type') != 'account':
+        return redirect(login)
+
+    register_no = request.session.get('register_no')
+    account = Account.objects.get(register_no=register_no)
+    posts = Post.objects.all()
+    post_data = []
+
+    liked_post_ids = PostLike.objects.filter(register_no=register_no).values_list('post_id', flat=True)
+
+    members_dict = {m.register_no: m.name for m in Member.objects.all()}
+    accounts_dict = {a.register_no: a.name for a in Account.objects.all()}
+
+    for post in posts:
+        reg = post.author_reg_no
+        author_name = members_dict.get(reg) or accounts_dict.get(reg) or "Unknown"
+        post_data.append((post, author_name))
+    return render(request, 'account_dashboard.html', {'account': account,
+                                                      'posts_with_authors': post_data,
+                                                      'liked_post_ids': liked_post_ids})
+
+
+def member_dashboard(request):
+    if 'register_no' not in request.session or request.session['user_type'] != 'member':
+        return redirect('login')
+
+    register_no = request.session.get('register_no')
+    member = Member.objects.get(register_no=request.session['register_no'])
+    posts = Post.objects.all()
+
+    liked_post_ids = PostLike.objects.filter(register_no=register_no).values_list('post_id', flat=True)
+
+    members_dict = {m.register_no: m.name for m in Member.objects.all()}
+    accounts_dict = {a.register_no: a.name for a in Account.objects.all()}
+
+    post_data = []
+    for post in posts:
+        reg = post.author_reg_no
+        author_name = members_dict.get(reg) or accounts_dict.get(reg) or "Unknown"
+        post_data.append((post, author_name))
+
+    applications = JoinRequest.objects.annotate(
+        upvote_count=models.Count('upvotes')
+    ).order_by('-upvote_count')
+
+    return render(request, 'member_dashboard.html', {
+        'member': member,
+        'posts_with_authors': post_data,
+        'applications': applications,
+        'liked_post_ids': liked_post_ids
+    })
+
+
+def create_post(request):
+    if request.method == 'POST':
+        title = request.POST['title']
+        content = request.POST['content']
+        reg_no = request.session.get('register_no')
+        member = Member.objects.filter(register_no=reg_no)
+        if member:
+            Post.objects.create(title=title, content=content, author_reg_no=reg_no, verified=True)
+        else:
+            Post.objects.create(title=title, content=content, author_reg_no=reg_no)
+        return redirect('/account_home/' if request.session['user_type'] == 'account' else '/member_home/')
+    return render(request, 'create_post.html')
+
+
+def verify_post(request, post_id):
+    if request.session.get('user_type') == 'member':
+        post = Post.objects.get(post_id=post_id)
+        post.verified = True
+        post.verified_by = request.session.get('register_no')
+        post.save()
+    return redirect('member_dashboard')
+
+
+def join_request(request, reg_no):
+    account = Account.objects.get(register_no=reg_no)
+    existing = JoinRequest.objects.filter(account=account).first()
+
+    if existing and existing.status == 'Rejected':
+        if request.method == 'POST':
+            form = JoinRequestForm(request.POST, request.FILES)
+            if form.is_valid():
+                join_req = form.save(commit=False)
+                join_req.account = account
+                join_req.status = 'Pending'
+                join_req.save()
+                return redirect('account_dashboard')
+        else:
+            form = JoinRequestForm()
+        return render(request, 'reapply_join_request.html', {'form': form, 'prev_request': existing})
+
+    elif existing:
+        return render(request, 'view_join_request.html', {'join_request': existing})
+
+    else:
+        if request.method == 'POST':
+            form = JoinRequestForm(request.POST, request.FILES)
+            if form.is_valid():
+                join_req = form.save(commit=False)
+                join_req.account = account
+                join_req.save()
+                return redirect('account_dashboard')
+        else:
+            form = JoinRequestForm()
+        return render(request, 'join_request.html', {'form': form})
+
+
+def view_applications(request):
+    if 'register_no' not in request.session or request.session['user_type'] != 'member':
+        return redirect('login')
+
+    member = Member.objects.get(register_no=request.session['register_no'])
+    applications = JoinRequest.objects.annotate(
+        upvote_count=models.Count('upvotes')
+    ).order_by('-upvote_count')
+
+    return render(request, 'view_applications.html', {
+        'member': member,
+        'applications': applications,
+    })
+
+
+def upvote_application(request, app_id):
+    member = Member.objects.get(register_no=request.session['register_no'])
+    app = JoinRequest.objects.get(id=app_id)
+    app.upvotes.add(member)
+    return redirect('view_applications')
+
+
+def update_application_status(request, app_id, action):
+    member = Member.objects.get(register_no=request.session['register_no'])
+    if member.club_role not in ['Lead', 'Coordinator']:
+        return HttpResponse("Unauthorized", status=401)
+
+    app = JoinRequest.objects.get(id=app_id)
+    if action == 'accept':
+        app.status = 'Accepted'
+    elif action == 'reject':
+        app.status = 'Rejected'
+    app.save()
+    return redirect('view_applications')
+
+
+def like_post(request, post_id):
+    reg_no = request.session.get('register_no')
+    post = Post.objects.get(pk=post_id)
+
+    already_liked = PostLike.objects.filter(post=post, register_no=reg_no).exists()
+    if not already_liked:
+        PostLike.objects.create(post=post, register_no=reg_no)
+        post.likes += 1
+        post.save()
+
+    if request.session.get('user_type') == 'member':
+        return redirect('member_dashboard')
+    else:
+        return redirect('account_dashboard')
 

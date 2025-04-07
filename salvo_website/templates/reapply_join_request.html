@@ -1,0 +1,13 @@
+<h2>Your Previous Application (Rejected)</h2>
+<p><strong>Reason to Join:</strong> {{ prev_request.reason_to_join }}</p>
+<p><strong>Why Recruit:</strong> {{ prev_request.why_recruit }}</p>
+<p><strong>Other Clubs:</strong> {{ prev_request.other_clubs }}</p>
+<p><strong>Status:</strong> {{ prev_request.status }}</p>
+
+<hr>
+<h3>Reapply</h3>
+<form method="POST" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Reapply</button>
+</form>

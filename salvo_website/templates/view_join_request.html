@@ -1,0 +1,12 @@
+<h2>Your Application</h2>
+<p><strong>Reason to Join:</strong> {{ join_request.reason_to_join }}</p>
+<p><strong>Why Recruit:</strong> {{ join_request.why_recruit }}</p>
+<p><strong>Other Clubs:</strong> {{ join_request.other_clubs }}</p>
+
+{% if join_request.resume %}
+  <p><strong>Resume:</strong> <a href="{{ join_request.resume.url }}">Download</a></p>
+{% else %}
+  <p><strong>Resume:</strong> Not uploaded</p>
+{% endif %}
+
+<p><strong>Status:</strong> {{ join_request.status }}</p>

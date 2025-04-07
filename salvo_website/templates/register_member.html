@@ -8,13 +8,14 @@
     <title>Member Sign Up</title>
 </head>
 <body>
-    Member Sign Up
+    Member Sign Up<br>
     {{ msg }}
-    <a href="account_signup">Not a member of SALVO? Click here to create your account</a>
+    <a href="/account_signup">Not a member of SALVO? Click here to create your account</a>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <input type="submit" value="Sign Up">
     </form>
+    <a href="/login">Back to Login</a>
 </body>
 </html>
