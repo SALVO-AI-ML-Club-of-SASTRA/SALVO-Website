@@ -1,0 +1,28 @@
+<h2>
+  {{ user.name }}
+</h2>
+{{ user.club_role }} ✅
+<p>Email: {{ user.sastra_email }}</p>
+<p>Register No: {{ user.register_no }}</p>
+<p>Branch: {{ user.branch }}</p>
+<p>Batch: {{ user.batch }}</p>
+
+{% if is_member %}
+  <p>Role: {{ user.club_role }}</p>
+  <p>Contribution Score: {{ user.contribution_score }}</p>
+{% endif %}
+
+<h3>Posts by {{ user.name }}</h3>
+
+{% if posts %}
+  {% for post in posts %}
+    <div>
+      <h4>{{ post.title }}</h4>
+      <p>{{ post.content }}</p>
+      <p><small>Posted on {{ post.date }}</small></p>
+      <p>Likes: {{ post.likes }}</p>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No posts yet.</p>
+{% endif %}

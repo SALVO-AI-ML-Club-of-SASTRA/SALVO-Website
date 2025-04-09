@@ -4,20 +4,21 @@ HI {{ account.name }}<br>
   <button>Create New Post</button>
 </a>
 <br>All Posts<br>
-{% for post, author in posts_with_authors %}
+{% for post, author_name in posts_with_authors %}
   <div>
-    <h3>{{ post.title }}</h3>
+    <p><strong>{{ post.title }}</strong></p>
     <p>{{ post.content }}</p>
-    <p>Author: {{ author }}</p>
-    <p>Status: {{ post.verified|yesno:"Verified,Not Verified" }}</p>
-    {% if user_type == 'member' and not post.verified %}
-      <a href="{% url 'verify_post' post.post_id %}">Verify</a>
+
+    {% if post.author_reg_no in members_dict %}
+      <p>By: <a href="{% url 'member_profile' post.author_reg_no %}">{{ author_name }}</a></p>
+    {% else %}
+      <p>By: <a href="{% url 'account_profile' post.author_reg_no %}">{{ author_name }}</a></p>
     {% endif %}
-    <p>Likes: {{ post.likes }}</p>
+
     {% if post.post_id in liked_post_ids %}
       <button disabled>Liked</button>
     {% else %}
-      <a href="{% url 'like_post' post.post_id %}"><button>Like</button></a>
+      <a href="{% url 'like_post' post.post_id %}">Like</a>
     {% endif %}
   </div>
 {% endfor %}

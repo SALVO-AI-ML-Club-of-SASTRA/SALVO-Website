@@ -77,9 +77,13 @@ def account_dashboard(request):
         reg = post.author_reg_no
         author_name = members_dict.get(reg) or accounts_dict.get(reg) or "Unknown"
         post_data.append((post, author_name))
-    return render(request, 'account_dashboard.html', {'account': account,
-                                                      'posts_with_authors': post_data,
-                                                      'liked_post_ids': liked_post_ids})
+    return render(request, 'account_dashboard.html', {
+        'account': account,
+        'posts_with_authors': post_data,
+        'liked_post_ids': liked_post_ids,
+        'members_dict': members_dict,
+        'accounts_dict': accounts_dict
+    })
 
 
 def member_dashboard(request):
@@ -87,19 +91,32 @@ def member_dashboard(request):
         return redirect('login')
 
     register_no = request.session.get('register_no')
-    member = Member.objects.get(register_no=request.session['register_no'])
+    member = Member.objects.get(register_no=register_no)
     posts = Post.objects.all()
 
     liked_post_ids = PostLike.objects.filter(register_no=register_no).values_list('post_id', flat=True)
 
-    members_dict = {m.register_no: m.name for m in Member.objects.all()}
-    accounts_dict = {a.register_no: a.name for a in Account.objects.all()}
+    members_dict = {
+        m.register_no: {'name': m.name, 'role': m.club_role} for m in Member.objects.all()
+    }
+    accounts_dict = {
+        a.register_no: {'name': a.name} for a in Account.objects.all()
+    }
 
     post_data = []
     for post in posts:
         reg = post.author_reg_no
-        author_name = members_dict.get(reg) or accounts_dict.get(reg) or "Unknown"
-        post_data.append((post, author_name))
+        if reg in members_dict:
+            author_info = members_dict[reg]
+            user_type = 'member'
+        elif reg in accounts_dict:
+            author_info = accounts_dict[reg]
+            user_type = 'account'
+        else:
+            author_info = {'name': 'Unknown'}
+            user_type = 'unknown'
+
+        post_data.append((post, author_info, user_type))
 
     applications = JoinRequest.objects.annotate(
         upvote_count=models.Count('upvotes')
@@ -111,6 +128,7 @@ def member_dashboard(request):
         'applications': applications,
         'liked_post_ids': liked_post_ids
     })
+
 
 
 def create_post(request):
@@ -220,3 +238,14 @@ def like_post(request, post_id):
     else:
         return redirect('account_dashboard')
 
+
+def account_profile(request, reg_no):
+    account = Account.objects.get(register_no=reg_no)
+    posts = Post.objects.filter(author_reg_no=reg_no)
+    return render(request, 'account_profile.html', {'user': account, 'posts': posts})
+
+
+def member_profile(request, reg_no):
+    member = Member.objects.get(register_no=reg_no)
+    posts = Post.objects.filter(author_reg_no=reg_no)
+    return render(request, 'member_profile.html', {'user': member, 'posts': posts})
