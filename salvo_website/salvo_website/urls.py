@@ -19,7 +19,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from website.views import home, login, member_dashboard, account_dashboard, register_member, register_account, \
-    create_post, verify_post, join_request, view_applications, upvote_application, update_application_status, like_post
+    create_post, verify_post, join_request, view_applications, upvote_application, update_application_status, like_post, \
+    account_profile, member_profile
 
 
 urlpatterns = [
@@ -38,6 +39,8 @@ urlpatterns = [
     path('applications/upvote/<int:app_id>/', upvote_application, name='upvote_application'),
     path('applications/<int:app_id>/<str:action>/', update_application_status, name='update_application_status'),
     path('like_post/<int:post_id>/', like_post, name='like_post'),
+    path('profile/account/<int:reg_no>/', account_profile, name='account_profile'),
+    path('profile/member/<int:reg_no>/', member_profile, name='member_profile'),
 ]
 
 if settings.DEBUG:
