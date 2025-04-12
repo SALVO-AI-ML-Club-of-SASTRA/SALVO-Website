@@ -41,6 +41,7 @@ urlpatterns = [
     path('like_post/<int:post_id>/', like_post, name='like_post'),
     path('profile/account/<int:reg_no>/', account_profile, name='account_profile'),
     path('profile/member/<int:reg_no>/', member_profile, name='member_profile'),
+
 ]
 
 if settings.DEBUG:
