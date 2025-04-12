@@ -1,30 +1,275 @@
-Member Home<br>
-HI {{ member.name }} <br>
-<a href="{% url 'create_post' %}">
-  <button>Create New Post</button>
-</a>
-<br>All Posts<br>
-{% for post, author_info, user_type in posts_with_authors %}
-  <div>
-    <h4>{{ post.title }}</h4>
-    <p>{{ post.content }}</p>
+<style>
+  .page-wrapper {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 1000px;
+        margin: auto;
+        text-align: center;
+  }
 
-    {% if user_type == 'member' %}
-      <p>By:
-        <a href="{% url 'member_profile' post.author_reg_no %}">
-          {{ author_info.name }} ({{ author_info.role }}) ✅
-        </a>
-      </p>
-    {% elif user_type == 'account' %}
-      <p>By:
-        <a href="{% url 'account_profile' post.author_reg_no %}">
-          {{ author_info.name }}
-        </a>
-      </p>
-    {% else %}
-      <p>By: Unknown</p>
-    {% endif %}
+  @media (max-width: 600px) {
+       .page-wrapper {
+            padding: 10px;
+       }
+
+        #search-bar {
+            font-size: 13px;
+            padding: 8px;
+        }
+
+        .search-dropdown li {
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+        h4 {
+            font-size: 18px;
+        }
+
+        p {
+            font-size: 14px;
+        }
+    }
+  .list-group {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+      flex-direction: column;
+      padding-left: 0;
+      margin-bottom: 0;
+  }
+
+  .list-group-item:hover {
+    z-index: 2;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+  }
+
+  .list-group-item:first-child {
+      border-top-left-radius: .25rem;
+      border-top-right-radius: .25rem;
+  }
+
+  .list-group-item {
+      position: relative;
+      display: block;
+      padding: .75rem 1.25rem;
+      margin-bottom: -1px;
+      background-color: #fff;
+      border: 1px solid rgba(0, 0, 0, .125);
+  }
+
+  .list-group-item-action {
+      width: 100%;
+      color: #495057;
+      text-align: inherit;
+  }
+
+  .search-container {
+      position: relative;
+      width: 300px;
+      margin: 20px auto;
+  }
+
+  #search-bar {
+      width: 100%;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 14px;
+  }
+
+  .search-dropdown {
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 0;
+      list-style: none;
+  }
+
+  .search-dropdown li {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+  }
+
+  .search-dropdown li:last-child {
+      border-bottom: none;
+  }
+
+  .search-dropdown li:hover {
+      background-color: #f1f1f1;
+  }
+</style>
+<body>
+<div class="page-wrapper">
+  Member Home<br>
+  HI {{ member.name }} <br>
+
+  <div class="search-container position-relative w-100" style="max-width: 400px; margin: auto;">
+    <input type="text" id="search-bar" class="form-control" placeholder="Search by name..." autocomplete="off">
+    <ul id="search-results" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000; list-style:None"></ul>
   </div>
-{% endfor %}
-<a href="{% url 'view_applications' %}">View Recruitment Applications</a>
-<a href="/home">Logout</a>
+
+  <a href="{% url 'create_post' %}">
+    <button>Create New Post</button>
+  </a>
+
+  <br>All Posts<br>
+  {% for post, author_info, user_type in posts_with_authors %}
+    <div>
+      <h4>{{ post.title }}</h4>
+      <p>{{ post.content }}</p>
+      <p>Likes :{{ post.likes }}</p>
+      {% if user_type == 'member' %}
+        <p>By:
+          <a href="{% url 'member_profile' post.author_reg_no %}">
+            {{ author_info.name }} ({{ author_info.role }}) ✅
+          </a>
+        </p>
+      {% elif user_type == 'account' %}
+        <p>By:
+          <a href="{% url 'account_profile' post.author_reg_no %}">
+            {{ author_info.name }}
+          </a>
+        </p>
+      {% else %}
+        <p>By: Unknown</p>
+      {% endif %}
+      {% if post.post_id in liked_post_ids %}
+        <button disabled>Liked</button>
+      {% else %}
+        <a href="{% url 'like_post' post.post_id %}">Like</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+
+  <a href="{% url 'view_applications' %}">View Recruitment Applications</a>
+  <a href="/home">Logout</a>
+</div>
+</body>
+<script>
+    const members = {{ members_dict|safe }};
+    const accounts = {{ accounts_dict|safe }};
+    const searchBar = document.getElementById("search-bar");
+    const resultsList = document.getElementById("search-results");
+
+    function searchSuggestions(query) {
+        const allNames = Object.keys(members).concat(Object.keys(accounts));
+        const matches = allNames.filter(name =>
+            name.toLowerCase().includes(query.toLowerCase())
+        );
+        return matches.sort();
+    }
+
+    function clearResults() {
+        resultsList.innerHTML = '';
+    }
+
+    function createResultItem(name, reg_no, userType) {
+        const li = document.createElement("li");
+        li.className = "list-group-item list-group-item-action";
+        li.textContent = name;
+        li.onclick = () => {
+            window.location.href = `/profile/${userType}/${reg_no}/`;
+        };
+        return li;
+    }
+
+    searchBar.addEventListener("input", () => {
+        const query = searchBar.value.trim();
+        clearResults();
+        if (!query) return;
+
+        const suggestions = searchSuggestions(query);
+        if (suggestions.length === 0) {
+            const li = document.createElement("li");
+            li.className = "list-group-item text-muted";
+            li.textContent = "No matches found";
+            resultsList.appendChild(li);
+            return;
+        }
+
+        suggestions.forEach(name => {
+            let reg_no = members[name] || accounts[name];
+            let userType = members[name] ? 'member' : 'account';
+            const item = createResultItem(name, reg_no, userType);
+            resultsList.appendChild(item);
+        });
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!searchBar.contains(e.target)) clearResults();
+    });
+</script>
+<script>
+    const members = {{ search_member_map|safe }};
+    const accounts = {{ search_account_map|safe }};
+    const searchBar = document.getElementById("search-bar");
+    const resultsList = document.getElementById("search-results");
+
+    function searchSuggestions(query) {
+        const allNames = Object.keys(members).concat(Object.keys(accounts));
+        const matches = allNames.filter(name =>
+            name.toLowerCase().includes(query.toLowerCase())
+        );
+        return matches.sort();
+    }
+
+    function clearResults() {
+        resultsList.innerHTML = '';
+    }
+
+    function createResultItem(name, reg_no, userType) {
+        const li = document.createElement("li");
+        li.className = "list-group-item list-group-item-action";
+        li.textContent = name;
+        li.onclick = () => {
+            window.location.href = `/profile/${userType}/${reg_no}/`;
+        };
+        return li;
+    }
+
+    searchBar.addEventListener("input", () => {
+        const query = searchBar.value.trim();
+        clearResults();
+        if (!query) return;
+
+        const suggestions = searchSuggestions(query);
+        if (suggestions.length === 0) {
+            const li = document.createElement("li");
+            li.className = "list-group-item text-muted";
+            li.textContent = "No matches found";
+            resultsList.appendChild(li);
+            return;
+        }
+
+        suggestions.forEach(name => {
+            let reg_no = members[name] || accounts[name];
+            let userType = members[name] ? 'member' : 'account';
+            const item = createResultItem(name, reg_no, userType);
+            resultsList.appendChild(item);
+        });
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!searchBar.contains(e.target)) clearResults();
+    });
+</script>
