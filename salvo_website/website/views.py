@@ -68,10 +68,18 @@ def account_dashboard(request):
     posts = Post.objects.all()
     post_data = []
 
+    all_names = list(Member.objects.values_list('name', flat=True)) + list(
+        Account.objects.values_list('name', flat=True))
+    all_names = sorted(all_names)  # for binary search
+
     liked_post_ids = PostLike.objects.filter(register_no=register_no).values_list('post_id', flat=True)
 
     members_dict = {m.register_no: m.name for m in Member.objects.all()}
     accounts_dict = {a.register_no: a.name for a in Account.objects.all()}
+
+    # For resolving name → reg_no in JS search
+    search_member_map = {m.name: m.register_no for m in Member.objects.all()}
+    search_account_map = {a.name: a.register_no for a in Account.objects.all()}
 
     for post in posts:
         reg = post.author_reg_no
@@ -82,7 +90,10 @@ def account_dashboard(request):
         'posts_with_authors': post_data,
         'liked_post_ids': liked_post_ids,
         'members_dict': members_dict,
-        'accounts_dict': accounts_dict
+        'accounts_dict': accounts_dict,
+        'search_names': all_names,
+        'search_member_map': search_member_map,
+        'search_account_map': search_account_map,
     })
 
 
@@ -103,6 +114,11 @@ def member_dashboard(request):
         a.register_no: {'name': a.name} for a in Account.objects.all()
     }
 
+    # Inside both account_dashboard and member_dashboard views
+    all_names = list(Member.objects.values_list('name', flat=True)) + list(
+        Account.objects.values_list('name', flat=True))
+    all_names = sorted(all_names)  # for binary search
+
     post_data = []
     for post in posts:
         reg = post.author_reg_no
@@ -122,11 +138,18 @@ def member_dashboard(request):
         upvote_count=models.Count('upvotes')
     ).order_by('-upvote_count')
 
+    # For resolving name → reg_no in JS search
+    search_member_map = {m.name: m.register_no for m in Member.objects.all()}
+    search_account_map = {a.name: a.register_no for a in Account.objects.all()}
+
     return render(request, 'member_dashboard.html', {
         'member': member,
         'posts_with_authors': post_data,
         'applications': applications,
-        'liked_post_ids': liked_post_ids
+        'liked_post_ids': liked_post_ids,
+        'search_names': all_names,
+        'search_member_map': search_member_map,
+        'search_account_map': search_account_map,
     })
 
 
