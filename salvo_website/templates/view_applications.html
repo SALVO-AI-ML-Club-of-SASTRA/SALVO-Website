@@ -1,24 +1,46 @@
-<h2>Join Requests</h2>
-{% for app in applications %}
-  <div style="border:1px solid #ccc; padding:10px; margin:10px;">
-    <p><strong>From:</strong> {{ app.account.name }} ({{ app.account.register_no }})</p>
-    <p><strong>Reason:</strong> {{ app.reason_to_join }}</p>
-    <p><strong>Why Recruit:</strong> {{ app.why_recruit }}</p>
-    <p><strong>Other Clubs:</strong> {{ app.other_clubs }}</p>
-    <p><strong>Status:</strong> {{ app.status }}</p>
-    <p><strong>Upvotes:</strong> {{ app.upvotes.count }}</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Join Requests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container my-5">
+    <h2 class="mb-4">Join Requests</h2>
 
-    {% if member not in app.upvotes.all %}
-      <a href="{% url 'upvote_application' app.id %}">Upvote</a>
-    {% else %}
-      <span>You upvoted</span>
-    {% endif %}
+    {% for app in applications %}
+      <div class="card mb-4">
+        <div class="card-body">
+          <p><strong>From:</strong> {{ app.account.name }} ({{ app.account.register_no }})</p>
+          <p><strong>Reason:</strong> {{ app.reason_to_join }}</p>
+          <p><strong>Why Recruit:</strong> {{ app.why_recruit }}</p>
+          <p><strong>Other Clubs:</strong> {{ app.other_clubs }}</p>
+          <p><strong>Status:</strong> {{ app.status }}</p>
+          <p><strong>Upvotes:</strong> {{ app.upvotes.count }}</p>
 
-    {% if member.club_role == 'Lead' or member.club_role == 'Coordinator' %}
-      {% if app.status == "Pending" %}
-        <a href="{% url 'update_application_status' app.id 'accept' %}">Accept</a> |
-        <a href="{% url 'update_application_status' app.id 'reject' %}">Reject</a>
-      {% endif %}
-    {% endif %}
+          <div class="d-flex flex-wrap gap-3 mt-3">
+            {% if member not in app.upvotes.all %}
+              <a href="{% url 'upvote_application' app.id %}" class="btn btn-outline-success btn-sm">Upvote</a>
+            {% else %}
+              <span class="text-success">You upvoted</span>
+            {% endif %}
+
+            {% if member.club_role == 'Lead' or member.club_role == 'Coordinator' %}
+              {% if app.status == "Pending" %}
+                <a href="{% url 'update_application_status' app.id 'accept' %}" class="btn btn-primary btn-sm">Accept</a>
+                <a href="{% url 'update_application_status' app.id 'reject' %}" class="btn btn-danger btn-sm">Reject</a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
   </div>
-{% endfor %}
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -3,19 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+          content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Member Sign Up</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    Member Sign Up<br>
-    {{ msg }}
-    <a href="/account_signup">Not a member of SALVO? Click here to create your account</a>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Sign Up">
-    </form>
-    <a href="/login">Back to Login</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="#">SALVO</a>
+    </nav>
+
+    <div class="container mt-5" style="max-width: 600px;">
+        {% if msg %}
+            <div class="alert alert-warning text-center">{{ msg }}</div>
+        {% endif %}
+
+        <div class="card shadow">
+            <div class="card-body">
+                <h3 class="card-title text-center mb-4">Member Sign Up</h3>
+                <p class="text-center">
+                    <a href="/account_signup">Not a member of SALVO? Click here to create your account</a>
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="d-grid">
+                        <input class="btn btn-success" type="submit" value="Sign Up">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <a href="/login" class="btn btn-outline-secondary">Back to Login</a>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        &copy; 2025 SALVO Club, SASTRA University
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
