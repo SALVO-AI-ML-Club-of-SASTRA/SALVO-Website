@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.db import models
 from .models import Account, Member, Post, JoinRequest, PostLike
 from .forms import AccountRegistrationForm, MemberRegistrationForm, LoginForm, JoinRequestForm
-
+from .tagger import PostTagger
+from .tag_dataset import AIdict
+tagger = PostTagger(AIdict, title_weight=2.0, max_tags=5, min_score=0.05)
 
 def home(request):
     return render(request, 'home.html')
@@ -160,6 +162,8 @@ def create_post(request):
         content = request.POST['content']
         reg_no = request.session.get('register_no')
         member = Member.objects.filter(register_no=reg_no)
+        out_tags = tagger.tag_post(title, content)
+        print(out_tags)
         if member:
             Post.objects.create(title=title, content=content, author_reg_no=reg_no, verified=True)
         else:
