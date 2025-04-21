@@ -29,6 +29,12 @@
             <div class="card-footer text-muted">
               <small>Posted on {{ post.date }}</small><br>
               <small>Likes: {{ post.likes }}</small>
+              <div class="mt-2">
+                {% load custom_tags %}
+                    {% for tag in post.tags|split_tags %}
+                        <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill me-1">{{ tag }}</span>
+                {% endfor %}
+              </div>
             </div>
           </div>
         </div>

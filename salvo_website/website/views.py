@@ -6,6 +6,9 @@ from .models import Account, Member, Post, JoinRequest, PostLike
 from .forms import AccountRegistrationForm, MemberRegistrationForm, LoginForm, JoinRequestForm
 from .tagger import PostTagger
 from .tag_dataset import AIdict
+import json
+
+
 tagger = PostTagger(AIdict, title_weight=2.0, max_tags=5, min_score=0.05)
 
 def home(request):
@@ -155,20 +158,36 @@ def member_dashboard(request):
     })
 
 
-
 def create_post(request):
     if request.method == 'POST':
-        title = request.POST['title']
-        content = request.POST['content']
-        reg_no = request.session.get('register_no')
-        member = Member.objects.filter(register_no=reg_no)
-        out_tags = tagger.tag_post(title, content)
-        print(out_tags)
-        if member:
-            Post.objects.create(title=title, content=content, author_reg_no=reg_no, verified=True)
+        if 'final_submission' in request.POST:
+            # Final step: save the post with tags
+            title = request.POST['title']
+            content = request.POST['content']
+            tags = request.POST.getlist('tags[]')
+            reg_no = request.session.get('register_no')
+            member = Member.objects.filter(register_no=reg_no).first()
+            post = Post.objects.create(
+                title=title,
+                content=content,
+                author_reg_no=reg_no,
+                verified=True if member else False,
+                tags=json.dumps(tags)
+            )
+            return redirect('/account_home/' if request.session['user_type'] == 'account' else '/member_home/')
+
         else:
-            Post.objects.create(title=title, content=content, author_reg_no=reg_no)
-        return redirect('/account_home/' if request.session['user_type'] == 'account' else '/member_home/')
+            # Step 1: identify tags and show for confirmation
+            title = request.POST['title']
+            content = request.POST['content']
+            out_tags = tagger.tag_post(title, content)
+            return render(request, 'confirm_tags.html', {
+                'title': title,
+                'content': content,
+                'tags': out_tags,
+                'available_tags': list(AIdict.keys())
+            })
+
     return render(request, 'create_post.html')
 
 

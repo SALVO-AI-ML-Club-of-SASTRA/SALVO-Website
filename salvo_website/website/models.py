@@ -55,6 +55,7 @@ class Post(models.Model):
     verified = models.BooleanField(default=False)
     verified_by = models.PositiveIntegerField(blank=True, null=True)
     likes = models.IntegerField(default=0)
+    tags = models.JSONField(default=list)
 
 
 class JoinRequest(models.Model):
