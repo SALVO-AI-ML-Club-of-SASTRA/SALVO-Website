@@ -1,5 +1,4 @@
 {% load static %}
-<!DOCTYPE html>
 <html>
 <head>
     <title>Confirm Tags</title>
@@ -65,7 +64,11 @@
             </div>
         </form>
     </div>
-
+    {% if user_type == 'member' %}
+    <a href="/member_home/" class="btn btn-outline-secondary mt-3">Back</a>
+    {% else %}
+    <a href="/account_home/" class="btn btn-outline-secondary mt-3">Back</a>
+    {% endif %}
     <script>
         const initialTags = {{ tags|safe }};
         const tagContainer = document.getElementById('tag-container');
