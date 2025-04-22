@@ -188,7 +188,7 @@ def create_post(request):
                 'available_tags': list(AIdict.keys())
             })
 
-    return render(request, 'create_post.html')
+    return render(request, 'create_post.html', {'user_type': request.session['user_type']})
 
 
 def verify_post(request, post_id):
