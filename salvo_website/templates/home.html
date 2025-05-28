@@ -8,10 +8,28 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="#">SALVO</a>
+        <a class="navbar-brand" href="/home">SALVO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Learn</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#join">Join</a>
+        </li>
+        </ul>
         <div class="ms-auto">
             <a class="btn btn-outline-light me-2" href="/login">Login</a>
             <a class="btn btn-light" href="/account_signup">Sign Up</a>
+        </div>
+        </div>
         </div>
     </nav>
 
@@ -30,7 +48,7 @@
 
         <section class="mb-5">
             <h2>Founders</h2>
-            <div class="row">
+            <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col-md-4">
                     <div class="card p-3">
                         <h5>Sathyanarayanan</h5>
@@ -94,32 +112,32 @@
                     <div class="card h-100 border-success">
                         <div class="card-body">
                             <h5 class="card-title">Smart India Hackathon</h5>
-                            <p class="card-text">Winners in the AI-Healthcare track, 2024.</p>
+                            <p class="card-text">Consistent Participation in SIH 2023 and 2024</p>
                         </div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 border-success">
                         <div class="card-body">
-                            <h5 class="card-title">AICon 2024</h5>
-                            <p class="card-text">Presented a paper on hybrid NLP pipelines.</p>
+                            <h5 class="card-title">Highest Placed Members from a single club in SASTRA</h5>
+                            <p class="card-text">Vast majority from those getting early offers are a member of SALVO!</p>
                         </div>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card h-100 border-success">
                         <div class="card-body">
-                            <h5 class="card-title">SASTRA ML Fair</h5>
-                            <p class="card-text">Best Club Booth Award for innovation and outreach.</p>
+                            <h5 class="card-title">Daksh AI Hackathon 2025</h5>
+                            <p class="card-text">Several winning teams, consisting of SALVO Members</p>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="mb-5 bg-dark text-light w-100" style="padding:15px; border-radius:7px;">
+        <section class="mb-5 bg-dark text-light w-100" style="padding:15px; border-radius:7px; margin-bottom:0px !important; margin-top:5px;">
             <h2>About This Website</h2>
-            <p>This portal is a central hub for all SALVO activities. It tracks attendance, showcases ongoing and
+            <p>This website is a central hub for all SALVO activities. It tracks attendance, showcases ongoing and
                 completed projects, and helps members manage their roles, contributions, and documents—all in one place.
                 We built this website to share and showoff our knowledge, thus you'd find modules useful for your learning,
                 and you'd find features in the website that showcase our learnings!
@@ -128,7 +146,7 @@
             </p>
         </section>
 
-        <section class="container py-4">
+        <section class="container py-4" id="join">
             <h2>Join Us</h2>
             <p>Ready to be part of the AI revolution at SASTRA?</p>
             <p>Take your first step to become a part of the AI community,

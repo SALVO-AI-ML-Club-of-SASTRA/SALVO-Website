@@ -35,9 +35,6 @@
         <div class="card shadow">
             <div class="card-body">
                 <h3 class="card-title text-center mb-4">Member Sign Up</h3>
-                <p class="text-center">
-                    <a href="/account_signup">Not a member of SALVO? Click here to create your account</a>
-                </p>
                 <form method="post">
                     {% csrf_token %}
                     {{ form.as_p }}
