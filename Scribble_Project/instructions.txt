@@ -1,0 +1,4 @@
+wsl
+source tf_env/bin/activate
+cd /mnt/d/MyEverything/PythonProjects/Recent_projects/cnn_analysis/Scribble_Project/scribble_project
+python manage.py runserver
