@@ -20,8 +20,9 @@ from django.contrib import admin
 from django.urls import path
 from website.views import home, login, member_dashboard, account_dashboard, register_member, register_account, \
     create_post, verify_post, join_request, view_applications, upvote_application, update_application_status, like_post, \
-    account_profile, member_profile
-
+    account_profile, member_profile, logout
+from drawapp import views
+from tracker import views as v1
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -42,6 +43,20 @@ urlpatterns = [
     path('profile/account/<int:reg_no>/', account_profile, name='account_profile'),
     path('profile/member/<int:reg_no>/', member_profile, name='member_profile'),
 
+    # Scribble URLS
+    path('play/draw', views.draw_page, name='draw'),
+    path('predict/', views.predict, name='predict'), # AJAX endpoint
+    path('logout/', logout),
+
+    # Tracker URLs
+    path('tracker-home/',v1.home),
+    path('add_member/',v1.add_members),
+    path('view_members/',v1.view_members),
+    path('upload_attendance_file/',v1.upload_attendance_file),
+    path('view_meetings/',v1.view_meetings),
+    path('add_minutes/<str:code>/',v1.add_minutes),
+    path('member_stats/',v1.member_stats),
+    path('meeting_stats/',v1.meeting_stats),
 ]
 
 if settings.DEBUG:

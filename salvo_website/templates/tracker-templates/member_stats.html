@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Statistics</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 5px;
+            background: conic-gradient(from 240deg at 50% 50%, #000000, #0a0b08, #12130f, #181915, #1e1f19, #23251e, #292b22);
+            color: aliceblue;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        h1, h2, h3 {
+            text-align: center;
+            color: aliceblue;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #1e1f19;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        label, p {
+            color: aliceblue;
+        }
+        select, button {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        select {
+            background-color: #2a2b2c;
+            color: aliceblue;
+        }
+        .btn-primary {
+            margin-top: 10px;
+            width: 100%;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            background: #2a2b2c;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Member Statistics</h1>
+    <div class="container">
+        <a href="/tracker-home" class="btn btn-primary">Back to Home</a>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="member_name">Select Member:</label>
+            <select name="member_name" id="member_name">
+                <option value="">--Choose a Member--</option>
+                {% for name in member_names %}
+                    <option value="{{ name }}" {% if name == member_name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">View Stats</button>
+        </form>
+
+        {% if meeting_durations_json %}
+            <h3>Meeting Durations for {{ member_name }}</h3>
+            <canvas id="memberChart" width="400" height="200"></canvas>
+            <p class="text-center mt-3">
+                <strong>Attendance Percentage:</strong> {{ attendance_percentage|floatformat:2 }}%
+            </p>
+
+            <script>
+                // Parse the JSON data passed from Django
+                const meetingData = JSON.parse(`{{ meeting_durations_json|safe }}`);
+                
+                // Extract meeting codes and total durations
+                const labels = meetingData.map(entry => entry.meeting_code);
+                const dataPoints = meetingData.map(entry => entry.total_duration/60);
+
+                // Create a bar chart using Chart.js
+                const data = {
+                    labels: labels,
+                    datasets: [{
+                        label: "Duration (minutes)",
+                        data: dataPoints,
+                        backgroundColor: ["#1E88E5", "#42A5F5", "#90CAF9", "#BBDEFB", "#E3F2FD"],
+                    }]
+                };
+
+                const ctx = document.getElementById("memberChart").getContext("2d");
+                new Chart(ctx, {
+                    type: "bar",
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: "rgba(255, 255, 255, 0.1)"
+                                }
+                            }
+                        }
+                    }
+                });
+            </script>
+        {% endif %}
+
+        {% if error %}
+            <p>{{ error }}</p>
+        {% endif %}
+    </div>
+    <div class="text-center mt-4">
+        <p>Created by Keshav Kannan in 2024 for SALVO</p>
+    </div>
+    
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+</html>
