@@ -295,3 +295,6 @@ def member_profile(request, reg_no):
     member = Member.objects.get(register_no=reg_no)
     posts = Post.objects.filter(author_reg_no=reg_no)
     return render(request, 'member_profile.html', {'user': member, 'posts': posts})
+
+def logout(request):
+    return redirect(login);
