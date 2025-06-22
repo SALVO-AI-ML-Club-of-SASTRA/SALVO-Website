@@ -44,7 +44,7 @@ urlpatterns = [
     path('profile/member/<int:reg_no>/', member_profile, name='member_profile'),
 
     # Scribble URLS
-    path('play/draw', views.draw_page, name='draw'),
+    path('play/draw/', views.draw_page, name='draw'),
     path('predict/', views.predict, name='predict'), # AJAX endpoint
     path('logout/', logout),
 
