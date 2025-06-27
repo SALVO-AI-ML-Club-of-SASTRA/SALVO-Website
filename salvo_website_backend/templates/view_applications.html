@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Join Requests</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="/home">SALVO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Learn</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#join">Join</a>
+        </li>
+        <li>
+            <a class="nav-link" href="/play/draw">Play Scribble!</a>
+        </li>
+        </ul>
+        <div class="ms-auto">
+            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
+        </div>
+        </div>
+        </div>
+    </nav>
+  <div class="container my-5">
+    <h2 class="mb-4">Join Requests</h2>
+
+    {% for app in applications %}
+      <div class="card mb-4">
+        <div class="card-body">
+          <p><strong>From:</strong> {{ app.account.name }} ({{ app.account.register_no }})</p>
+          <p><strong>Reason:</strong> {{ app.reason_to_join }}</p>
+          <p><strong>Why Recruit:</strong> {{ app.why_recruit }}</p>
+          <p><strong>Other Clubs:</strong> {{ app.other_clubs }}</p>
+          <p><strong>Status:</strong> {{ app.status }}</p>
+          <p><strong>Upvotes:</strong> {{ app.upvotes.count }}</p>
+
+          <div class="d-flex flex-wrap gap-3 mt-3">
+            {% if member not in app.upvotes.all %}
+              <a href="{% url 'upvote_application' app.id %}" class="btn btn-outline-success btn-sm">Upvote</a>
+            {% else %}
+              <span class="text-success">You upvoted</span>
+            {% endif %}
+
+            {% if member.club_role == 'Lead' or member.club_role == 'Coordinator' %}
+              {% if app.status == "Pending" %}
+                <a href="{% url 'update_application_status' app.id 'accept' %}" class="btn btn-primary btn-sm">Accept</a>
+                <a href="{% url 'update_application_status' app.id 'reject' %}" class="btn btn-danger btn-sm">Reject</a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

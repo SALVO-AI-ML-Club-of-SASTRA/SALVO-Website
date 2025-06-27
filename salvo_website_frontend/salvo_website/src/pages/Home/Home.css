@@ -1,0 +1,12 @@
+
+h1 {
+    font-family: var(--subheading-font);
+    font-size: 2.5rem;
+    color: var(--primary-color);
+}
+
+p {
+  font-family: var(--para-font);
+  font-size: 1.25rem;
+  color: var(--secondary-color);
+}

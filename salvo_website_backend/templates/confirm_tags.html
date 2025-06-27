@@ -1,0 +1,141 @@
+{% load static %}
+<html>
+<head>
+    <title>Confirm Tags</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .tag {
+            display: inline-block;
+            background-color: rgba(0,123,255,0.15);
+            color: #007bff;
+            border-radius: 20px;
+            padding: 5px 15px;
+            margin: 5px;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .tag .remove-tag {
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tag-input {
+            margin-top: 10px;
+        }
+
+        .palette {
+            background-color: rgba(0,123,255,0.15);
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="/home">SALVO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Learn</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#join">Join</a>
+        </li>
+        <li>
+            <a class="nav-link" href="/play/draw">Play Scribble!</a>
+        </li>
+        </ul>
+        <div class="ms-auto">
+            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
+        </div>
+        </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <h4 class="text-center mb-4">Edit Tags for Your Post</h4>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="final_submission" value="1">
+            <input type="hidden" name="title" value="{{ title }}">
+            <input type="hidden" name="content" value="{{ content }}">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Title</label>
+                <div class="form-control">{{ title }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Content</label>
+                <div class="form-control" style="height:auto;">{{ content }}</div>
+            </div>
+
+            <label class="form-label fw-semibold">Tags</label>
+            <div id="tag-container" class="d-flex flex-wrap"></div>
+
+            <select id="tag-selector" class="form-select mt-3">
+                <option selected disabled>-- Add a tag --</option>
+                {% for tag in available_tags %}
+                    <option value="{{ tag }}">{{ tag }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-primary px-4">Post</button>
+            </div>
+        </form>
+    </div>
+    {% if user_type == 'member' %}
+    <a href="/member_home/" class="btn btn-outline-secondary mt-3">Back</a>
+    {% else %}
+    <a href="/account_home/" class="btn btn-outline-secondary mt-3">Back</a>
+    {% endif %}
+    <script>
+        const initialTags = {{ tags|safe }};
+        const tagContainer = document.getElementById('tag-container');
+        const tagSelector = document.getElementById('tag-selector');
+
+        function renderTags(tags) {
+            tagContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag palette';
+                tagElement.textContent = tag;
+
+                const remove = document.createElement('span');
+                remove.className = 'remove-tag';
+                remove.textContent = '×';
+                remove.onclick = () => {
+                    tags = tags.filter(t => t !== tag);
+                    renderTags(tags);
+                };
+
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'tags[]';
+                hiddenInput.value = tag;
+
+                tagElement.appendChild(remove);
+                tagElement.appendChild(hiddenInput);
+                tagContainer.appendChild(tagElement);
+            });
+        }
+
+        tagSelector.addEventListener('change', () => {
+            const selected = tagSelector.value;
+            if (!initialTags.includes(selected)) {
+                initialTags.push(selected);
+                renderTags(initialTags);
+            }
+        });
+
+        renderTags(initialTags);
+    </script>
+</body>
+</html>
