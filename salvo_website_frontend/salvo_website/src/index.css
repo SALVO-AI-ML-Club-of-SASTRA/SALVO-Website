@@ -1,34 +1,45 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:700&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500&display=swap');
 @import url('https://fonts.cdnfonts.com/css/star-wars');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Poppins:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Star+Wars:wght@400&display=swap');
 
-:root{
-  --heading-font: 'Montserrat','Source Sans Pro', sans-serif;
-  --subheading-font: 'Star Wars', 'Source Sans Pro', sans-serif;
-  --para-font: 'Poppins', 'Source Sans Pro', sans-serif;
+/* Global CSS Variables */
+:root {
+  --heading-font: 'Montserrat', Arial, sans-serif;
+  --subheading-font: 'Star Wars', Arial, sans-serif;
+  --para-font: 'Poppins', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --background-color: #090924;
   --primary-color: #F6F6DB;
   --secondary-color: #FFF8EC;
   --accent-color: #E6E636;
-  --box-color: #B9B9B9;
+  --box-color-light: #B9B9B9;
+  --box-color-dark1: #000713;
+  --box-color-dark2: #262626;
+  --button-color: #000713;
+  --button-hover-color: #262626;
   --page-black: #222222;
   --page-white: #f1f1e2;
+  --box-shadow: 0 4px 10px #367ce6;
+  --input-bg: #374151;
+  --input-border: #4b5563;
+  --input-focus: #89a4ff;
+  --button-primary: #fcfccb;
+  --button-primary-hover: #e6c636;
+  --button-google: #1f2937;
+  --button-google-hover: #374151;
+  --link-color: #ebd2a8;
+  --link-hover: #93c5fd;
+  --error-color: #f7b0b0;
+  --success-color: #8ef0cf;
 }
+
 
 body {
   margin: 0;
   padding: 0;
   background-color: var(--background-color);
   color: var(--primary-color);
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-  --background-color: #F6F6DB;
-  --primary-color: #090924;
-  --secondary-color: #222222;
-  --accent-color: #FFF8EC;
-  --page-black: #e4e4e4;
-  --page-white: #385070;
-  }
 }
