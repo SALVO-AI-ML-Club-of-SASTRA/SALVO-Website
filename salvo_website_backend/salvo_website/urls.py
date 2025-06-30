@@ -44,9 +44,14 @@ urlpatterns = [
     path('profile/member/<int:reg_no>/', member_profile, name='member_profile'),
 
     # Scribble URLS
-    path('play/draw/', views.draw_page, name='draw'),
-    path('predict/', views.predict, name='predict'), # AJAX endpoint
-    path('logout/', logout),
+    path('username/', views.username_page, name='username'),
+    path('draw/', views.draw_page, name='draw'),
+    path('predict/', views.predict, name='predict'),  # AJAX endpoint
+    path('models/', views.model_management, name='models'),  # NEW
+    path('upload-model/', views.upload_model, name='upload_model'),
+    path('get-models/', views.get_models, name='get_models'),
+    path('delete-model/', views.delete_model, name='delete_model'),
+    path('get-models/', views.get_models, name='get_models'),
 
     # Tracker URLs
     path('tracker-home/',v1.home),
