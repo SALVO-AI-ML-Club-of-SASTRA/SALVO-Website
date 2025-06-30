@@ -2,3 +2,4 @@ python==3.10
 django
 Django
 scikit-learn
+matplotlib
