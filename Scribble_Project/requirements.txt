@@ -1,6 +1,0 @@
-Django==5.2.3
-numpy==1.26.0
-pillow==11.0.0
-opencv-python==4.5.5.62
-tensorflow==2.18.0
-matplotlib==3.8.4
