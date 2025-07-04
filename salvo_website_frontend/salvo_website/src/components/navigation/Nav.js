@@ -69,9 +69,7 @@ function Nav() {
                             ) : (
                                 <>
                                     <p>Please log in</p>
-                                    <Link to="/login" className="nav-link" onClick={handleLinkClick}>Login</Link>
-                                    <Link to="/register" className="nav-link" onClick={handleLinkClick}>Register</Link>
-                                </>
+                                    <Link to="/login" className="nav-link" onClick={handleLinkClick}>Login</Link>                                </>
                             )}
                         </div>
                     </div>
