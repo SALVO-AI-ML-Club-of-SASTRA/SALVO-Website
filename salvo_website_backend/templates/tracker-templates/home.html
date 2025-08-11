@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salvo Manager</title>
+    {% load static %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{% static 'tracker/salvo_logo.jpg' %}">
+    <style>
+        body {
+            padding: 5px;
+            background: conic-gradient(from 240deg at 50% 50%, #000000, #0a0b08, #12130f, #181915, #1e1f19, #23251e, #292b22);
+            color: aliceblue;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        a {
+            color: lightblue;
+            text-decoration: none;
+        }
+        a:hover {
+            border-style: solid;
+            border-color: lightskyblue;
+            border-radius: 5px;
+            border-width: 1px;
+            color: lightskyblue;
+        }
+        .content-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .content-container p {
+            margin: 0;
+            flex: 1;
+            padding-right: 10px;
+        }
+        @media (max-width: 768px) {
+        .row {
+            flex-direction: column;
+        }
+    }
+    </style>
+</head>
+<body>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark" style="background-color: #000000;">
+        <container class="navbar-brand" href="/home" style="margin-left: 20px;">
+            {% load static %}
+            <img src="{% static 'tracker/salvo_logo.jpg' %}" width="50px" height="50px" class="d-inline-block align-center" alt="">
+            <strong style="color:lightskyblue"><a href="/home">SALVO</a></strong>
+        </container>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+          <ul class="navbar-nav">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home</a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Features
+                </a>
+                <div class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" href="/add_member">Register Member</a>
+                    <a class="dropdown-item" href="/upload_attendance_file">Log Attendance</a>
+                    <a class="dropdown-item" href="#member_stats">View Stats</a>
+                </div>
+            </li>
+          </ul>
+        </div>
+    </nav>
+    <div style="
+        margin-top: 50px; 
+        margin-bottom: 25px; 
+        max-width: 100%; 
+        min-height: 400px; 
+        background: linear-gradient(90deg, rgba(157,172,255,1) 0%, rgba(169,185,255,1) 35%, rgba(65,223,255,1) 100%);
+        padding: 30px; 
+        border-radius: 2px;
+    ">
+        <div class="row">
+            <!-- Table for highest attendance -->
+            <div class="col-lg-6 col-md-12">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;border-radius: 4px;margin-top:40px;">
+                    <thead>
+                        <tr style="background-color:  rgb(77, 255, 195); color: rgb(31, 32, 32);text-align: left;">
+                            <th style="padding: 10px; text-align: left;">S.No.</th>
+                            <th style="padding: 10px; text-align: left;">Top Committed Members</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in highest_attendees %}
+                        <tr style="background-color: rgba(0, 0, 0, 0.4)">
+                            <td style="padding: 10px;">{{ forloop.counter }}</td>
+                            <td style="padding: 10px;">{{ member }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" style="padding: 10px; text-align: center; background-color: rgba(0, 0, 0, 0.2);">
+                                No data available
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table for lowest attendance -->
+            <div class="col-lg-6 col-md-12">
+                <table style="width: 100%; border-collapse: collapse; border-radius: 4px; margin-top:40px ;">
+                    <thead>
+                        <tr style="background-color: rgb(255, 68, 68); color: white; text-align: left;">
+                            <th style="padding: 10px; text-align: left;">S.No.</th>
+                            <th style="padding: 10px; text-align: left;">Least Committed Members</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in lowest_attendees %}
+                        <tr style="background-color:rgba(0, 0, 0, 0.6)">
+                            <td style="padding: 10px;">{{ forloop.counter }}</td>
+                            <td style="padding: 10px;">{{ member }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" style="padding: 10px; text-align: center; background-color: rgba(0, 0, 0, 0.2);">
+                                No data available
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="container" style="background-color: #1e1e1e; border-radius: 10px; padding:20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);margin-bottom: 20px;">
+            <p>
+                If you are here, it must be because you were chosen as the lead or the admin. This home page was designed to help you out
+                with this manager app and will remain this way for future usages. If you have the source code, however, you can tweak it to your convenience.
+                But do save the legacy code somewhere because it really is one of a kind.
+                The app is supposed to:
+                <ul>
+                    <li>Let you know in numbers which member you can trust the most with their commitment.</li>
+                    <li>(Later) Member with most contributions.</li>
+                    <li>(Most Importantly) Whom to kick out, with basis and without hesitation.</li>
+                </ul>
+            </p>
+        </div>
+        <div class="content-container">
+            <p>
+                This is where you register your new members. The link will take you to a page where you fill a form for each member.
+                Members get added to the database. Important to note that without registering, you can't track attendance for them.
+            </p>
+            <a href="/add_member" class="btn btn-outline-primary">Register Member</a>
+        </div>
+        <div class="content-container">
+            <p>
+                This is the main feature of this application. This link will take you to a form that requires you to enter meeting details (GMeet only).
+                You need to download an extension from Chrome called 'Google Meet Attendance List'. Here's the link:
+                <a href="https://chromewebstore.google.com/detail/google-meet-attendance-li/appcnhiefcidclcdjeahgklghghihfok?hl=en-GB&utm_source=ext_sidebar" target="_blank">
+                    Google Meet Attendance List Extension
+                </a>.
+                Follow the instructions provided to upload attendance data after each meet.
+            </p>
+            <a href="/upload_attendance_file" class="btn btn-outline-primary">Log Meeting</a>
+        </div>
+        <div class="content-container">
+            <p>
+                Just like the name suggests, it's for viewing your list of members. To edit, you will need to be a Django superuser.
+                Changes can and shall only be made through the admin interface in Django.
+            </p>
+            <a href="/view_members" class="btn btn-outline-primary">View Members</a>
+        </div>
+        <div class="content-container">
+            <p>
+                This section allows you to view the meeting list. An added feature includes a button to add minutes of meeting.
+                Use this to save meeting details logs. Ensure meeting codes are filled properly when uploading attendance.
+            </p>
+            <a href="/view_meetings" class="btn btn-outline-primary">View Meetings</a>
+        </div>
+        <div class="content-container" id="member_stats">
+            <p>
+                This part of the application works on Django-DB and Chart.js. Attendance details are compiled and displayed
+                as graphs for each member, showing their commitment and attendance duration.
+            </p>
+            <a href="/member_stats" class="btn btn-outline-primary">View Member-Wise Stats</a>
+        </div>
+        <div class="content-container" id="meeting_stats">
+            <p>
+                Meeting-wise cumulative stats displayed with Chart.js. Identifies members with less than 40% attendance.
+                Helps analyze commitment and identify areas for improvement.
+            </p>
+            <a href="/meeting_stats" class="btn btn-outline-primary">View Meeting-Wise Stats</a>
+        </div>
+        <div class="text-center mt-4">
+            <p>Created by Keshav Kannan in 2024 for SALVO</p>
+        </div>
+    </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</html>

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="/home">SALVO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Learn</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#join">Join</a>
+        </li>
+        <li>
+            <a class="nav-link" href="/play/draw">Play Scribble!</a>
+        </li>
+        </ul>
+        <div class="ms-auto">
+            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
+        </div>
+        </div>
+        </div>
+    </nav>
+<div class="container my-5">
+  <div class="card p-4 mb-4">
+    <h2 class="card-title">{{ user.name }}</h2>
+    <p class="text-muted mb-1">{{ user.club_role }} ✅</p>
+    <p><strong>Email:</strong> {{ user.sastra_email }}</p>
+    <p><strong>Register No:</strong> {{ user.register_no }}</p>
+    <p><strong>Branch:</strong> {{ user.branch }}</p>
+    <p><strong>Batch:</strong> {{ user.batch }}</p>
+
+    {% if is_member %}
+      <p><strong>Role:</strong> {{ user.club_role }}</p>
+      <p><strong>Contribution Score:</strong> {{ user.contribution_score }}</p>
+    {% endif %}
+  </div>
+
+  <h3 class="mb-3">Posts by {{ user.name }}</h3>
+
+  {% if posts %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+      {% for post in posts %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h4 class="card-title">{{ post.title }}</h4>
+              <p class="card-text">{{ post.content }}</p>
+            </div>
+            <div class="card-footer text-muted">
+              <small>Posted on {{ post.date }}</small><br>
+              <small>Likes: {{ post.likes }}</small>
+              <div class="mt-2">
+                {% load custom_tags %}
+                    {% for tag in post.tags|split_tags %}
+                        <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill me-1">{{ tag }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">No posts yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

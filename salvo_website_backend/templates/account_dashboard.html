@@ -1,0 +1,195 @@
+<head>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+
+    @media (max-width: 600px) {
+
+      #search-bar {
+        font-size: 13px;
+        padding: 8px;
+      }
+
+      .search-dropdown li {
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+    }
+
+    .search-container {
+      position: relative;
+      width: 300px;
+      margin: 20px auto;
+    }
+
+    #search-bar {
+      width: 100%;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .search-dropdown {
+      position: absolute;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 0;
+      list-style: none;
+    }
+
+    .search-dropdown li {
+      padding: 10px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    .search-dropdown li:last-child {
+      border-bottom: none;
+    }
+
+    .search-dropdown li:hover {
+      background-color: #f1f1f1;
+    }
+
+    .post-card {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      background: #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      min-width: 100%;
+      max-width: 600px;
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="/home">SALVO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="/home">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Learn</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#join">Join</a>
+        </li>
+        <li>
+            <a class="nav-link" href="/play/draw">Play Scribble!</a>
+        </li>
+        </ul>
+        <div class="ms-auto">
+            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
+        </div>
+        </div>
+        </div>
+    </nav>
+  <div class="container py-5">
+    <h3 class="mb-4 text-center">Welcome, {{ account.name }}</h3>
+
+    <div class="search-container">
+      <input type="text" id="search-bar" class="form-control" placeholder="Search by name..." autocomplete="off">
+      <ul id="search-results" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000;"></ul>
+    </div>
+
+    <div class="text-center mb-4">
+      <a href="{% url 'create_post' %}" class="btn btn-primary" style="margin-top:10px;">Create New Post</a>
+    </div>
+
+    <h4 class="text-center mb-4">All Posts</h4>
+    {% for post, author_name in posts_with_authors %}
+      <div class="post-card">
+        <p><strong>{{ post.title }}</strong></p>
+        <p>{{ post.content }}</p>
+        <p>Likes: {{ post.likes }}</p>
+        <div class="mt-2">
+            {% load custom_tags %}
+                {% for tag in post.tags|split_tags %}
+                    <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill me-1">{{ tag }}</span>
+            {% endfor %}
+        </div>
+        {% if post.author_reg_no in members_dict %}
+          <p>By: <a href="{% url 'member_profile' post.author_reg_no %}">{{ author_name }}</a></p>
+        {% else %}
+          <p>By: <a href="{% url 'account_profile' post.author_reg_no %}">{{ author_name }}</a></p>
+        {% endif %}
+
+        {% if post.post_id in liked_post_ids %}
+          <button class="btn btn-secondary" disabled>Liked</button>
+        {% else %}
+          <a href="{% url 'like_post' post.post_id %}" class="btn btn-success">Like</a>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <a href="{% url 'join_request' account.register_no %}" class="btn btn-primary me-2">Join Us</a>
+    <a href="/home" class="btn btn-danger">Logout</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const members = {{ search_member_map|safe }};
+    const accounts = {{ search_account_map|safe }};
+    const searchBar = document.getElementById("search-bar");
+    const resultsList = document.getElementById("search-results");
+
+    function searchSuggestions(query) {
+      const allNames = Object.keys(members).concat(Object.keys(accounts));
+      return allNames.filter(name => name.toLowerCase().includes(query.toLowerCase())).sort();
+    }
+
+    function clearResults() {
+      resultsList.innerHTML = '';
+    }
+
+    function createResultItem(name, reg_no, userType) {
+      const li = document.createElement("li");
+      li.className = "list-group-item list-group-item-action";
+      li.textContent = name;
+      li.onclick = () => window.location.href = `/profile/${userType}/${reg_no}/`;
+      return li;
+    }
+
+    searchBar.addEventListener("input", () => {
+      const query = searchBar.value.trim();
+      clearResults();
+      if (!query) return;
+
+      const suggestions = searchSuggestions(query);
+      if (suggestions.length === 0) {
+        const li = document.createElement("li");
+        li.className = "list-group-item text-muted";
+        li.textContent = "No matches found";
+        resultsList.appendChild(li);
+        return;
+      }
+
+      suggestions.forEach(name => {
+        let reg_no = members[name] || accounts[name];
+        let userType = members[name] ? 'member' : 'account';
+        resultsList.appendChild(createResultItem(name, reg_no, userType));
+      });
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!searchBar.contains(e.target)) clearResults();
+    });
+  </script>
+</body>

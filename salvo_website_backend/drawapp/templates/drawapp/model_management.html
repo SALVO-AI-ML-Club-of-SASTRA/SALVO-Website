@@ -1,0 +1,390 @@
+<!-- drawapp/templates/drawapp/model_management.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Model Management - Scribble Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .upload-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px dashed #ddd;
+        }
+        
+        .upload-section:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .file-input-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-input-label {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .file-input-label:hover {
+            background: #5a6fd8;
+        }
+        
+        .upload-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background: #218838;
+        }
+        
+        .upload-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .selected-file {
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .models-section {
+            margin-bottom: 30px;
+        }
+        
+        .model-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            min-height: 200px;
+        }
+        
+        .model-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .model-info {
+            flex: 1;
+        }
+        
+        .model-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .model-details {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .model-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .goto-game-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+        
+        .goto-game-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .goto-game-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .no-models {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Model Management</h1>
+        
+        <div id="statusMessage" class="status-message"></div>
+        
+        <div class="upload-section">
+            <h3>📁 Add New Model</h3>
+            <form id="uploadForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="file-input-container">
+                    <label for="modelFile" class="file-input-label">
+                        📂 Choose .keras File
+                    </label>
+                    <input type="file" id="modelFile" name="model_file" accept=".keras" required>
+                    <span id="selectedFileName" class="selected-file">No file selected</span>
+                </div>
+                <button type="submit" class="upload-btn" id="uploadBtn" disabled>
+                    ⬆️ Upload Model
+                </button>
+            </form>
+        </div>
+        
+        <div class="models-section">
+            <h3>🤖 Available Models</h3>
+            <div class="model-list" id="modelList">
+                <!-- Models will be loaded here -->
+            </div>
+        </div>
+        
+        <button class="goto-game-btn" id="gotoGameBtn" onclick="goToGame()">
+            🎮 Start Game with Selected Models
+        </button>
+    </div>
+
+    <script>
+        // File input handling
+        document.getElementById('modelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileName = document.getElementById('selectedFileName');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (file) {
+                fileName.textContent = file.name;
+                fileName.style.color = '#28a745';
+                uploadBtn.disabled = false;
+            } else {
+                fileName.textContent = 'No file selected';
+                fileName.style.color = '#666';
+                uploadBtn.disabled = true;
+            }
+        });
+        
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadModel();
+        });
+        
+        function showStatus(message, isError = false) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message ${isError ? 'status-error' : 'status-success'}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function uploadModel() {
+            const formData = new FormData();
+            const fileInput = document.getElementById('modelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showStatus('Please select a file', true);
+                return;
+            }
+            
+            if (!file.name.endsWith('.keras')) {
+                showStatus('Please select a .keras file', true);
+                return;
+            }
+            
+            formData.append('model_file', file);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = '⏳ Uploading...';
+            
+            fetch('/upload-model/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Model uploaded successfully!');
+                    loadModels();
+                    
+                    // Reset form
+                    fileInput.value = '';
+                    document.getElementById('selectedFileName').textContent = 'No file selected';
+                    document.getElementById('selectedFileName').style.color = '#666';
+                } else {
+                    showStatus(data.error || 'Upload failed', true);
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                showStatus('Upload failed. Please try again.', true);
+            })
+            .finally(() => {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = '⬆️ Upload Model';
+            });
+        }
+        
+        function loadModels() {
+            fetch('/get-models/')
+            .then(response => response.json())
+            .then(data => {
+                const modelList = document.getElementById('modelList');
+                const gotoBtn = document.getElementById('gotoGameBtn');
+                
+                if (data.models && data.models.length > 0) {
+                    modelList.innerHTML = data.models.map(model => `
+                        <div class="model-item">
+                            <div class="model-info">
+                                <div class="model-name">${model.name}</div>
+                                <div class="model-details">
+                                    Uploaded: ${new Date(model.uploaded_at).toLocaleString()}
+                                    ${model.size ? ` • Size: ${(model.size / 1024 / 1024).toFixed(1)} MB` : ''}
+                                </div>
+                            </div>
+                            <div class="model-actions">
+                                <button class="delete-btn" onclick="deleteModel('${model.filename}')">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    gotoBtn.disabled = false;
+                } else {
+                    modelList.innerHTML = '<div class="no-models">No models uploaded yet. Upload a .keras file to get started!</div>';
+                    gotoBtn.disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading models:', error);
+                showStatus('Failed to load models', true);
+            });
+        }
+        
+        function deleteModel(filename) {
+            if (!confirm('Are you sure you want to delete this model?')) {
+                return;
+            }
+            
+            fetch('/delete-model/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ filename: filename })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showStatus('Model deleted successfully!');
+                    loadModels();
+                } else {
+                    showStatus(data.error || 'Delete failed', true);
+                }
+            })
+            .catch(error => {
+                console.error('Delete error:', error);
+                showStatus('Delete failed. Please try again.', true);
+            });
+        }
+        
+        function goToGame() {
+            window.location.href = '/draw/';
+        }
+        
+        // Load models on page load
+        document.addEventListener('DOMContentLoaded', loadModels);
+    </script>
+</body>
+</html>

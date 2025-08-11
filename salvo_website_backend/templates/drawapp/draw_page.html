@@ -1,0 +1,563 @@
+    <!-- drawapp/templates/drawapp/draw_page.html -->
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Scribble Game</title>
+        <style>
+            body {
+                display: flex;
+                font-family: Arial, sans-serif;
+            }
+            .left-panel, .right-panel {
+                padding: 20px;
+                height: 95vh;
+                overflow-y: auto;
+            }
+            .left-panel {
+                flex: 2;
+            }
+            .right-panel {
+                flex: 1;
+                border-left: 1px solid #ccc;
+                background: #f9f9f9;
+            }
+            canvas {
+                border: 2px solid #333;
+                cursor: crosshair;
+            }
+            #chatbox {
+                height: 500px;
+                overflow-y: auto;
+                background: #fff;
+                padding: 10px;
+                border: 1px solid #aaa;
+            }
+            .chat-msg {
+                padding: 5px 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="left-panel">
+            <h2>Draw the word As Big As Possible!</h2>
+            <canvas id="canvas" width="400" height="400"></canvas><br><br>
+            
+            <button onclick="clearCanvas()">Clear</button>
+            <button onclick="newChallenge()">New Challenge</button>
+
+            <h3>Choose a word:</h3>
+            <ul id="word-options">
+                {% for word in challenge_words %}
+                    <li><button onclick="selectWord('{{ word }}')">{{ word }}</button></li>
+                {% endfor %}
+            </ul>
+
+            <h4 id="selected-word">Selected Word: <em>None</em></h4>
+            <h4 id="hint-status">Hints Revealed to model: Waiting...</h4>
+            <h4 id="timer">Time left: 60s</h4>
+            <h4 id="delay-display">Backend Delay: <em>0ms</em></h4>
+            <h1 id="final-status" style="color: green; font-size: 28px; font-weight: bold;"></h1>
+        </div>
+
+        <div class="right-panel">
+            <!--
+            <h3>What the model sees:</h3>
+            <div id="model-vision-container" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+            -->
+            <h3>Loaded Models:</h3>
+            <ul>
+                {% for idx, name in model_mapping.items %}
+                    <li><strong>Model {{ idx }}</strong> → {{ name }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>Model Chat</h2>
+            <div id="chatbox">
+                <div class="chat-msg">Model will predict here...</div>
+            </div>
+        </div>
+        <script>
+        const randomWords = [
+        "apple", "banana", "pencil", "laptop", "table", "carpet", "window", "chair", "cloud", "river",
+        "guitar", "bottle", "school", "ticket", "planet", "camera", "rocket", "mouse", "pizza", "pillow",
+        "keyboard", "phone", "book", "tree", "flower", "house", "balloon", "umbrella", "watch", "candle",
+        "clock", "bicycle", "sunglasses", "backpack", "t-shirt", "hat", "glasses", "toothbrush", "couch", "mirror",
+        "painting", "scissors", "basketball", "football", "tennis", "golf", "skateboard", "drum", "violin", "trumpet",
+        "camera", "television", "microwave", "refrigerator", "oven", "stove", "blender", "toaster", "washing machine", "dryer"
+        ];
+        </script>
+
+        <script>
+            let canvas = document.getElementById("canvas");
+            let ctx = canvas.getContext("2d");
+            let painting = false;
+            let currentWord = null;
+            let hints = [];
+            let startTime = null;
+            let gameTimer = null;
+            let timerInterval = null; // ADDED: Separate timer for UI updates
+            let gameEnded = false;  // Add this near the top with other global variables
+            let failedGuesses = []; // Store failed guesses to avoid repeating them
+            //let isPredicting = false; // Flag to prevent multiple predictions at once
+            let lastX = 0, lastY = 0;
+
+            canvas.addEventListener("mousedown", (e) => {
+                painting = true;
+                const rect = canvas.getBoundingClientRect();
+                lastX = e.clientX - rect.left;
+                lastY = e.clientY - rect.top;
+            });
+
+            canvas.addEventListener("mouseup", () => painting = false);
+            canvas.addEventListener("mouseleave", () => painting = false);
+
+            canvas.addEventListener("mousemove", draw);
+
+            function draw(e) {
+                if (!painting) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                ctx.strokeStyle = "black";
+                ctx.lineWidth = 10;
+                ctx.lineCap = "round";
+
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                lastX = x;
+                lastY = y;
+            }
+
+            function clearCanvas() {
+                ctx.fillStyle = "white";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            function newChallenge() {
+                location.reload();
+            }
+
+           function selectWord(word) {
+                currentWord = word.toLowerCase();
+                document.getElementById("selected-word").innerHTML = "You selected: <b>" + word + "</b>";
+                
+                // Clear any existing game state
+                if (gameTimer) clearInterval(gameTimer);
+                if (timerInterval) clearInterval(timerInterval);
+                gameEnded = false;
+                
+                // Hide word buttons
+                document.getElementById("word-options").style.display = "none";
+                
+                // Reset UI elements
+                document.getElementById("hint-status").innerText = "Hints Revealed to model: Waiting...";
+                document.getElementById("final-status").innerText = "";
+                
+                // Clear chat
+                document.getElementById("chatbox").innerHTML = '<div class="chat-msg">Model will predict here...</div>';
+                
+                // Start new prediction cycle
+                startPredictionCycle();
+            }
+
+            function getCanvasImage() {
+                return canvas.toDataURL("image/png");
+            }
+
+            function updateChat(predictionData) {
+                if (gameEnded) return;
+                    // predictionData structure: [result, inference_time, model_idx, visual_inputs]
+                const predictions = predictionData[0]; // Get the actual predictions
+
+                
+                
+                const modelIndex = predictionData[2]; // Get the model index
+                
+                if (!predictions || predictions.length === 0) return;
+                
+                const guess = predictions[0][0]; // [0][0] gets the first prediction's word
+                //const confidence = Math.floor(predictions[0][1] * 100); // Use actual confidence
+
+                let score = predictions[0][1];  // raw softmax value
+
+                let tier;
+                if (score >= 0.4) tier = 90;
+                else if (score >= 0.25) tier = 80;
+                else if (score >= 0.23) tier = 70;
+                else if (score >= 0.18) tier = 60;
+                else if (score >= 0.16) tier = 50;
+                else if (score >= 0.15) tier = 40;
+                else if (score >= 0.12) tier = 30;
+                else if (score >= 0.1) tier = 29;
+                else if (score >= 0.07) tier = 28;
+                else if (score >= 0.05) tier = 27;
+                else if (score >= 0.03) tier = 26;
+                else if (score >= 0.02) tier = 25;
+                else if (score >= 0.01) tier = 20;
+                else if (score >= 0.005) tier = 10;
+                else if (score >= 0.001) tier = 5;
+                else tier = 1; // Default to 1% confidence for very low scores
+                const confidence = tier; // Use the tier as the confidence percentage
+                // Skip if this guess is already in failedGuesses
+                const normalized = guess.toLowerCase().replace(/[^a-z]/g, '');
+
+                if (failedGuesses.includes(normalized)) {
+                    return; // Skip repeated guesses
+                }
+                const phrases = [
+                    `I am ${confidence}% sure it is <WORD>!`,
+                    `I believe there's a ${confidence}% chance it's <WORD>.`,
+                    `With ${confidence}% confidence, I say it's <WORD>.`,
+                    `It looks like <WORD> to me—${confidence}% sure!`,
+                    `My circuits tell me there's a ${confidence}% chance it's <WORD>.`,
+                    `${confidence}% probability says it's <WORD>.`,
+                    `I'm feeling ${confidence}% certain this is <WORD>.`,
+                    `Pretty sure this is <WORD> (${confidence}%).`,
+                    `${confidence}% says yes, it's <WORD>!`,
+                    `This might be <WORD>, with ${confidence}% certainty.`,
+                    `Based on what I see, <WORD> (${confidence}% sure).`,
+                    `Hmm… ${confidence}% confidence says it's <WORD>.`,
+                    `According to me, it's <WORD>. (${confidence}% confident!)`,
+                    `Could this be <WORD>? ${confidence}% chance it is.`,
+                    `My model thinks it's <WORD>—${confidence}% confidence.`,
+                    `Let me guess... <WORD> is the right answer!`,
+                    `I see that it is <WORD>`,
+                    `It must surely be <WORD>`,
+                    `I am sure it is <WORD>`,
+                    `I guess it is <WORD>?`,
+                    `I am not sure, but I will guess it is <WORD>`,
+                    `What do you say about <WORD>?`,
+                    `Hahaha, I know it is <WORD>, am I wrong?`,
+                    `Oh come on, it must be <WORD>, right?`,
+                    `This screams <WORD> to me.`,
+                    `Are you trying to draw <WORD>?`,
+                    `I can feel it... it's <WORD>.`,
+                    `Maybe... just maybe... it's <WORD>.`,
+                    `I'll go with <WORD>.`,
+                    `Looks like <WORD> from up here.`,
+                    `Feels like <WORD>.`,
+                    `Is it <WORD> that you're drawing?`,
+                    `Let me take a wild guess... <WORD>!`,
+                    `You're definitely drawing <WORD>, right?`,
+                    `Is that supposed to be <WORD>?`,
+                    `Could that be <WORD>?`,
+                    `I hope I'm not wrong, but <WORD>?`,
+                    `Hmm... <WORD>, maybe?`,
+                    `I'll lock in my answer: <WORD>.`,
+                    `Don't tell me that's <WORD>!`,
+                    `<WORD>? Final answer.`,
+                    `I'm leaning toward <WORD>.`,
+                    `I swear this looks like <WORD>.`,
+                    `If I had to bet, it's <WORD>.`,
+                    `First instinct: <WORD>.`,
+                    `My algorithm says <WORD>.`,
+                    `Wait… is that <WORD>?`,
+                    `That's gotta be <WORD>.`,
+                    `Best guess? <WORD>.`,
+                    `<WORD>? I've seen worse.`,
+                    `This totally looks like <WORD>.`,
+                    `Gotta say, <WORD> is my guess.`,
+                    `Is <WORD> your intention?`,
+                    `I'm guessing <WORD> based on what I see.`,
+                    `Just a guess... <WORD>.`,
+                    `Could be <WORD>... or spaghetti.`,
+                    `My neural net whispered <WORD>.`,
+                    `Going with my gut: <WORD>.`,
+                    `My circuits say it's <WORD>.`,
+                    `Can I phone a friend? No? Then <WORD>.`,
+                    `Don't quote me on this... but <WORD>.`,
+                    `If this isn't <WORD>, I'll eat my code.`,
+                    `No offense... but this might be <WORD>.`,
+                    `Hey, that looks like <WORD> to me.`,
+                    `I've seen <WORD> before. This is it.`,
+                    `I would label that as <WORD>.`,
+                    `One word: <WORD>.`,
+                    `Not gonna lie... <WORD>.`,
+                    `On second thought... it's <WORD>.`,
+                    `I'm betting it's <WORD>.`,
+                    `Gut feeling? <WORD>.`,
+                    `I've processed worse... maybe <WORD>?`,
+                    `That shape is giving me <WORD> vibes.`,
+                    `You're totally drawing <WORD>.`,
+                    `<WORD>? Just a hunch.`,
+                    `Might be <WORD>. Might not. But I'll go with it.`,
+                    `That's totally <WORD>. You can't convince me otherwise.`,
+                    `Ok, this is <WORD>, I am ${confidence}% sure`
+                ];
+
+                const template = phrases[Math.floor(Math.random() * phrases.length)];
+
+                // Pick a random color for this word
+                const colors = ["#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6"];
+                const chosenColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // Wrap the entire predicted word in a single-colored span
+                const coloredGuess = `<span style="color:${chosenColor}; font-weight:bold;">${guess}</span>`;
+
+                // Replace <WORD> in sentence
+                let sentence = template.replace("<WORD>", coloredGuess);
+                if (modelIndex !== null) {
+                    sentence = `<b>Model ${modelIndex + 1}:</b> ` + sentence;
+                }
+                const finalSentence = sentence;
+
+
+                let chat = document.getElementById("chatbox");
+                let msg = document.createElement("div");
+                msg.className = "chat-msg";
+                msg.innerHTML = finalSentence;
+                chat.appendChild(msg);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            let lastInferenceTime = 3000;  // default to 500MS
+
+            function sendPrediction() {
+                if (!currentWord) return;
+
+                console.log("Sending prediction request..."); // DEBUG
+                const startTime = performance.now();
+                fetch("/predict/", {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        image: getCanvasImage(),
+                        selected_word: currentWord,
+                        hints: hints
+                    })
+                })
+                .then(res => {
+                    console.log("Response received:", res.status); // DEBUG
+                    return res.json();
+                })
+                .then(data => {
+                    console.log("Data received:", data); // DEBUG
+                    const endTime = performance.now();
+                    lastInferenceTime = data.delay_time
+                        ? data.delay_time * 1000  // convert to ms if returned in seconds
+                        : endTime - startTime;       // fallback to frontend measurement
+                    
+                    const delayInMs = Math.round(lastInferenceTime);
+                    document.getElementById("delay-display").innerText = `Backend Delay: ${delayInMs} ms`;
+
+                        // FIXED: Only call updateModelVision if the container exists
+                    
+                    
+                    const visionContainer = document.getElementById("model-vision-container");
+                    if (visionContainer && data.visual_inputs) {
+                        updateModelVision(data.visual_inputs);
+                    }
+                    
+                    if (data.top_predictions && data.top_predictions.length > 0) {
+                        // Process predictions in order they were received (sorted by inference time)
+                        data.top_predictions.forEach((modelData) => {
+                            updateChat(modelData);
+                        });
+
+                        let target = currentWord.toLowerCase().replace(/[^a-z]/g, '');
+                        let guessedCorrectly = false;
+                        let winner_model = 0;
+                        
+                        // Check which model guessed correctly first
+                        data.top_predictions.forEach((modelData) => {
+                            const predictions = modelData[0];
+                            if (predictions && predictions.length > 0) {
+                                const predClean = predictions[0][0].toLowerCase().replace(/[^a-z]/g, '');
+                                if (predClean === target && !guessedCorrectly) {
+                                    guessedCorrectly = true;
+                                    winner_model = modelData[2] + 1; // model_idx is at index 2
+                                    console.log(`✅ Model ${winner_model} guessed correctly.`);
+                                }
+                            }
+                        });
+
+                        if (guessedCorrectly) {
+                            
+                            if (gameEnded) 
+                            {
+                            clearInterval(gameTimer);
+                            clearInterval(timerInterval); // ADDED: Clear timer interval
+                            setTimeout(() => location.reload(), 100000);
+                            console.log("Game ended, model guessed correctly."); // DEBUG
+                            return;
+                            }
+                             // Set game as ended to prevent further actions
+                            document.getElementById("hint-status").innerText = "🎉 Model guessed correctly!";
+                            document.getElementById("final-status").innerText = `🎉 Model ${winner_model} guessed correctly! The word was: ${currentWord}`;
+                            document.getElementById("final-status").style.color = "green";
+                            gameEnded = true;
+                            clearInterval(gameTimer);
+                            clearInterval(timerInterval); // ADDED: Clear timer interval
+                            setTimeout(() => location.reload(), 100000);
+                            return;
+                        }
+                        else {
+
+                            // ✅ ADD THIS BLOCK RIGHT HERE
+                            data.top_predictions.forEach((modelData) => {
+                                const predictions = modelData[0];
+                                if (predictions && predictions.length > 0) {
+                                    const guess = predictions[0][0];
+                                    const normalized = guess.toLowerCase().replace(/[^a-z]/g, '');
+                                    const target = currentWord.toLowerCase().replace(/[^a-z]/g, '');
+
+                                    if (normalized !== target && !failedGuesses.includes(normalized)) {
+                                        failedGuesses.push(normalized);
+                                        console.log(`🔁 Added to failed guesses (frontend): ${normalized}`);
+                                    }
+                                }
+                            });
+                            console.log("No model guessed correctly yet."); // DEBUG
+                        }
+
+                    } else {
+                        console.log("No predictions received"); // DEBUG
+                    }
+                })
+
+                
+                .catch(error => {
+                    console.error("Prediction error:", error); // DEBUG
+                });
+           
+
+            }
+
+            function revealHint() {
+                let available = [...Array(currentWord.length).keys()].filter(i => !hints.some(h => h.index === i));
+                if (available.length === 0) return;
+                let i = available[Math.floor(Math.random() * available.length)];
+                hints.push({ index: i, letter: currentWord[i] });
+
+                // Create visual mask
+                let display = "";
+                for (let j = 0; j < currentWord.length; j++) {
+                    let match = hints.find(h => h.index === j);
+                    display += match ? match.letter : "_";
+                }
+
+                document.getElementById("hint-status").innerText = `HINT Revealed to model: ${display}`;
+            }
+
+            // ADDED: Separate function to update timer display
+            function updateTimer() {
+                if (!startTime) return;
+                
+                let elapsed = (Date.now() - startTime) / 1000;
+                let rem = Math.max(0, 60 - Math.floor(elapsed));
+                document.getElementById("timer").innerText = `Time left: ${rem}s`;
+                
+                if (elapsed >= 60) {
+                    gameEnded = true;
+                    document.getElementById("hint-status").innerText += " ⏱ Time's up!";
+                    document.getElementById("final-status").innerText = "⏱ Time's up!";
+                    document.getElementById("final-status").style.color = "red";
+                    clearInterval(gameTimer);
+                    clearInterval(timerInterval);
+                    setTimeout(() => location.reload(), 10000);
+                    return;
+                }
+            }
+
+            function startPredictionCycle() {
+                startTime = Date.now();
+                hints = [];
+                document.getElementById("hint-status").innerText = "HINT Revealed to model: " + "_ ".repeat(currentWord.length);
+
+                // ADDED: Start timer update interval
+                timerInterval = setInterval(updateTimer, 1000);
+
+                function predictLoop() {
+                    let elapsed = (Date.now() - startTime) / 1000;
+
+                    //if (elapsed < 0.5 && Math.random() < 0.8) {
+                    //    if (Math.random() < 0.3) {
+                    //        let randomGuess = randomWords[Math.floor(Math.random() * randomWords.length)];
+                    //        updateChat([[[randomGuess, 0.01, 0]]]);
+                    //        scheduleNext(); return;
+                    //    } else {
+                    //        let candidates = randomWords.filter(w => w.length === currentWord.length);
+                    //        let randomGuess = (candidates.length ? candidates : randomWords)[Math.floor(Math.random() * (candidates.length || randomWords.length))];
+                    //        updateChat([[[randomGuess, 0.01]]]);
+                    //        scheduleNext(); return;
+                    //    }
+                    //}
+
+                    if (elapsed > 15 && hints.length < 1) {
+                        revealHint();
+                    } else if (elapsed > 25 && hints.length < 2) {
+                        revealHint();
+                    } else if (elapsed > 35 && hints.length < 3) {
+                        revealHint();
+                    } else if (elapsed > 50 && hints.length < 4) {
+                        revealHint();
+                    }
+
+                    // REMOVED: Timer update from here since it's now handled separately
+                    
+                    if (elapsed >= 60) {
+                        gameEnded = true;
+                        document.getElementById("hint-status").innerText += " ⏱ Time's up!";
+                        document.getElementById("final-status").innerText = "⏱ Time's up!";
+                        document.getElementById("final-status").style.color = "red";
+                        clearInterval(timerInterval); // ADDED: Clear timer interval
+                        setTimeout(() => location.reload(), 100000);
+                        return;
+                    }
+
+                    sendPrediction();
+                    scheduleNext();
+                    
+
+                
+                }
+
+                function scheduleNext() {
+                    const buffer = 300; // add a small buffer in ms
+
+                    //const delay = 1000+ Math.random() * 1000;
+                    const delay = lastInferenceTime + buffer;
+                    gameTimer = setTimeout(predictLoop, delay);
+                }
+
+                
+
+
+                predictLoop();
+            }
+
+            clearCanvas();
+        </script>
+
+        <script>
+        function updateModelVision(visual_inputs) {
+            const container = document.getElementById("model-vision-container");
+            if (!container) {
+                console.error("model-vision-container not found!"); // DEBUG
+                return;
+            }
+            
+            container.innerHTML = "";
+
+            visual_inputs.forEach(input => {
+                const box = document.createElement("div");
+                box.style.border = "1px solid #ccc";
+                box.style.padding = "5px";
+                box.style.backgroundColor = "#fff";
+                box.innerHTML = `
+                    <img src="data:image/png;base64,${input.img}" width="128" height="128"><br>
+                    <small><b>1.</b> ${input.preds[0][0]}<br>
+                        <b>2.</b> ${input.preds[1][0]}</small>
+                `;
+                container.appendChild(box);
+            });
+        }
+        </script>
+
+    </body>
+    </html>
