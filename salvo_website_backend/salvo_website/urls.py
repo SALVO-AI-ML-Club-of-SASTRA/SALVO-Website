@@ -20,7 +20,7 @@ from django.contrib import admin
 from django.urls import path
 from website.views import home, login, member_dashboard, account_dashboard, register_member, register_account, \
     create_post, verify_post, join_request, view_applications, upvote_application, update_application_status, like_post, \
-    account_profile, member_profile, logout
+    account_profile, member_profile, logout, delete_post
 from drawapp import views
 from tracker import views as v1
 
@@ -35,6 +35,7 @@ urlpatterns = [
     path('member_signup/', register_member),
     path('account_signup/', register_account),
     path('create_post/', create_post, name='create_post'),
+    path('delete_post/<int:post_id>/', delete_post, name='delete_post'),
     path('verify_post/<int:post_id>/', verify_post, name='verify_post'),
     path('join_request/<int:reg_no>/', join_request, name='join_request'),
     path('applications/', view_applications, name='view_applications'),

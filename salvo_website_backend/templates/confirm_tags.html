@@ -98,6 +98,7 @@
     {% endif %}
     <script>
         const initialTags = {{ tags|safe }};
+        const availableTags = {{ available_tags|safe }};
         const tagContainer = document.getElementById('tag-container');
         const tagSelector = document.getElementById('tag-selector');
 
@@ -113,7 +114,18 @@
                 remove.textContent = '×';
                 remove.onclick = () => {
                     tags = tags.filter(t => t !== tag);
+                    //remove from available_tags list so that next time removed ones dont appear
+                    const index = initialTags.indexOf(tag);
+                    if (index > -1) {
+                        initialTags.splice(index, 1);
+                    }
                     renderTags(tags);
+                    
+                    console.log(`Removing tag: ${tag}`);
+                    console.log(`Available tags ${initialTags}`);
+
+
+
                 };
 
                 const hiddenInput = document.createElement('input');

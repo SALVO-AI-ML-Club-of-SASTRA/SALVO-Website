@@ -13,14 +13,17 @@ def split_tags(value):
             if tag.startswith('['):   #for ["xyz",..
                 tag=tag[2:-1]
                 tag.strip()
+                tag.strip("'\"")  # Remove quotes if present
 
             elif tag.endswith(']'):  #for ..,"xyz"]
                 tag=tag[2:-2]
                 tag.strip()
+                tag.strip("'\"")
 
             else:
                 tag=tag[1:-1]   # for "xyz"
                 tag.strip()
+                tag.strip("'\"")
             l.append(tag)
         return l
     return []

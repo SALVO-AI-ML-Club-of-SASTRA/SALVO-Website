@@ -9,6 +9,7 @@ from .tag_dataset import AIdict
 import json
 
 
+
 tagger = PostTagger(AIdict, title_weight=2.0, max_tags=5, min_score=0.05)
 
 def home(request):
@@ -193,7 +194,7 @@ def create_post(request):
                 'title': title,
                 'content': content,
                 'tags': out_tags,
-                'available_tags': list(AIdict.keys())
+                'available_tags': sorted(list(AIdict.keys()))
             })
 
     return render(request, 'create_post.html', {'user_type': request.session['user_type']})
@@ -207,6 +208,26 @@ def verify_post(request, post_id):
         post.save()
     return redirect('member_dashboard')
 
+def delete_post(request, post_id):
+    if request.session.get('user_type') != 'member':
+        return redirect(login)
+
+    #check if memeber is lead or coordinator
+    member = Member.objects.get(register_no=request.session.get('register_no'))
+    if member.club_role not in ['Lead', 'Co-ordinator']:
+        print("Unauthorized delete attempt by:", member.register_no)
+        messages.error(request, "You do not have permission to delete posts.")
+        return redirect('member_dashboard')
+    post = Post.objects.get(post_id=post_id)
+    print("Post to delete:", post)
+    if post:
+        print("Deleting post:", post_id)
+        post.delete()
+        messages.success(request, "Post deleted successfully!")
+    else:
+        messages.error(request, "Post doesn't exist.")
+    print("Redirecting to member dashboard after delete")
+    return redirect('member_dashboard')
 
 def join_request(request, reg_no):
     account = Account.objects.get(register_no=reg_no)
