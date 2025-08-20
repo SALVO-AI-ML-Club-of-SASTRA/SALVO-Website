@@ -55,11 +55,13 @@ class PostTagger:
         self.stop_words = set(stopwords.words('english'))
        
         try:
+            print("Using NLTK's WordNetLemmatizer for lemmatization.")
             self.lemmatizer = WordNetLemmatizer()
         except:
             print("Warning: WordNetLemmatizer not available, skipping lemmatization")
             self.lemmatizer = None
-            
+        
+        print("Using scikit learn's TF-IDF Vectorizer for text representation.")
         self.vectorizer = TfidfVectorizer(stop_words='english')
         
         # Pre-process the label dictionary
@@ -74,6 +76,7 @@ class PostTagger:
         corpus = list(self.label_texts.values())
         
         # Fit the vectorizer and transform the corpus
+        print("Fitting scikit learn's TF-IDF Vectorizer to label texts...")
         self.label_vectors = self.vectorizer.fit_transform(corpus)
         
         # Store the labels in order for later reference
@@ -90,9 +93,10 @@ class PostTagger:
         
         # Tokenize (with fallback option)
         try:
+            print("Using NLTK word_tokenize for tokenization.")
             tokens = word_tokenize(text)    
         except:
-            print("Warning: word_tokenize failed, using spacy's nlp ")
+            print("Warning: word_tokenize failed, using default split.")
             tokens = text.split()
             
 
@@ -141,6 +145,7 @@ class PostTagger:
         post_vector = self.vectorizer.transform([post_text])
         
         # Calculate cosine similarity between post and each label
+        print("Using scikit learn's cosine_similarity to calculate label scores...")
         similarities = cosine_similarity(post_vector, self.label_vectors).flatten()
         
         # Create a dictionary of scores
