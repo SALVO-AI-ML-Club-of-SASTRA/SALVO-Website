@@ -1,168 +1,1496 @@
+{% load static %}
 <!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SALVO - Home</title>
+    <title>SALVO - AI-ML Club | SASTRA University</title>
+    
+    <link rel="icon" type="image/x-icon" href="{% static 'tracker/salvo_logo.jpg' %}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-cyan: #00D4FF;
+            --primary-blue: #0066FF;
+            --primary-purple: #6366F1;
+            --accent-green: #00FF88;
+            --neural-orange: #FF6B35;
+            --data-yellow: #FFD23F;
+            --dark-bg: #0A0F1C;
+            --darker-bg: #060A14;
+            --card-bg: rgba(15, 25, 45, 0.9);
+            --border-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #FFFFFF;
+            --text-secondary: #94A3B8;
+            --text-accent: #64FFDA;
+            --code-bg: rgba(30, 41, 59, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Neural Network Background */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at center, #1e3a8a 0%, #0f172a 70%, #020617 100%);
+        }
+
+        .neural-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-cyan);
+            animation: pulse-node 3s ease-in-out infinite;
+        }
+
+        .neural-connection {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+            animation: data-flow 4s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse-node {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes data-flow {
+            0% { opacity: 0; transform: scaleX(0); }
+            50% { opacity: 0.8; transform: scaleX(1); }
+            100% { opacity: 0; transform: scaleX(0); }
+        }
+
+        /* Code Rain Effect */
+        .code-rain {
+            position: absolute;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-green);
+            opacity: 0.3;
+            animation: matrix-fall 15s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100vh); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-brand {
+            display: flex !important;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-cyan) !important;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            text-decoration: none;
+            flex-direction: row;
+        }
+
+        .navbar-logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 12px;
+
+        }
+
+        .navbar-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.2;
+        }
+
+        .navbar-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: -2px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-secondary) !important;
+            transition: all 0.3s ease;
+            position: relative;
+            margin: 0 10px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-green);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-green) !important;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .btn-ai {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.4);
+        }
+
+        .btn-ai:hover::before {
+            left: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 255, 136, 0.05));
+        }
+
+        .hero-content {
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+            position: relative;
+        }
+
+        .hero h1::after {
+            content: '_';
+            animation: cursor-blink 1s infinite;
+            color: var(--accent-green);
+        }
+
+        @keyframes cursor-blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hero .subtitle {
+            font-size: 1.5rem;
+            font-weight: 400;
+            color: var(--text-accent);
+            margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .hero .code-snippet {
+            background: var(--code-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 30px 0;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero .code-snippet::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-cyan), var(--accent-green), var(--neural-orange));
+            animation: code-scan 3s ease-in-out infinite;
+        }
+
+        @keyframes code-scan {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .code-line {
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .keyword { color: var(--neural-orange); }
+        .string { color: var(--accent-green); }
+        .comment { color: var(--text-secondary); opacity: 0.7; }
+        .function { color: var(--data-yellow); }
+        .variable { color: var(--primary-cyan); }
+
+        /* AI Cards */
+        .ai-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .ai-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-green);
+            box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .ai-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Data Visualization Elements */
+        .data-viz {
+            position: relative;
+            height: 200px;
+            background: var(--code-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-glow);
+        }
+
+        .data-bar {
+            position: absolute;
+            bottom: 20px;
+            width: 8px;
+            background: linear-gradient(to top, var(--primary-cyan), var(--accent-green));
+            border-radius: 4px;
+            animation: data-animate 4s ease-in-out infinite;
+        }
+
+        @keyframes data-animate {
+            0%, 100% { height: 20px; opacity: 0.6; }
+            50% { height: 80px; opacity: 1; }
+        }
+
+        /* Section Styling */
+        .section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.8rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .section-title::before {
+            content: '// ';
+            color: var(--text-secondary);
+        }
+
+        /* AI Stats */
+        .ai-stats {
+            background: var(--darker-bg);
+            padding: 80px 0;
+            border-top: 1px solid var(--border-glow);
+            border-bottom: 1px solid var(--border-glow);
+            position: relative;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .stat-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* AI Algorithm Showcase */
+        .algorithm-showcase {
+            background: var(--code-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid var(--border-glow);
+            position: relative;
+        }
+
+        .algorithm-title {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-green);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .algorithm-code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* Call to Action */
+        .cta-section {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+            border: 1px solid var(--border-glow);
+            border-radius: 20px;
+            padding: 80px 40px;
+            text-align: center;
+            margin: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-btn {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            border: none;
+            padding: 18px 50px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 255, 136, 0.5);
+        }
+
+        /* Make Tomorrow Today Animation */
+        .hero-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .animated-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 4rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 0.9;
+            position: relative;
+            background: linear-gradient(
+                90deg,
+                var(--text-secondary) 0%,
+                var(--text-secondary) 30%,
+                var(--primary-cyan) 40%,
+                var(--accent-green) 50%,
+                var(--primary-blue) 60%,
+                var(--text-secondary) 70%,
+                var(--text-secondary) 100%
+            );
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: wave-gradient 4s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        @keyframes wave-gradient {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .animated-text::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(0, 212, 255, 0.2) 30%,
+                rgba(0, 255, 136, 0.3) 50%,
+                rgba(0, 102, 255, 0.2) 70%,
+                transparent 100%
+            );
+            background-size: 200% 100%;
+            animation: wave-glow 4s ease-in-out infinite;
+            border-radius: 10px;
+            filter: blur(20px);
+            z-index: -1;
+        }
+
+        @keyframes wave-glow {
+            0%, 100% {
+                background-position: -100% 50%;
+                opacity: 0.3;
+            }
+            50% {
+                background-position: 100% 50%;
+                opacity: 0.8;
+            }
+        }
+
+        /* AI Icons */
+        .ai-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ai-icon:hover {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 0 15px currentColor);
+        }
+
+        /* Timeline Styles */
+        .timeline-section {
+            position: relative;
+            padding: 100px 0;
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.03), rgba(0, 255, 136, 0.03));
+        }
+
+        .timeline {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, var(--primary-cyan), var(--accent-green), var(--neural-orange));
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            animation: timeline-glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes timeline-glow {
+            0% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+            100% { box-shadow: 0 0 30px rgba(0, 212, 255, 0.8); }
+        }
+
+        .timeline-item {
+            position: relative;
+            margin: 120px 0;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .timeline-item.animate-timeline {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: auto;
+            margin-right: 60px;
+            text-align: right;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content {
+            margin-left: 60px;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .timeline-content {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            position: relative;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 255, 136, 0.2);
+        }
+
+        .timeline-content::before {
+            content: '';
+            position: absolute;
+            top: 30px;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content::before {
+            right: -30px;
+            border-left-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .timeline-item:nth-child(even) .timeline-content::before {
+            left: -30px;
+            border-right-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .timeline-marker {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: var(--accent-green);
+            border: 4px solid var(--dark-bg);
+            border-radius: 50%;
+            z-index: 2;
+            box-shadow: 0 0 20px var(--accent-green);
+            animation: pulse-marker 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-marker {
+            0%, 100% { 
+                transform: translateX(-50%) scale(1); 
+                box-shadow: 0 0 20px var(--accent-green);
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.2); 
+                box-shadow: 0 0 30px var(--accent-green);
+            }
+        }
+
+        .timeline-year {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue));
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 8px 20px;
+            border-radius: 25px;
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+            z-index: 3;
+            white-space: nowrap;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .timeline-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--accent-green);
+            margin-bottom: 10px;
+        }
+
+        .timeline-category {
+            font-size: 0.8rem;
+            color: var(--primary-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .timeline-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .timeline-tech {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-tech {
+            justify-content: flex-end;
+        }
+
+        .tech-badge {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+        }
+
+        /* Mobile Timeline */
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 30px;
+            }
+
+            .timeline-marker {
+                left: 30px;
+            }
+
+            .timeline-year {
+                left: 30px;
+                transform: translateX(0);
+                top: -20px;
+                font-size: 1rem;
+                padding: 6px 16px;
+            }
+
+            .timeline-item {
+                margin: 100px 0;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-content,
+            .timeline-item:nth-child(even) .timeline-content {
+                margin-left: 80px;
+                margin-right: 20px;
+                text-align: left;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-content::before,
+            .timeline-item:nth-child(even) .timeline-content::before {
+                left: -30px;
+                right: auto;
+                border-right-color: rgba(0, 212, 255, 0.2);
+                border-left-color: transparent;
+            }
+
+            .timeline-item:nth-child(odd) .timeline-tech {
+                justify-content: flex-start;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--darker-bg);
+            border-top: 1px solid var(--border-glow);
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .hero .subtitle { font-size: 1.2rem; }
+            .section-title { font-size: 2.2rem; }
+            .ai-card { padding: 1.5rem; }
+            .code-snippet { padding: 15px; }
+            .animated-text { 
+                font-size: 2.5rem; 
+                text-align: center;
+                margin-top: 30px;
+            }
+            .hero-right {
+                margin-top: 40px;
+            }
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            .navbar-subtitle {
+                font-size: 0.6rem;
+            }
+        }
+
+        /* Scroll animations */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw/">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/login">Login</a>
-            <a class="btn btn-light" href="/account_signup">Sign Up</a>
-        </div>
-        </div>
+    <div class="neural-bg" id="neural-network"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#home">
+                <img src="{% static 'tracker/salvo_logo.jpg' %}" alt="SALVO Logo" class="navbar-logo">
+                <div class="navbar-text">
+                    <span>SALVO</span>
+                    <span class="navbar-subtitle">AI Club</span>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">HOME</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">ABOUT</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#projects">PROJECTS</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#achievements">ACHIEVEMENTS</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/play/draw/">PLAY SCRIBBLE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#join">JOIN</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a class="btn btn-ai me-2" href="/login">LOGIN</a>
+                    <a class="btn btn-ai" href="/account_signup">SIGN UP</a>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <header class="bg-primary text-white text-center py-5">
-        <h1>SALVO</h1>
-        <p class="lead">The Official AI-ML Club of SASTRA</p>
-        <p>Make tomorrow today.</p>
-    </header>
-
-    <main class="container py-4">
-        <section class="mb-5">
-            <h2>Our Vision</h2>
-            <p>We at SALVO strive to make every student at SASTRA University understand, adapt, and utilize AI/ML concepts and tools in their projects.</p>
-            <blockquote class="blockquote">"Aim to build startups, you definitely end up with projects worth your while."</blockquote>
-        </section>
-
-        <section class="mb-5">
-            <h2>Founders</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <div class="col-md-4">
-                    <div class="card p-3">
-                        <h5>Sathyanarayanan</h5>
-                        <p>About Sathya</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card p-3">
-                        <h5>Vishwa</h5>
-                        <p>About Vishwa</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card p-3">
-                        <h5>Shruthi Balaji</h5>
-                        <p>About Shruthi</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="mb-5">
-            <h2>About Our Members</h2>
-            <p>Our members actively work on projects, compete in hackathons, and form one of the strongest academic social networks at SASTRA University.</p>
-        </section>
-
-        <section class="mb-5">
-            <h2>SALVO Projects</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Smart Attendance</h5>
-                            <p class="card-text">Automated Google Meet attendance system using ML.</p>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="hero-content">
+                        <h1>SALVO</h1>
+                        <div class="subtitle">AI/ML Club @ SASTRA University</div>
+                        
+                        <div class="code-snippet">
+                            <div class="code-line"><span class="keyword">class</span> <span class="function">SALVO</span>:</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">def</span> <span class="function">__init__</span>(<span class="variable">self</span>):</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">self</span>.mission = <span class="string">"Make tomorrow today"</span></div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">self</span>.focus = [<span class="string">"AI"</span>, <span class="string">"ML"</span>, <span class="string">"Innovation"</span>]</div>
+                            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="variable">self</span>.students = <span class="function">train_future_leaders</span>()</div>
+                            <div class="code-line"><span class="comment"># Transforming ideas into intelligent solutions</span></div>
+                        </div>
+                        
+                        <div class="d-flex flex-wrap gap-3 mt-4">
+                            <a href="#join" class="btn btn-ai btn-lg">
+                                <i class="fas fa-brain me-2"></i>Initialize AI Journey
+                            </a>
+                            <a href="#about" class="btn btn-ai btn-lg">
+                                <i class="fas fa-code me-2"></i>Explore Algorithms
+                            </a>
                         </div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">IoT Fan Control</h5>
-                            <p class="card-text">Temperature-based fan regulation using Arduino & Firebase.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title">Sarcasm Detector</h5>
-                            <p class="card-text">RNN + TF-IDF hybrid model to detect sarcasm in comments.</p>
+                <div class="col-lg-6">
+                    <div class="hero-right">
+                        <div class="animated-text">
+                            MAKE<br>
+                            TOMORROW<br>
+                            TODAY
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="mb-5">
-            <h2>Our Achievements</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
-                <div class="col">
-                    <div class="card h-100 border-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Smart India Hackathon</h5>
-                            <p class="card-text">Consistent Participation in SIH 2023 and 2024</p>
-                        </div>
+    <!-- AI Stats Section -->
+    <section class="ai-stats">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number" data-count="500">0</span>
+                        <div class="stat-label">Neural Networks Trained</div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="card h-100 border-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Highest Placed Members from a single club in SASTRA</h5>
-                            <p class="card-text">Vast majority from those getting early offers are a member of SALVO!</p>
-                        </div>
+                <div class="col-md-4">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number" data-count="50">0</span>
+                        <div class="stat-label">AI Models Deployed</div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="card h-100 border-success">
-                        <div class="card-body">
-                            <h5 class="card-title">Daksh AI Hackathon 2025</h5>
-                            <p class="card-text">Several winning teams, consisting of SALVO Members</p>
+                <div class="col-md-4">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number" data-count="25">0</span>
+                        <div class="stat-label">ML Competitions Won</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Our Mission</h2>
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <div class="ai-card animate-on-scroll">
+                        <div class="row align-items-center">
+                            <div class="col-lg-8">
+                                <p class="fs-5 mb-4">We at SALVO strive to make every student at SASTRA University understand, adapt, and utilize AI/ML concepts and tools in their projects.</p>
+                                <blockquote class="algorithm-showcase">
+                                    <div class="algorithm-title">SALVO.philosophy()</div>
+                                    <div class="algorithm-code">
+                                        <span class="string">"Aim to build startups, you definitely end up<br>
+                                        &nbsp;with projects worth your while."</span><br>
+                                        <span class="comment">// Innovation through intelligent algorithms</span>
+                                    </div>
+                                </blockquote>
+                            </div>
+                            <div class="col-lg-4 text-center">
+                                <div class="ai-icon">
+                                    <i class="fas fa-brain"></i>
+                                </div>
+                                <div class="ai-icon">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="mb-5 bg-dark text-light w-100" style="padding:15px; border-radius:7px; margin-bottom:0px !important; margin-top:5px;">
-            <h2>About This Website</h2>
-            <p>This website is a central hub for all SALVO activities. It tracks attendance, showcases ongoing and
-                completed projects, and helps members manage their roles, contributions, and documents—all in one place.
-                We built this website to share and showoff our knowledge, thus you'd find modules useful for your learning,
-                and you'd find features in the website that showcase our learnings!
-                Like the Post Tagger we built from scratch!
-                A RAG model that answers your doubts, and the most awaited, Visualize and Learn Modules!
-            </p>
-        </section>
+    <!-- Founders Section -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Core Developers</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="ai-card animate-on-scroll text-center">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-user-cog"></i>
+                        </div>
+                        <h5 class="code-font">SATHYANARAYANAN</h5>
+                        <p class="text-accent mb-2">Lead AI Architect</p>
+                        <div class="algorithm-showcase mt-3">
+                            <div class="algorithm-code">
+                                <span class="keyword">role</span>: <span class="string">"Visionary Leader"</span><br>
+                                <span class="keyword">expertise</span>: [<span class="string">"Deep Learning"</span>]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ai-card animate-on-scroll text-center">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <h5 class="code-font">VISHWA</h5>
+                        <p class="text-accent mb-2">ML Systems Engineer</p>
+                        <div class="algorithm-showcase mt-3">
+                            <div class="algorithm-code">
+                                <span class="keyword">role</span>: <span class="string">"Tech Innovator"</span><br>
+                                <span class="keyword">expertise</span>: [<span class="string">"Neural Networks"</span>]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ai-card animate-on-scroll text-center">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-network-wired"></i>
+                        </div>
+                        <h5 class="code-font">SHRUTHI BALAJI</h5>
+                        <p class="text-accent mb-2">Data Science Lead</p>
+                        <div class="algorithm-showcase mt-3">
+                            <div class="algorithm-code">
+                                <span class="keyword">role</span>: <span class="string">"Strategic Architect"</span><br>
+                                <span class="keyword">expertise</span>: [<span class="string">"Data Analysis"</span>]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-        <section class="container py-4" id="join">
-            <h2>Join Us</h2>
-            <p>Ready to be part of the AI revolution at SASTRA?</p>
-            <p>Take your first step to become a part of the AI community,
-                so that when a super-ai is created,
-                it lets you live at the worst case or makes you its most paid human at the best xD</p>
-            <a href="/account_signup" class="btn btn-primary btn-lg">Join SALVO Now</a>
-        </section>
-    </main>
+    <!-- Projects Section -->
+    <section id="projects" class="section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">AI Project Repository</h2>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h5 class="code-font mb-3">smart_attendance.py</h5>
+                        <p class="text-secondary mb-4">Computer vision-based attendance system using ML for automated tracking in Google Meet sessions.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">import</span> cv2, tensorflow<br>
+                                <span class="keyword">model</span> = load_model(<span class="string">'face_recognition'</span>)
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge bg-primary me-1">Computer Vision</span>
+                            <span class="badge bg-success me-1">TensorFlow</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                        <h5 class="code-font mb-3">iot_smart_control.py</h5>
+                        <p class="text-secondary mb-4">IoT system with predictive algorithms for temperature-based automation using Arduino and Firebase.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">def</span> <span class="function">predict_temp</span>(sensors):<br>
+                                &nbsp;&nbsp;<span class="keyword">return</span> model.predict(sensors)
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge bg-warning me-1">IoT</span>
+                            <span class="badge bg-info me-1">Predictive ML</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <h5 class="code-font mb-3">sarcasm_detector.py</h5>
+                        <p class="text-secondary mb-4">Hybrid RNN + TF-IDF model for natural language processing and sarcasm detection in text.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">model</span> = Sequential([<br>
+                                &nbsp;&nbsp;LSTM(128), Dense(1, <span class="string">'sigmoid'</span>)<br>
+                                ])
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <span class="badge bg-danger me-1">NLP</span>
+                            <span class="badge bg-secondary me-1">RNN</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <footer class="bg-dark text-white text-center py-3 mt-4">
-        &copy; 2025 SALVO-AICS, SASTRA University
+    <!-- Timeline Section -->
+    <section class="timeline-section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Evolution Timeline</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-year">2019</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">CLUB ESTABLISHED</div>
+                        <div class="timeline-title">Foundation</div>
+                        <div class="timeline-description">
+                            SALVO AI Club was founded by passionate AI enthusiasts at SASTRA University.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">Python</span>
+                            <span class="tech-badge">Machine Learning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-year">2020</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">AI INNOVATION</div>
+                        <div class="timeline-title">First Major Project</div>
+                        <div class="timeline-description">
+                            Launched our first major AI project - Campus Smart Assistant using NLP.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">NLP</span>
+                            <span class="tech-badge">TensorFlow</span>
+                            <span class="tech-badge">Deep Learning</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-year">2021</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">GROWTH PHASE</div>
+                        <div class="timeline-title">Industry Partnerships</div>
+                        <div class="timeline-description">
+                            Established partnerships with leading tech companies for mentorship and internships.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">Computer Vision</span>
+                            <span class="tech-badge">IoT</span>
+                            <span class="tech-badge">Cloud AI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-year">2022</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">ACADEMIC RECOGNITION</div>
+                        <div class="timeline-title">Research Excellence</div>
+                        <div class="timeline-description">
+                            Published breakthrough research in computer vision and machine learning.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">Research</span>
+                            <span class="tech-badge">Neural Networks</span>
+                            <span class="tech-badge">PyTorch</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-year">2023</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">NATIONAL FAME</div>
+                        <div class="timeline-title">National Recognition</div>
+                        <div class="timeline-description">
+                            Won national AI hackathons and received recognition from tech industry leaders.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">Hackathons</span>
+                            <span class="tech-badge">Innovation</span>
+                            <span class="tech-badge">Awards</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-year">2024</div>
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-category">PRESENT DAY</div>
+                        <div class="timeline-title">Leading Innovation</div>
+                        <div class="timeline-description">
+                            Currently leading AI innovation at SASTRA with 100+ active members and multiple ongoing projects.
+                        </div>
+                        <div class="timeline-tech">
+                            <span class="tech-badge">LLMs</span>
+                            <span class="tech-badge">Generative AI</span>
+                            <span class="tech-badge">MLOps</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Achievements Section -->
+    <section id="achievements" class="section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Achievement Log</h2>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3" style="background: linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h5 class="code-font mb-3">Smart India Hackathon</h5>
+                        <p class="text-secondary mb-4">Consistent excellence in SIH 2023 and 2024 with AI-powered solutions.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">achievements</span> = [<br>
+                                &nbsp;&nbsp;<span class="string">"SIH_2023"</span>, <span class="string">"SIH_2024"</span><br>
+                                ]
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3" style="background: linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h5 class="code-font mb-3">Placement Excellence</h5>
+                        <p class="text-secondary mb-4">Highest placed members from a single club in SASTRA with premium AI/ML job placements.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">placement_rate</span> = <span class="string">"95%"</span><br>
+                                <span class="keyword">avg_package</span> = <span class="string">"Premium"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="ai-card animate-on-scroll h-100">
+                        <div class="ai-icon mb-3" style="background: linear-gradient(45deg, #FFD700, #FFA500); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <h5 class="code-font mb-3">Daksh AI 2025</h5>
+                        <p class="text-secondary mb-4">Multiple winning teams in AI hackathon championships with innovative solutions.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-code">
+                                <span class="keyword">winners</span> = len(salvo_teams)<br>
+                                <span class="keyword">success_rate</span> = <span class="string">"100%"</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Section -->
+    <section class="section">
+        <div class="container">
+            <div class="ai-card animate-on-scroll">
+                <h2 class="code-font mb-4" style="color: var(--accent-green);">Platform Architecture</h2>
+                <div class="row">
+                    <div class="col-lg-8">
+                        <p class="fs-5 mb-4">This platform serves as our central AI development hub, featuring intelligent attendance tracking, project showcase algorithms, and automated member management systems.</p>
+                        <div class="algorithm-showcase">
+                            <div class="algorithm-title">platform_features.py</div>
+                            <div class="algorithm-code">
+                                <span class="keyword">features</span> = {<br>
+                                &nbsp;&nbsp;<span class="string">"post_tagger"</span>: <span class="function">custom_nlp_model</span>(),<br>
+                                &nbsp;&nbsp;<span class="string">"rag_system"</span>: <span class="function">knowledge_retrieval</span>(),<br>
+                                &nbsp;&nbsp;<span class="string">"learn_modules"</span>: <span class="function">interactive_ai</span>()<br>
+                                }<br>
+                                <span class="comment"># Built from scratch with love and algorithms</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 text-center">
+                        <div class="ai-icon mb-3">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="ai-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section id="join" class="section">
+        <div class="container">
+            <div class="cta-section animate-on-scroll">
+                <h2 class="code-font mb-4">Ready to train your neural network?</h2>
+                <p class="fs-5 mb-4">Initialize your journey into the AI community at SASTRA University.</p>
+                <div class="algorithm-showcase mb-4">
+                    <div class="algorithm-code">
+                        <span class="keyword">if</span> future == <span class="string">"AI_powered"</span>:<br>
+                        &nbsp;&nbsp;<span class="function">join</span>(SALVO)<br>
+                        &nbsp;&nbsp;<span class="keyword">return</span> <span class="string">"Success guaranteed!"</span> 🤖
+                    </div>
+                </div>
+                <a href="/account_signup" class="btn cta-btn">
+                    <i class="fas fa-brain me-2"></i>JOIN NEURAL NETWORK
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="code-font">&copy; 2025 SALVO.AICS.SASTRA.UNIVERSITY // POWERED_BY_AI</p>
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Neural Network Background
+        function createNeuralNetwork() {
+            const container = document.getElementById('neural-network');
+            const nodeCount = 30;
+            const nodes = [];
+
+            // Create nodes
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.className = 'neural-node';
+                node.style.left = Math.random() * 100 + '%';
+                node.style.top = Math.random() * 100 + '%';
+                node.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(node);
+                nodes.push({
+                    element: node,
+                    x: parseFloat(node.style.left),
+                    y: parseFloat(node.style.top)
+                });
+            }
+
+            // Create connections
+            nodes.forEach((node, i) => {
+                nodes.slice(i + 1).forEach(otherNode => {
+                    const distance = Math.sqrt(
+                        Math.pow(node.x - otherNode.x, 2) + 
+                        Math.pow(node.y - otherNode.y, 2)
+                    );
+                    
+                    if (distance < 30) {
+                        const connection = document.createElement('div');
+                        connection.className = 'neural-connection';
+                        
+                        const angle = Math.atan2(otherNode.y - node.y, otherNode.x - node.x);
+                        const length = distance * window.innerWidth / 100;
+                        
+                        connection.style.left = node.x + '%';
+                        connection.style.top = node.y + '%';
+                        connection.style.width = length + 'px';
+                        connection.style.transform = `rotate(${angle}rad)`;
+                        connection.style.transformOrigin = '0 50%';
+                        connection.style.animationDelay = Math.random() * 4 + 's';
+                        
+                        container.appendChild(connection);
+                    }
+                });
+            });
+        }
+
+        // Code Rain Effect
+        function createCodeRain() {
+            const codeSnippets = [
+                'import tensorflow as tf',
+                'model = Sequential()',
+                'model.compile(optimizer="adam")',
+                'def neural_network():',
+                'return model.predict(X)',
+                'from sklearn import metrics',
+                'accuracy = 0.97',
+                'loss = 0.03',
+                'epoch += 1',
+                'train_data.shape',
+                'np.array([1, 0, 1])',
+                'activation="relu"',
+                'Dense(128)',
+                'Dropout(0.2)',
+                'model.fit(X, y)'
+            ];
+
+            setInterval(() => {
+                if (Math.random() < 0.3) {
+                    const rain = document.createElement('div');
+                    rain.className = 'code-rain';
+                    rain.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                    rain.style.left = Math.random() * 100 + '%';
+                    rain.style.animationDuration = (10 + Math.random() * 10) + 's';
+                    
+                    document.body.appendChild(rain);
+                    
+                    setTimeout(() => {
+                        if (rain.parentNode) rain.parentNode.removeChild(rain);
+                    }, 15000);
+                }
+            }, 2000);
+        }
+
+        // Counter Animation
+        function animateCounters() {
+            const counters = document.querySelectorAll('.stat-number');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-count'));
+                const increment = target / 100;
+                let current = 0;
+
+                const updateCounter = () => {
+                    if (current < target) {
+                        current += increment;
+                        counter.textContent = Math.floor(current) + '+';
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target + '+';
+                    }
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        updateCounter();
+                        observer.disconnect();
+                    }
+                });
+
+                observer.observe(counter);
+            });
+        }
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Timeline animations
+        const timelineObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry, index) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => {
+                        entry.target.classList.add('animate-timeline');
+                    }, index * 200); // Staggered animation
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.timeline-item').forEach(el => {
+            timelineObserver.observe(el);
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createNeuralNetwork();
+            createCodeRain();
+            animateCounters();
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(0, 0, 0, 0.98)';
+            } else {
+                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
+            }
+        });
+    </script>
 </body>
 </html>
