@@ -1,92 +1,112 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Member Sign Up</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-    form p {
-        margin-bottom: 1rem;
-    }
-    form label {
-        display: block;
-        margin-bottom: 0.3rem;
-        font-weight: 500;
-    }
-    form input {
-        width: 100%;
-        padding: 0.4rem;
-    }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        </div>
-        </div>
-    </nav>
-    
-    {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
-    <div class="container mt-5" style="max-width: 600px;">
-        {% if msg %}
-            <div class="alert alert-warning text-center">{{ msg }}</div>
-        {% endif %}
+{% extends 'base.html' %}
 
-        <div class="card shadow">
-            <div class="card-body">
-                <h3 class="card-title text-center mb-4">Member Sign Up</h3>
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="d-grid">
-                        <input class="btn btn-success" type="submit" value="Sign Up">
+{% block title %}Member Registration - SALVO AI Club{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
+                <div class="ai-card animate-on-scroll" style="margin-top: 50px;">
+                    <div class="text-center mb-4">
+                        <h2 class="code-font" style="color: var(--accent-green); margin-bottom: 10px;">
+                            <i class="fas fa-user-graduate me-2"></i>Member Registration
+                        </h2>
+                        <p class="text-secondary">Add new AI enthusiast to the neural network</p>
+                        <div class="badge" style="background: linear-gradient(45deg, var(--data-yellow), var(--neural-orange)) !important; padding: 8px 16px;">
+                            <i class="fas fa-crown me-1"></i>{{ member.club_role }} Access
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
 
-        <div class="text-center mt-3">
-            <a href="/login" class="btn btn-outline-secondary">Back to Login</a>
+                    {% if msg %}
+                        <div class="alert alert-warning text-center mb-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>{{ msg }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <div class="form-text" style="color: var(--text-secondary);">
+                                            <i class="fas fa-info-circle me-1"></i>{{ field.help_text }}
+                                        </div>
+                                    {% endif %}
+                                    {% if field.errors %}
+                                        <div class="text-danger mt-1">
+                                            {% for error in field.errors %}
+                                                <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-plus me-2"></i>Add to Neural Network
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="text-center">
+                        <a href="/login" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+
+                    <!-- AI Code Snippet -->
+                    <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                            <div><span style="color: var(--neural-orange);">def</span> <span style="color: var(--data-yellow);">add_member</span>(<span style="color: var(--primary-cyan);">new_user</span>):</div>
+                            <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">salvo_network</span>.add(<span style="color: var(--primary-cyan);">new_user</span>)</div>
+                            <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">return</span> <span style="color: var(--accent-green)">"Welcome to AI Club!"</span></div>
+                            <div style="color: var(--text-secondary);"># Expanding our AI community</div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="ai-card animate-on-scroll" style="margin-top: 50px;">
+                    <div class="text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-ban" style="font-size: 4rem; color: var(--neural-orange); margin-bottom: 20px;"></i>
+                            <h2 class="code-font" style="color: var(--neural-orange); margin-bottom: 15px;">
+                                Access Denied
+                            </h2>
+                            <p class="text-secondary mb-3">Insufficient permissions detected</p>
+                            <div class="badge" style="background: linear-gradient(45deg, var(--neural-orange), #dc3545) !important; padding: 8px 16px;">
+                                Current Role: {{ member.club_role }}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Only club leads or coordinators can add new members to the neural network.
+                        </div>
+
+                        <a href="/home" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Back to Home
+                        </a>
+
+                        <!-- Error Code Snippet -->
+                        <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--neural-orange);">
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                                <div><span style="color: var(--neural-orange);">if</span> <span style="color: var(--primary-cyan);">user.role</span> <span style="color: var(--neural-orange);">not in</span> [<span style="color: var(--accent-green)">"Lead"</span>, <span style="color: var(--accent-green)">"Co-ordinator"</span>]:</div>
+                                <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">raise</span> <span style="color: var(--data-yellow);">PermissionError</span>(<span style="color: var(--accent-green)">"Access denied"</span>)</div>
+                                <div style="color: var(--text-secondary);"># Authorization required</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
         </div>
     </div>
-    {% else %}
-    <div class="container mt-5">
-
-        <div class="alert alert-danger text-center">
-            {{member.club_role}}
-            <strong>Access Denied!</strong> Only club leads or coordinators can add new members.
-        </div>
-        <div class="text-center">
-            <a href="/home" class="btn btn-outline-secondary">Back to Home</a>
-        </div>
-    </div>
-    {% endif %}
-    <footer class="bg-dark text-white text-center py-3 mt-5">
-        &copy; 2025 SALVO Club, SASTRA University
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

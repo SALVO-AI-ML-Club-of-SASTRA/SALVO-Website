@@ -1,35 +1,81 @@
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
+{% extends 'base.html' %}
+
+{% block title %}AI Scribble Game - Username{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="ai-card animate-on-scroll" style="margin-top: 50px;">
+                <div class="text-center mb-4">
+                    <h2 class="code-font" style="color: var(--accent-green); margin-bottom: 15px;">
+                        <i class="fas fa-gamepad me-2"></i>AI Scribble Challenge
+                    </h2>
+                    <p class="text-secondary fs-5">Test your creativity against our neural network</p>
+                </div>
+
+                <form method="post" class="px-2">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user me-2"></i>Choose Your Player Name
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="Enter a creative username..." required>
+                        <div class="form-text" style="color: var(--text-secondary);">
+                            <i class="fas fa-info-circle me-1"></i>This name will be visible to other players
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-play me-2"></i>Start AI Challenge
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center">
+                    <a href="/home" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>Back to Home
+                    </a>
+                </div>
+
+                <!-- Game Info Section -->
+                <div class="mt-4 p-4" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1)); border-radius: 15px; border: 1px solid var(--border-glow);">
+                    <h5 class="code-font text-center mb-3" style="color: var(--primary-cyan);">
+                        <i class="fas fa-brain me-2"></i>How It Works
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-pencil-alt" style="font-size: 2rem; color: var(--accent-green); margin-bottom: 10px;"></i>
+                            <h6 class="code-font text-accent">Draw</h6>
+                            <p class="text-secondary small">Create drawings based on given prompts</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-robot" style="font-size: 2rem; color: var(--primary-cyan); margin-bottom: 10px;"></i>
+                            <h6 class="code-font text-accent">AI Guesses</h6>
+                            <p class="text-secondary small">Our neural network tries to recognize your art</p>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <i class="fas fa-trophy" style="font-size: 2rem; color: var(--neural-orange); margin-bottom: 10px;"></i>
+                            <h6 class="code-font text-accent">Score</h6>
+                            <p class="text-secondary small">Test your artistic skills against AI</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Code Snippet -->
+                <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                        <div><span style="color: var(--neural-orange);">class</span> <span style="color: var(--data-yellow);">ScribbleAI</span>:</div>
+                        <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">def</span> <span style="color: var(--data-yellow);">predict_drawing</span>(<span style="color: var(--primary-cyan);">self</span>, canvas):</div>
+                        <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">features</span> = <span style="color: var(--data-yellow);">extract_features</span>(canvas)</div>
+                        <div style="margin-left: 40px;"><span style="color: var(--neural-orange);">return</span> <span style="color: var(--primary-cyan);">self</span>.model.predict(<span style="color: var(--primary-cyan);">features</span>)</div>
+                        <div style="color: var(--text-secondary);"># Neural network powered drawing recognition</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        </div>
-        </div>
-</nav>
-<form method="post">
-  {% csrf_token %}
-  <label>Enter your username:</label>
-  <input type="text" name="username" required>
-  <button type="submit">Enter</button>
-</form>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
+</div>
+{% endblock %}

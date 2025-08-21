@@ -1,150 +1,218 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Member Home</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .input-group {
-      position: relative;
+{% extends 'base.html' %}
+
+{% block title %}Member Dashboard - SALVO AI Club{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(15px);
+        height: 100%;
     }
 
-    .search-dropdown {
-      position: absolute;
-      top: 100%; /* Places dropdown directly below input */
-      left: 0;
-      width: 100%; /* Match width of input-group */
-      z-index: 1000;
-      max-height: 200px;
-      overflow-y: auto;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .stat-card:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 255, 136, 0.2);
     }
 
-
-    .search-dropdown li {
-      padding: 10px 15px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    .search-dropdown li:last-child {
-      border-bottom: none;
+    .welcome-card {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+        border: 1px solid var(--border-glow);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(15px);
     }
 
-    .search-dropdown li:hover {
-      background-color: #f1f1f1;
+    .admin-badge {
+        background: linear-gradient(45deg, var(--data-yellow), var(--neural-orange)) !important;
+        color: var(--dark-bg) !important;
+        font-weight: bold;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
+</style>
+{% endblock %}
 
-    .post-card {
-      border: 1px solid #dee2e6;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 20px;
-      background: #fff;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-  </style>
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
+{% block content %}
+<div class="container">
+    <!-- Welcome Section -->
+    <div class="welcome-card animate-on-scroll">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="page-title text-start mb-3">
+                    Welcome, {{ member.name }}
+                </h1>
+                <p class="text-secondary fs-5 mb-2">
+                    <i class="fas fa-cogs me-2"></i>Member Control Panel Active
+                </p>
+                <div class="admin-badge">
+                    <i class="fas fa-crown me-2"></i>{{ member.club_role }}
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="ai-icon mb-3">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="ai-card animate-on-scroll mb-4">
+        <div class="text-center mb-3">
+            <h4 class="code-font" style="color: var(--accent-green);">
+                <i class="fas fa-search me-2"></i>Neural Search
+            </h4>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search-bar" class="form-control" placeholder="Search members by name..." autocomplete="off">
+            <ul id="search-results" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000;"></ul>
+        </div>
+    </div>
+
+    <!-- Admin Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h6 class="code-font text-accent">Create Post</h6>
+                <a href="{% url 'create_post' %}" class="btn btn-primary btn-sm mt-2">
+                    <i class="fas fa-pen me-1"></i>New Post
+                </a>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h6 class="code-font text-accent">Applications</h6>
+                <a href="{% url 'view_applications' %}" class="btn btn-success btn-sm mt-2">
+                    <i class="fas fa-clipboard-list me-1"></i>Review
+                </a>
+            </div>
+        </div>
+        {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
+        <div class="col-md-3">
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <h6 class="code-font text-accent">Add Members</h6>
+                <a href="/member_signup" class="btn btn-ai btn-sm mt-2">
+                    <i class="fas fa-plus me-1"></i>Add
+                </a>
+            </div>
+        </div>
+        {% endif %}
         {% if member.club_role == "Lead" %}
-        <li>
-            <a class="nav-link" href="/tracker-home">Track Members</a>
-        </li>
+        <div class="col-md-3">
+            <div class="stat-card animate-on-scroll">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h6 class="code-font text-accent">Track Members</h6>
+                <a href="/tracker-home" class="btn btn-warning btn-sm mt-2">
+                    <i class="fas fa-analytics me-1"></i>Track
+                </a>
+            </div>
+        </div>
         {% endif %}
-        {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
-        <li>
-            <a class="nav-link" href="/member_signup">Add Members</a>
-        </li>
-        {% endif %}
-        </ul>
-
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
-        </div>
-        </div>
-        </div>
-    </nav>
-
-  <div class="container py-5">
-    
-    <h3 class="mb-4 text-center">Welcome, {{ member.name }}</h3>
-
-    <div class="input-group mx-auto" style="max-width: 400px; position: relative;">
-      <input type="text" id="search-bar" class="form-control" placeholder="Search by name..." autocomplete="off">
-      <ul id="search-results" class="search-dropdown"></ul>
     </div>
 
-    <div class="text-center mb-4">
-      <a href="{% url 'create_post' %}" class="btn btn-primary" style="margin-top:10px;">Create New Post</a>
+    <!-- Posts Section -->
+    <div class="ai-card animate-on-scroll">
+        <h4 class="code-font text-center mb-4" style="color: var(--accent-green);">
+            <i class="fas fa-stream me-2"></i>Neural Feed Management
+        </h4>
+        
+        {% for post, author_info, user_type in posts_with_authors %}
+            <div class="post-card">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="code-font" style="color: var(--primary-cyan);">{{ post.title }}</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge">
+                            <i class="fas fa-heart me-1"></i>{{ post.likes }}
+                        </span>
+                        {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
+                            <a href="{% url 'delete_post' post.post_id %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <p class="text-secondary mb-3">{{ post.content }}</p>
+                
+                <div class="mb-3">
+                    {% load custom_tags %}
+                    {% for tag in post.tags|split_tags %}
+                        <span class="badge me-1" style="background: linear-gradient(45deg, var(--primary-purple), var(--primary-blue)) !important;">
+                            #{{ tag }}
+                        </span>
+                    {% endfor %}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-secondary">
+                        <i class="fas fa-user me-1"></i>
+                        By: 
+                        {% if user_type == 'member' %}
+                            <a href="{% url 'member_profile' post.author_reg_no %}" style="color: var(--accent-green);">
+                                {{ author_info.name }} ({{ author_info.role }}) <i class="fas fa-check-circle"></i>
+                            </a>
+                        {% elif user_type == 'account' %}
+                            <a href="{% url 'account_profile' post.author_reg_no %}" style="color: var(--primary-cyan);">{{ author_info.name }}</a>
+                        {% else %}
+                            <span style="color: var(--text-secondary);">Unknown User</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        {% if post.post_id in liked_post_ids %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled>
+                                <i class="fas fa-heart me-1"></i>Liked
+                            </button>
+                        {% else %}
+                            <a href="{% url 'like_post' post.post_id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-heart me-1"></i>Like
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center text-secondary">
+                <i class="fas fa-robot" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>No posts in the neural feed yet. Create the first one!</p>
+            </div>
+        {% endfor %}
     </div>
+</div>
 
-    <h4 class="text-center mb-4">All Posts</h4>
-    {% for post, author_info, user_type in posts_with_authors %}
-      <div class="post-card">
-        <h5>{{ post.title }}</h5>
-        <p>{{ post.content }}</p>
-        <p><strong>Likes:</strong> {{ post.likes }}</p>
-        {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
-          <a href="{% url 'delete_post' post.post_id %}" class="btn btn-danger">Delete</a>
-        {% endif %}
-        <div class="mt-2">
-            {% load custom_tags %}
-                {% for tag in post.tags|split_tags %}
-                    <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill me-1">{{ tag }}</span>
-            {% endfor %}
-        </div>
-        {% if user_type == 'member' %}
-          <p>By: <a href="{% url 'member_profile' post.author_reg_no %}">{{ author_info.name }} ({{ author_info.role }}) ✅</a></p>
-        {% elif user_type == 'account' %}
-          <p>By: <a href="{% url 'account_profile' post.author_reg_no %}">{{ author_info.name }}</a></p>
-        {% else %}
-          <p>By: Unknown</p>
-        {% endif %}
-
-        {% if post.post_id in liked_post_ids %}
-          <button class="btn btn-success" disabled>Liked</button>
-        {% else %}
-          <a href="{% url 'like_post' post.post_id %}" class="btn btn-outline-primary">Like</a>
-        {% endif %}
-      </div>
-    {% endfor %}
-
-    <div class="text-center mt-4">
-      <a href="{% url 'view_applications' %}" class="btn btn-secondary me-2">View Recruitment Applications</a>
-    </div>
-  </div>
-
-  <script>
+<script>
+    // Search functionality
     const members = {{ search_member_map|safe }};
     const accounts = {{ search_account_map|safe }};
     const searchBar = document.getElementById("search-bar");
@@ -152,23 +220,19 @@
 
     function searchSuggestions(query) {
         const allNames = Object.keys(members).concat(Object.keys(accounts));
-        const matches = allNames.filter(name =>
-            name.toLowerCase().includes(query.toLowerCase())
-        );
-        return matches.sort();
+        return allNames.filter(name => name.toLowerCase().includes(query.toLowerCase())).sort();
     }
 
     function clearResults() {
         resultsList.innerHTML = '';
+        resultsList.classList.remove('show');
     }
 
     function createResultItem(name, reg_no, userType) {
         const li = document.createElement("li");
         li.className = "list-group-item list-group-item-action";
-        li.textContent = name;
-        li.onclick = () => {
-            window.location.href = `/profile/${userType}/${reg_no}/`;
-        };
+        li.innerHTML = `<i class="fas fa-user me-2"></i>${name}`;
+        li.onclick = () => window.location.href = `/profile/${userType}/${reg_no}/`;
         return li;
     }
 
@@ -181,22 +245,22 @@
         if (suggestions.length === 0) {
             const li = document.createElement("li");
             li.className = "list-group-item text-muted";
-            li.textContent = "No matches found";
+            li.innerHTML = '<i class="fas fa-search me-2"></i>No matches found';
             resultsList.appendChild(li);
-            return;
+        } else {
+            suggestions.forEach(name => {
+                let reg_no = members[name] || accounts[name];
+                let userType = members[name] ? 'member' : 'account';
+                resultsList.appendChild(createResultItem(name, reg_no, userType));
+            });
         }
-
-        suggestions.forEach(name => {
-            let reg_no = members[name] || accounts[name];
-            let userType = members[name] ? 'member' : 'account';
-            const item = createResultItem(name, reg_no, userType);
-            resultsList.appendChild(item);
-        });
+        resultsList.classList.add('show');
     });
 
     document.addEventListener("click", (e) => {
-        if (!searchBar.contains(e.target)) clearResults();
+        if (!searchBar.contains(e.target) && !resultsList.contains(e.target)) {
+            clearResults();
+        }
     });
-  </script>
-</body>
-</html>
+</script>
+{% endblock %}

@@ -1,74 +1,250 @@
 {% extends 'base.html' %}
+
+{% block title %}{{ user.name }} - Member Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+        border: 1px solid var(--border-glow);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(15px);
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: var(--dark-bg);
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 30px rgba(0, 255, 136, 0.4);
+        border: 3px solid var(--accent-green);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        border-color: var(--accent-green);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.2);
+    }
+
+    .info-label {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-accent);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        color: var(--text-primary);
+        font-weight: 500;
+        font-size: 1.1rem;
+    }
+
+    .member-badge {
+        background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan)) !important;
+        color: var(--dark-bg) !important;
+        font-weight: bold;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 1rem;
+    }
+
+    .role-badge {
+        background: linear-gradient(45deg, var(--data-yellow), var(--neural-orange)) !important;
+        color: var(--dark-bg) !important;
+        font-weight: bold;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .contribution-score {
+        background: var(--code-bg);
+        border: 2px solid var(--accent-green);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .contribution-score::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, transparent, rgba(0, 255, 136, 0.1), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .contribution-score:hover::before {
+        transform: translateX(100%);
+    }
+
+    .score-number {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
-        </div>
-        </div>
-        </div>
-    </nav>
-<div class="container my-5">
-  <div class="card p-4 mb-4">
-    <h2 class="card-title">{{ user.name }}</h2>
-    <p class="text-muted mb-1">{{ user.club_role }} ✅</p>
-    <p><strong>Email:</strong> {{ user.sastra_email }}</p>
-    <p><strong>Register No:</strong> {{ user.register_no }}</p>
-    <p><strong>Branch:</strong> {{ user.branch }}</p>
-    <p><strong>Batch:</strong> {{ user.batch }}</p>
-
-    {% if is_member %}
-      <p><strong>Role:</strong> {{ user.club_role }}</p>
-      <p><strong>Contribution Score:</strong> {{ user.contribution_score }}</p>
-    {% endif %}
-  </div>
-
-  <h3 class="mb-3">Posts by {{ user.name }}</h3>
-
-  {% if posts %}
-    <div class="row row-cols-1 row-cols-md-2 g-4">
-      {% for post in posts %}
-        <div class="col">
-          <div class="card h-100">
-            <div class="card-body">
-              <h4 class="card-title">{{ post.title }}</h4>
-              <p class="card-text">{{ post.content }}</p>
+<div class="container">
+    <!-- Profile Header -->
+    <div class="profile-header animate-on-scroll">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="member-badge mb-3">
+                    <i class="fas fa-check-circle me-2"></i>Verified Member
+                </div>
+                <div class="role-badge">
+                    <i class="fas fa-crown me-2"></i>{{ user.club_role }}
+                </div>
             </div>
-            <div class="card-footer text-muted">
-              <small>Posted on {{ post.date }}</small><br>
-              <small>Likes: {{ post.likes }}</small>
-              <div class="mt-2">
-                {% load custom_tags %}
-                    {% for tag in post.tags|split_tags %}
-                        <span class="badge bg-primary bg-opacity-25 text-primary rounded-pill me-1">{{ tag }}</span>
-                {% endfor %}
-              </div>
+            <div class="col-md-8">
+                <h1 class="page-title text-start mb-3">
+                    {{ user.name }}
+                </h1>
+                <p class="text-secondary fs-5 mb-3">
+                    <i class="fas fa-brain me-2"></i>SALVO AI Club Member
+                </p>
+                
+                <!-- Quick Info Grid -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">{{ user.sastra_email }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Register No</div>
+                        <div class="info-value">{{ user.register_no }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Branch</div>
+                        <div class="info-value">{{ user.branch }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Batch</div>
+                        <div class="info-value">{{ user.batch }}</div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      {% endfor %}
     </div>
-  {% else %}
-    <p class="text-muted">No posts yet.</p>
-  {% endif %}
+
+    <!-- Contribution Score Section -->
+    {% if is_member %}
+    <div class="row mb-4">
+        <div class="col-md-6 mx-auto">
+            <div class="contribution-score animate-on-scroll">
+                <h5 class="code-font mb-3" style="color: var(--accent-green);">Contribution Score</h5>
+                <div class="score-number">{{ user.contribution_score }}</div>
+                <p class="text-secondary mt-2">Neural Network Contributions</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Posts Section -->
+    <div class="ai-card animate-on-scroll">
+        <h4 class="code-font text-center mb-4" style="color: var(--accent-green);">
+            <i class="fas fa-stream me-2"></i>Posts by {{ user.name }}
+        </h4>
+        
+        {% if posts %}
+            <div class="posts-grid">
+                {% for post in posts %}
+                    <div class="post-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h5 class="code-font" style="color: var(--primary-cyan);">{{ post.title }}</h5>
+                            <span class="badge">
+                                <i class="fas fa-heart me-1"></i>{{ post.likes }}
+                            </span>
+                        </div>
+                        
+                        <p class="text-secondary mb-3">{{ post.content }}</p>
+                        
+                        <div class="mb-3">
+                            {% load custom_tags %}
+                            {% for tag in post.tags|split_tags %}
+                                <span class="badge me-1" style="background: linear-gradient(45deg, var(--primary-purple), var(--primary-blue)) !important;">
+                                    #{{ tag }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-secondary small">
+                            <i class="fas fa-calendar me-1"></i>{{ post.date|date:"M d, Y" }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center text-secondary">
+                <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+                <p>No posts by {{ user.name }} yet.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- AI Code Snippet -->
+    <div class="ai-card animate-on-scroll mt-4">
+        <div class="p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                <div><span style="color: var(--neural-orange);">class</span> <span style="color: var(--data-yellow);">ClubMember</span>(<span style="color: var(--primary-blue);">AIEnthusiast</span>):</div>
+                <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">def</span> <span style="color: var(--data-yellow);">__init__</span>(<span style="color: var(--primary-cyan);">self</span>):</div>
+                <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">self</span>.name = <span style="color: var(--accent-green)">"{{ user.name }}"</span></div>
+                <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">self</span>.role = <span style="color: var(--accent-green)">"{{ user.club_role }}"</span></div>
+                <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">self</span>.contribution = {{ user.contribution_score }}</div>
+                <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">self</span>.verified = <span style="color: var(--data-yellow);">True</span></div>
+                <div style="color: var(--text-secondary);"># Active SALVO AI Club member</div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

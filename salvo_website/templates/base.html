@@ -1,49 +1,691 @@
-<!DOCTYPE html>
+{% load static %}
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>User Profile</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}SALVO - AI-ML Club | SASTRA University{% endblock %}</title>
+    
+    <link rel="icon" type="image/x-icon" href="{% static 'tracker/salvo_logo.jpg' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-cyan: #00D4FF;
+            --primary-blue: #0066FF;
+            --primary-purple: #6366F1;
+            --accent-green: #00FF88;
+            --neural-orange: #FF6B35;
+            --data-yellow: #FFD23F;
+            --dark-bg: #0A0F1C;
+            --darker-bg: #060A14;
+            --card-bg: rgba(15, 25, 45, 0.9);
+            --border-glow: rgba(0, 212, 255, 0.3);
+            --text-primary: #FFFFFF;
+            --text-secondary: #94A3B8;
+            --text-accent: #64FFDA;
+            --code-bg: rgba(30, 41, 59, 0.8);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Neural Network Background */
+        .neural-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(ellipse at center, #1e3a8a 0%, #0f172a 70%, #020617 100%);
+        }
+
+        .neural-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-cyan);
+            animation: pulse-node 3s ease-in-out infinite;
+        }
+
+        .neural-connection {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+            animation: data-flow 4s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes pulse-node {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes data-flow {
+            0% { opacity: 0; transform: scaleX(0); }
+            50% { opacity: 0.8; transform: scaleX(1); }
+            100% { opacity: 0; transform: scaleX(0); }
+        }
+
+        /* Code Rain Effect */
+        .code-rain {
+            position: absolute;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-green);
+            opacity: 0.3;
+            animation: matrix-fall 15s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes matrix-fall {
+            0% { transform: translateY(-100vh); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(0, 0, 0, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glow);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .navbar-brand {
+            display: flex !important;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-cyan) !important;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+            text-decoration: none;
+            flex-direction: row;
+        }
+
+        .navbar-logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        .navbar-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            line-height: 1.2;
+        }
+
+        .navbar-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: -2px;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-secondary) !important;
+            transition: all 0.3s ease;
+            position: relative;
+            margin: 0 10px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-green);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent-green) !important;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        .btn-ai {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            border: none;
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            color: var(--dark-bg);
+        }
+
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-ai:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 212, 255, 0.4);
+            color: var(--dark-bg);
+        }
+
+        .btn-ai:hover::before {
+            left: 100%;
+        }
+
+        /* AI Cards */
+        .ai-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            overflow: hidden;
+        }
+
+        .ai-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .ai-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent-green);
+            box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .ai-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Form Styling */
+        .form-control {
+            background: var(--code-bg);
+            border: 1px solid var(--border-glow);
+            color: var(--text-primary);
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: var(--code-bg);
+            border-color: var(--accent-green);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0, 255, 136, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-label {
+            color: var(--text-accent);
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        /* Button Variants */
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-purple));
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 102, 255, 0.4);
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-purple));
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan));
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4);
+            background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan));
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid var(--text-secondary);
+            color: var(--text-secondary);
+            background: transparent;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            background: var(--text-secondary);
+            color: var(--dark-bg);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(148, 163, 184, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, var(--neural-orange), #dc3545);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 53, 0.4);
+            background: linear-gradient(45deg, var(--neural-orange), #dc3545);
+        }
+
+        /* Alert Styling */
+        .alert {
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .alert-warning {
+            border-color: var(--data-yellow);
+            background: rgba(255, 210, 63, 0.1);
+        }
+
+        /* Page Content */
+        .page-content {
+            min-height: calc(100vh - 200px);
+            padding-top: 100px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .page-title::before {
+            content: '// ';
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--darker-bg);
+            border-top: 1px solid var(--border-glow);
+            padding: 40px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(15px);
+            margin-bottom: 2rem;
+        }
+
+        /* Post Card Styling */
+        .post-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+        }
+
+        .post-card:hover {
+            border-color: var(--accent-green);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 255, 136, 0.2);
+        }
+
+        /* Badge Styling */
+        .badge {
+            background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)) !important;
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 12px;
+        }
+
+        /* Search Styling */
+        .search-container {
+            position: relative;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--border-glow);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+        }
+
+        .list-group-item {
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+            color: var(--text-primary);
+            padding: 12px 15px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .list-group-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            color: var(--accent-green);
+        }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .page-title { font-size: 2rem; }
+            .ai-card { padding: 1.5rem; }
+            .navbar-brand { font-size: 1.3rem; }
+            .navbar-subtitle { font-size: 0.6rem; }
+        }
+
+        /* Animation for page load */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
 </head>
 <body>
-  {% block content %}
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
-        </div>
-        </div>
+    <div class="neural-bg" id="neural-network"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/home">
+                <img src="{% static 'tracker/salvo_logo.jpg' %}" alt="SALVO Logo" class="navbar-logo">
+                <div class="navbar-text">
+                    <span>SALVO</span>
+                    <span class="navbar-subtitle">AI Club</span>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/home">HOME</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">ABOUT</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#projects">PROJECTS</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/play/draw/">PLAY SCRIBBLE</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#join">JOIN</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    {% if user.is_authenticated %}
+                        <a class="btn btn-ai me-2" href="/logout">LOGOUT</a>
+                    {% else %}
+                        <a class="btn btn-ai me-2" href="/login">LOGIN</a>
+                        <a class="btn btn-ai" href="/account_signup">SIGN UP</a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </nav>
-  <!-- Your content like the bootstrapped template goes here -->
-  {% endblock %}
 
+    <!-- Page Content -->
+    <div class="page-content">
+        {% block content %}
+        {% endblock %}
+    </div>
 
-  <footer class="bg-dark text-white text-center py-3 mt-4">
-        &copy; 2025 SALVO-AICS, SASTRA University
-  </footer>
-  <!-- Bootstrap JS (optional) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="code-font">&copy; 2025 SALVO.AICS.SASTRA.UNIVERSITY // POWERED_BY_AI</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Neural Network Background
+        function createNeuralNetwork() {
+            const container = document.getElementById('neural-network');
+            const nodeCount = 20;
+            const nodes = [];
+
+            // Create nodes
+            for (let i = 0; i < nodeCount; i++) {
+                const node = document.createElement('div');
+                node.className = 'neural-node';
+                node.style.left = Math.random() * 100 + '%';
+                node.style.top = Math.random() * 100 + '%';
+                node.style.animationDelay = Math.random() * 3 + 's';
+                container.appendChild(node);
+                nodes.push({
+                    element: node,
+                    x: parseFloat(node.style.left),
+                    y: parseFloat(node.style.top)
+                });
+            }
+
+            // Create connections
+            nodes.forEach((node, i) => {
+                nodes.slice(i + 1).forEach(otherNode => {
+                    const distance = Math.sqrt(
+                        Math.pow(node.x - otherNode.x, 2) + 
+                        Math.pow(node.y - otherNode.y, 2)
+                    );
+                    
+                    if (distance < 25) {
+                        const connection = document.createElement('div');
+                        connection.className = 'neural-connection';
+                        
+                        const angle = Math.atan2(otherNode.y - node.y, otherNode.x - node.x);
+                        const length = distance * window.innerWidth / 100;
+                        
+                        connection.style.left = node.x + '%';
+                        connection.style.top = node.y + '%';
+                        connection.style.width = length + 'px';
+                        connection.style.transform = `rotate(${angle}rad)`;
+                        connection.style.transformOrigin = '0 50%';
+                        connection.style.animationDelay = Math.random() * 4 + 's';
+                        
+                        container.appendChild(connection);
+                    }
+                });
+            });
+        }
+
+        // Code Rain Effect
+        function createCodeRain() {
+            const codeSnippets = [
+                'import tensorflow as tf',
+                'model = Sequential()',
+                'def neural_network():',
+                'return model.predict(X)',
+                'accuracy = 0.97',
+                'epoch += 1',
+                'Dense(128)',
+                'model.fit(X, y)'
+            ];
+
+            setInterval(() => {
+                if (Math.random() < 0.2) {
+                    const rain = document.createElement('div');
+                    rain.className = 'code-rain';
+                    rain.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                    rain.style.left = Math.random() * 100 + '%';
+                    rain.style.animationDuration = (10 + Math.random() * 10) + 's';
+                    
+                    document.body.appendChild(rain);
+                    
+                    setTimeout(() => {
+                        if (rain.parentNode) rain.parentNode.removeChild(rain);
+                    }, 15000);
+                }
+            }, 3000);
+        }
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animated');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createNeuralNetwork();
+            createCodeRain();
+        });
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.style.background = 'rgba(0, 0, 0, 0.98)';
+            } else {
+                navbar.style.background = 'rgba(0, 0, 0, 0.95)';
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

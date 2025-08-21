@@ -1,73 +1,214 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Join Requests</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
-        </div>
-        </div>
-        </div>
-    </nav>
-  <div class="container my-5">
-    <h2 class="mb-4">Join Requests</h2>
+{% extends 'base.html' %}
 
-    {% for app in applications %}
-      <div class="card mb-4">
-        <div class="card-body">
-          <p><strong>From:</strong> {{ app.account.name }} ({{ app.account.register_no }})</p>
-          <p><strong>Reason:</strong> {{ app.reason_to_join }}</p>
-          <p><strong>Why Recruit:</strong> {{ app.why_recruit }}</p>
-          <p><strong>Other Clubs:</strong> {{ app.other_clubs }}</p>
-          <p><strong>Status:</strong> {{ app.status }}</p>
-          <p><strong>Upvotes:</strong> {{ app.upvotes.count }}</p>
+{% block title %}Applications Review - SALVO AI Club{% endblock %}
 
-          <div class="d-flex flex-wrap gap-3 mt-3">
-            {% if member not in app.upvotes.all %}
-              <a href="{% url 'upvote_application' app.id %}" class="btn btn-outline-success btn-sm">Upvote</a>
-            {% else %}
-              <span class="text-success">You upvoted</span>
-            {% endif %}
+{% block extra_css %}
+<style>
+    .application-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        backdrop-filter: blur(15px);
+        transition: all 0.3s ease;
+    }
 
-            {% if member.club_role == 'Lead' or member.club_role == 'Coordinator' %}
-              {% if app.status == "Pending" %}
-                <a href="{% url 'update_application_status' app.id 'accept' %}" class="btn btn-primary btn-sm">Accept</a>
-                <a href="{% url 'update_application_status' app.id 'reject' %}" class="btn btn-danger btn-sm">Reject</a>
-              {% endif %}
-            {% endif %}
-          </div>
+    .application-card:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 255, 136, 0.2);
+    }
+
+    .applicant-header {
+        background: var(--code-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-glow);
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status-pending {
+        background: linear-gradient(45deg, var(--data-yellow), var(--neural-orange)) !important;
+        color: var(--dark-bg) !important;
+    }
+
+    .status-approved {
+        background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan)) !important;
+        color: var(--dark-bg) !important;
+    }
+
+    .status-rejected {
+        background: linear-gradient(45deg, var(--neural-orange), #dc3545) !important;
+        color: white !important;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .info-label {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-accent);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .upvote-section {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+        border: 1px solid var(--border-glow);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-clipboard-list me-2"></i>Recruitment Applications
+        </h1>
+        <p class="text-secondary fs-5">Review and manage club membership applications</p>
+    </div>
+
+    {% if applications %}
+        {% for app in applications %}
+            <div class="application-card animate-on-scroll">
+                <!-- Applicant Header -->
+                <div class="applicant-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="code-font mb-2" style="color: var(--primary-cyan);">
+                                <i class="fas fa-user me-2"></i>{{ app.account.name }}
+                            </h4>
+                            <p class="text-secondary mb-0">
+                                <i class="fas fa-id-card me-2"></i>{{ app.account.register_no }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="status-badge status-{{ app.status|lower }}">
+                                {% if app.status == 'pending' %}
+                                    <i class="fas fa-clock me-1"></i>
+                                {% elif app.status == 'approved' %}
+                                    <i class="fas fa-check me-1"></i>
+                                {% else %}
+                                    <i class="fas fa-times me-1"></i>
+                                {% endif %}
+                                {{ app.status }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Application Details -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Reason to Join</div>
+                        <div class="text-primary">{{ app.reason_to_join }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Why Recruit</div>
+                        <div class="text-primary">{{ app.why_recruit }}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Other Clubs</div>
+                        <div class="text-primary">{{ app.other_clubs|default:"None" }}</div>
+                    </div>
+                </div>
+
+                <!-- Upvote Section -->
+                <div class="upvote-section">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h6 class="code-font mb-2" style="color: var(--accent-green);">
+                                <i class="fas fa-thumbs-up me-2"></i>Community Support
+                            </h6>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge" style="background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)) !important; padding: 8px 12px;">
+                                    {{ app.upvotes.count }} Upvotes
+                                </span>
+                                {% if app.request_id not in user_upvoted_applications %}
+                                    <a href="{% url 'upvote_application' app.request_id %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-thumbs-up me-1"></i>Upvote
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-outline-success btn-sm" disabled>
+                                        <i class="fas fa-check me-1"></i>Upvoted
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            {% if app.status == 'pending' %}
+                                <a href="{% url 'approve_application' app.request_id %}" class="btn btn-success me-2">
+                                    <i class="fas fa-check me-1"></i>Approve
+                                </a>
+                                <a href="{% url 'reject_application' app.request_id %}" class="btn btn-danger">
+                                    <i class="fas fa-times me-1"></i>Reject
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resume Download -->
+                {% if app.resume %}
+                    <div class="text-center mt-3">
+                        <a href="{{ app.resume.url }}" class="btn btn-primary" target="_blank">
+                            <i class="fas fa-download me-2"></i>Download Resume
+                        </a>
+                    </div>
+                {% endif %}
+
+                <!-- AI Code Snippet for this application -->
+                <div class="mt-3 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                        <div><span style="color: var(--neural-orange);">class</span> <span style="color: var(--data-yellow);">Applicant</span>:</div>
+                        <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">name</span> = <span style="color: var(--accent-green)">"{{ app.account.name }}"</span></div>
+                        <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">status</span> = <span style="color: var(--accent-green)">"{{ app.status }}"</span></div>
+                        <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">upvotes</span> = {{ app.upvotes.count }}</div>
+                        <div style="color: var(--text-secondary);"># Candidate for AI Club membership</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="ai-card animate-on-scroll text-center">
+            <i class="fas fa-inbox" style="font-size: 4rem; color: var(--text-secondary); opacity: 0.5; margin-bottom: 20px;"></i>
+            <h4 class="code-font text-secondary">No Applications Yet</h4>
+            <p class="text-secondary">Waiting for new AI enthusiasts to apply...</p>
+            
+            <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    <div><span style="color: var(--neural-orange);">while</span> applications.length == <span style="color: var(--data-yellow);">0</span>:</div>
+                    <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">wait_for_enthusiasts</span>()</div>
+                    <div style="margin-left: 20px;"><span style="color: var(--text-secondary);"># Future AI innovators incoming...</span></div>
+                </div>
+            </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    {% endif %}
+</div>
+{% endblock %}
