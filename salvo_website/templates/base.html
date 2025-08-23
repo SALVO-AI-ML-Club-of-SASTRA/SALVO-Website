@@ -538,7 +538,7 @@
                     </li>
                 </ul>
                 <div class="d-flex">
-                    {% if user.is_authenticated %}
+                    {% if request.session.user_type %}
                         <a class="btn btn-ai me-2" href="/logout">LOGOUT</a>
                     {% else %}
                         <a class="btn btn-ai me-2" href="/login">LOGIN</a>

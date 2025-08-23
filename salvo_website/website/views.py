@@ -326,4 +326,7 @@ def member_profile(request, reg_no):
     return render(request, 'member_profile.html', {'user': member, 'posts': posts})
 
 def logout(request):
-    return redirect(login);
+    # Clear all session data
+    request.session.flush()
+    messages.success(request, "You have been logged out successfully!")
+    return redirect(home)

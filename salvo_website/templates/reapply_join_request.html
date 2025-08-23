@@ -30,8 +30,12 @@
         </li>
         </ul>
         <div class="ms-auto">
-            <a class="btn btn-outline-light me-2" href="/logout">Logout</a>
-            <a class="btn btn-light" href="/account_signup">Sign Up</a>
+            {% if request.session.user_type %}
+                <a class="btn btn-outline-light me-2" href="/logout">LOGOUT</a>
+            {% else %}
+                <a class="btn btn-outline-light me-2" href="/login">LOGIN</a>
+                <a class="btn btn-outline-light" href="/account_signup">SIGN UP</a>
+            {% endif %}
         </div>
         </div>
         </div>
