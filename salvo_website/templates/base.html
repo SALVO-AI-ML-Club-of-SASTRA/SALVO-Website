@@ -525,17 +525,29 @@
                         <a class="nav-link" href="/home">HOME</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about">ABOUT</a>
+                        <a class="nav-link" href="/home#about">ABOUT</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#projects">PROJECTS</a>
+                        <a class="nav-link" href="/home#projects">PROJECTS</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/home#achievements">ACHIEVEMENTS</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/play/draw/">PLAY SCRIBBLE</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#join">JOIN</a>
+                        <a class="nav-link" href="/home#join">JOIN</a>
                     </li>
+                    {% if request.session.user_type %}
+                        <li class="nav-item">
+                            {% if request.session.user_type == 'member' %}
+                                <a class="nav-link" href="{% url 'member_dashboard' %}" style="color: var(--accent-green) !important; font-weight: bold;">MY DASHBOARD</a>
+                            {% else %}
+                                <a class="nav-link" href="{% url 'account_dashboard' %}" style="color: var(--accent-green) !important; font-weight: bold;">MY DASHBOARD</a>
+                            {% endif %}
+                        </li>
+                    {% endif %}
                 </ul>
                 <div class="d-flex">
                     {% if request.session.user_type %}

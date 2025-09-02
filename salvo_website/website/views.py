@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
 from django.db import models
+from django.http import JsonResponse
 from .models import Account, Member, Post, JoinRequest, PostLike
 from .forms import AccountRegistrationForm, MemberRegistrationForm, LoginForm, JoinRequestForm
 from .tagger import PostTagger
@@ -79,7 +80,7 @@ def account_dashboard(request):
 
     register_no = request.session.get('register_no')
     account = Account.objects.get(register_no=register_no)
-    posts = Post.objects.all()
+    posts = Post.objects.all().order_by('-date')
     post_data = []
 
     all_names = list(Member.objects.values_list('name', flat=True)) + list(
@@ -117,7 +118,7 @@ def member_dashboard(request):
 
     register_no = request.session.get('register_no')
     member = Member.objects.get(register_no=register_no)
-    posts = Post.objects.all()
+    posts = Post.objects.all().order_by('-date')
 
     liked_post_ids = PostLike.objects.filter(register_no=register_no).values_list('post_id', flat=True)
 
@@ -210,22 +211,38 @@ def verify_post(request, post_id):
 
 def delete_post(request, post_id):
     if request.session.get('user_type') != 'member':
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'Unauthorized'}, status=401)
         return redirect(login)
 
     #check if memeber is lead or coordinator
     member = Member.objects.get(register_no=request.session.get('register_no'))
     if member.club_role not in ['Lead', 'Co-ordinator']:
         print("Unauthorized delete attempt by:", member.register_no)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'You do not have permission to delete posts.'}, status=403)
         messages.error(request, "You do not have permission to delete posts.")
         return redirect('member_dashboard')
-    post = Post.objects.get(post_id=post_id)
-    print("Post to delete:", post)
-    if post:
+    
+    try:
+        post = Post.objects.get(post_id=post_id)
+        print("Post to delete:", post)
         print("Deleting post:", post_id)
         post.delete()
+        
+        # Check if this is an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Post deleted successfully!'
+            })
+        
         messages.success(request, "Post deleted successfully!")
-    else:
+    except Post.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': "Post doesn't exist."}, status=404)
         messages.error(request, "Post doesn't exist.")
+    
     print("Redirecting to member dashboard after delete")
     return redirect('member_dashboard')
 
@@ -308,6 +325,15 @@ def like_post(request, post_id):
         post.likes += 1
         post.save()
 
+    # Check if this is an AJAX request
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'new_likes': post.likes,
+            'liked': True
+        })
+
+    # Regular redirect for non-AJAX requests
     if request.session.get('user_type') == 'member':
         return redirect('member_dashboard')
     else:

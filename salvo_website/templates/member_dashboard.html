@@ -148,17 +148,17 @@
         </h4>
         
         {% for post, author_info, user_type in posts_with_authors %}
-            <div class="post-card">
+            <div class="post-card" id="post-{{ post.post_id }}">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h5 class="code-font" style="color: var(--primary-cyan);">{{ post.title }}</h5>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge">
+                        <span class="badge" id="likes-count-{{ post.post_id }}">
                             <i class="fas fa-heart me-1"></i>{{ post.likes }}
                         </span>
                         {% if member.club_role == "Lead" or member.club_role == "Co-ordinator" %}
-                            <a href="{% url 'delete_post' post.post_id %}" class="btn btn-danger btn-sm">
+                            <button onclick="deletePost({{ post.post_id }})" class="btn btn-danger btn-sm">
                                 <i class="fas fa-trash me-1"></i>Delete
-                            </a>
+                            </button>
                         {% endif %}
                     </div>
                 </div>
@@ -195,9 +195,9 @@
                                 <i class="fas fa-heart me-1"></i>Liked
                             </button>
                         {% else %}
-                            <a href="{% url 'like_post' post.post_id %}" class="btn btn-success btn-sm">
+                            <button onclick="likePost({{ post.post_id }})" class="btn btn-success btn-sm" id="like-btn-{{ post.post_id }}">
                                 <i class="fas fa-heart me-1"></i>Like
-                            </a>
+                            </button>
                         {% endif %}
                     </div>
                 </div>
@@ -262,5 +262,92 @@
             clearResults();
         }
     });
+
+    // AJAX functions for like and delete
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function likePost(postId) {
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/like_post/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update likes count
+                const likesCountElement = document.getElementById(`likes-count-${postId}`);
+                likesCountElement.innerHTML = `<i class="fas fa-heart me-1"></i>${data.new_likes}`;
+                
+                // Update like button to "Liked" state
+                const likeButton = document.getElementById(`like-btn-${postId}`);
+                likeButton.outerHTML = `<button class="btn btn-outline-secondary btn-sm" disabled>
+                    <i class="fas fa-heart me-1"></i>Liked
+                </button>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while liking the post.');
+        });
+    }
+
+    function deletePost(postId) {
+        if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+            return;
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/delete_post/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the post from the DOM with animation
+                const postElement = document.getElementById(`post-${postId}`);
+                postElement.style.opacity = '0';
+                postElement.style.transform = 'translateY(-20px)';
+                postElement.style.transition = 'all 0.3s ease';
+                
+                setTimeout(() => {
+                    postElement.remove();
+                }, 300);
+                
+                // Show success message (you can customize this)
+                console.log(data.message);
+            } else {
+                alert(data.error || 'An error occurred while deleting the post.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the post.');
+        });
+    }
 </script>
 {% endblock %}

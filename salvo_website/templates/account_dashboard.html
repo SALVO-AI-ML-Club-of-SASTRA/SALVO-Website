@@ -130,10 +130,10 @@
         </h4>
         
         {% for post, author_name in posts_with_authors %}
-            <div class="post-card">
+            <div class="post-card" id="post-{{ post.post_id }}">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <h5 class="code-font" style="color: var(--primary-cyan);">{{ post.title }}</h5>
-                    <span class="badge">
+                    <span class="badge" id="likes-count-{{ post.post_id }}">
                         <i class="fas fa-heart me-1"></i>{{ post.likes }}
                     </span>
                 </div>
@@ -166,9 +166,9 @@
                                 <i class="fas fa-heart me-1"></i>Liked
                             </button>
                         {% else %}
-                            <a href="{% url 'like_post' post.post_id %}" class="btn btn-success btn-sm">
+                            <button onclick="likePost({{ post.post_id }})" class="btn btn-success btn-sm" id="like-btn-{{ post.post_id }}">
                                 <i class="fas fa-heart me-1"></i>Like
-                            </a>
+                            </button>
                         {% endif %}
                     </div>
                 </div>
@@ -233,5 +233,52 @@
             clearResults();
         }
     });
+
+    // AJAX functions for like
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function likePost(postId) {
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(`/like_post/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update likes count
+                const likesCountElement = document.getElementById(`likes-count-${postId}`);
+                likesCountElement.innerHTML = `<i class="fas fa-heart me-1"></i>${data.new_likes}`;
+                
+                // Update like button to "Liked" state
+                const likeButton = document.getElementById(`like-btn-${postId}`);
+                likeButton.outerHTML = `<button class="btn btn-outline-secondary btn-sm" disabled>
+                    <i class="fas fa-heart me-1"></i>Liked
+                </button>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while liking the post.');
+        });
+    }
 </script>
 {% endblock %}
