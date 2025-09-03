@@ -1,0 +1,1236 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}K-means Clustering Visualizer - SALVO{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* K-means Clustering Specific Styles */
+    .clustering-container {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 0;
+        backdrop-filter: blur(15px);
+        overflow: hidden;
+        min-height: 600px;
+    }
+
+    .mode-selector {
+        background: var(--darker-bg);
+        border-bottom: 1px solid var(--border-glow);
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .mode-btn {
+        background: linear-gradient(45deg, var(--primary-blue), var(--primary-purple));
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+    }
+
+    .mode-btn.active {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+    }
+
+    .mode-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 102, 255, 0.4);
+    }
+
+    .control-section {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(15px);
+    }
+
+    .control-section h3 {
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .parameter-controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .parameter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .parameter-group label {
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+
+    .parameter-group input, .parameter-group select {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.9rem;
+    }
+
+    .parameter-group input:focus, .parameter-group select:focus {
+        border-color: var(--accent-green);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+    }
+
+    .action-btn {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        color: var(--dark-bg);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .action-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+    }
+
+    .action-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .secondary-btn {
+        background: linear-gradient(45deg, var(--neural-orange), #dc3545);
+        border: none;
+        padding: 8px 20px;
+        border-radius: 20px;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        margin: 5px;
+    }
+
+    .secondary-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+    }
+
+    .visualization-area {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 12px;
+        padding: 20px;
+        min-height: 500px;
+        position: relative;
+    }
+
+    .chart-container {
+        width: 100%;
+        height: 450px;
+        position: relative;
+        background: var(--darker-bg);
+        border-radius: 8px;
+        border: 1px solid var(--border-glow);
+    }
+
+    .chart-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-secondary);
+        font-family: 'JetBrains Mono', monospace;
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .chart-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: var(--primary-cyan);
+        opacity: 0.6;
+    }
+
+    .cluster-info {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    .cluster-info h4 {
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+        margin-bottom: 15px;
+    }
+
+    .cluster-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+    }
+
+    .cluster-stat {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .cluster-stat .cluster-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .cluster-stat .cluster-count {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .cluster-stat .cluster-performance {
+        color: var(--text-accent);
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+
+    .high-performance { color: var(--accent-green) !important; }
+    .medium-performance { color: var(--data-yellow) !important; }
+    .low-performance { color: var(--neural-orange) !important; }
+
+    .elbow-chart {
+        width: 100%;
+        height: 200px;
+        background: var(--darker-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+
+    .interactive-instructions {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .animation-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 15px 0;
+        flex-wrap: wrap;
+    }
+
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 15px;
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .status-ready {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        color: var(--accent-green);
+    }
+
+    .status-running {
+        background: rgba(255, 210, 63, 0.1);
+        border: 1px solid rgba(255, 210, 63, 0.3);
+        color: var(--data-yellow);
+    }
+
+    .status-complete {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: var(--primary-cyan);
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0, 212, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--primary-cyan);
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Chart styling */
+    .kmeans-chart {
+        width: 100%;
+        height: 100%;
+    }
+
+    .point {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .point:hover {
+        stroke-width: 2;
+        stroke: var(--accent-green);
+    }
+
+    .centroid {
+        stroke: var(--text-primary);
+        stroke-width: 2;
+        filter: drop-shadow(0 0 5px currentColor);
+    }
+
+    .centroid-trail {
+        stroke-width: 2;
+        stroke-dasharray: 5,5;
+        fill: none;
+        opacity: 0.7;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .mode-selector {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .parameter-controls {
+            grid-template-columns: 1fr;
+        }
+        
+        .chart-container {
+            height: 350px;
+        }
+        
+        .cluster-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .animation-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-circle-nodes me-2"></i>K-means Clustering
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="text-center mb-5 animate-on-scroll">
+        <h1 class="page-title">K-means Clustering Visualizer</h1>
+        <p class="text-secondary fs-5">Explore unsupervised learning through interactive K-means clustering</p>
+        <div class="algorithm-showcase mt-4">
+            <div class="algorithm-code">
+                <span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> <span class="function">KMeans</span><br>
+                <span class="variable">kmeans</span> = <span class="function">KMeans</span>(n_clusters=<span class="string">k</span>, random_state=<span class="string">42</span>)<br>
+                <span class="variable">labels</span> = <span class="variable">kmeans</span>.<span class="function">fit_predict</span>(X)<br>
+                <span class="comment"># Discover hidden patterns in data</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Panel - Controls -->
+        <div class="col-lg-4">
+            <!-- Mode Selection -->
+            <div class="control-section animate-on-scroll">
+                <h3><i class="fas fa-cogs me-2"></i>Clustering Mode</h3>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="study" id="studyModeBtn">
+                        <i class="fas fa-graduation-cap me-2"></i>Study Mode
+                    </button>
+                    <button class="mode-btn" data-mode="interactive" id="interactiveModeBtn">
+                        <i class="fas fa-mouse-pointer me-2"></i>Interactive Mode
+                    </button>
+                </div>
+                <div id="modeDescription" class="interactive-instructions">
+                    Study Mode: Analyze student performance data and see how K-means groups students by academic achievement.
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="control-section animate-on-scroll">
+                <h3><i class="fas fa-sliders-h me-2"></i>Parameters</h3>
+                
+                <div class="parameter-controls">
+                    <div class="parameter-group" id="datasetGroup">
+                        <label for="datasetSelect">Dataset Type:</label>
+                        <select id="datasetSelect">
+                            <option value="student">Student Performance</option>
+                            <option value="generated">Generated Clusters</option>
+                            <option value="blobs">Random Blobs</option>
+                        </select>
+                    </div>
+                    
+                    <div class="parameter-group">
+                        <label for="clustersInput">Number of Clusters (K):</label>
+                        <input type="number" id="clustersInput" value="3" min="2" max="8">
+                    </div>
+                    
+                    <div class="parameter-group" id="pointsGroup">
+                        <label for="pointsInput">Number of Points:</label>
+                        <input type="number" id="pointsInput" value="100" min="20" max="200">
+                    </div>
+                </div>
+
+                <button class="action-btn" id="generateDataBtn">
+                    <i class="fas fa-chart-area me-2"></i>Generate Data & Elbow Plot
+                </button>
+                
+                <button class="action-btn" id="runClusteringBtn" disabled>
+                    <i class="fas fa-play me-2"></i>Run K-means Clustering
+                </button>
+                
+                <div class="animation-controls" id="animationControls" style="display: none;">
+                    <button class="secondary-btn" id="animateBtn">
+                        <i class="fas fa-play me-1"></i>Animate
+                    </button>
+                    <button class="secondary-btn" id="stepBtn">
+                        <i class="fas fa-step-forward me-1"></i>Step
+                    </button>
+                    <button class="secondary-btn" id="resetBtn">
+                        <i class="fas fa-undo me-1"></i>Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Controls -->
+            <div class="control-section animate-on-scroll" id="interactiveControls" style="display: none;">
+                <h3><i class="fas fa-hand-pointer me-2"></i>Interactive Controls</h3>
+                <div class="interactive-instructions">
+                    Click on the chart to add data points. Each click adds a new point that will be included in the clustering.
+                </div>
+                <button class="secondary-btn" id="clearPointsBtn">
+                    <i class="fas fa-trash me-1"></i>Clear All Points
+                </button>
+                <div id="pointCounter" class="mt-2 text-secondary">Points added: 0</div>
+            </div>
+
+            <!-- Status -->
+            <div id="statusIndicator" class="status-indicator status-ready">
+                <i class="fas fa-circle"></i>
+                <span>Ready to generate data</span>
+            </div>
+        </div>
+
+        <!-- Right Panel - Visualization -->
+        <div class="col-lg-8">
+            <div class="clustering-container animate-on-scroll">
+                <div class="visualization-area">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 class="mb-0" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                            <i class="fas fa-project-diagram me-2"></i>Clustering Visualization
+                        </h3>
+                        <div id="iterationCounter" style="color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; display: none;">
+                            Iteration: <span id="currentIteration">0</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Elbow Method Chart -->
+                    <div id="elbowSection" style="display: none;">
+                        <h4 style="color: var(--primary-cyan); font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;">
+                            <i class="fas fa-chart-line me-2"></i>Elbow Method - Optimal K
+                        </h4>
+                        <div id="elbowChart" class="elbow-chart">
+                            <svg id="elbowSvg" width="100%" height="100%"></svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Clustering Chart -->
+                    <div class="chart-container">
+                        <div id="chartPlaceholder" class="chart-placeholder">
+                            <i class="fas fa-project-diagram"></i>
+                            <h4>No Data Generated Yet</h4>
+                            <p>Generate data using the controls on the left to see K-means clustering in action.</p>
+                        </div>
+                        <svg id="clusterChart" class="kmeans-chart" style="display: none;"></svg>
+                    </div>
+                </div>
+                
+                <!-- Cluster Information -->
+                <div id="clusterInfo" class="cluster-info" style="display: none;">
+                    <h4><i class="fas fa-info-circle me-2"></i>Cluster Analysis</h4>
+                    <div id="clusterStats" class="cluster-stats"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let currentMode = 'study';
+let currentData = null;
+let currentClusters = null;
+let animationSteps = [];
+let animationIndex = 0;
+let isAnimating = false;
+let userPoints = [];
+
+// API Base URL
+const API_BASE_URL = window.location.origin + '/visualizations/api/kmeans';
+
+// Mode descriptions
+const modeDescriptions = {
+    'study': 'Study Mode: Analyze student performance data and see how K-means groups students by academic achievement.',
+    'interactive': 'Interactive Mode: Click on the chart to add your own data points and watch K-means clustering in real-time.'
+};
+
+// Color schemes for clusters
+const clusterColors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
+const clusterMarkers = ['circle', 'square', 'triangle', 'diamond', 'cross', 'star'];
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    updateModeDescription();
+    updateParameterVisibility();
+});
+
+function setupEventListeners() {
+    // Mode selection
+    document.getElementById('studyModeBtn').addEventListener('click', () => switchMode('study'));
+    document.getElementById('interactiveModeBtn').addEventListener('click', () => switchMode('interactive'));
+    
+    // Data generation and clustering
+    document.getElementById('generateDataBtn').addEventListener('click', generateData);
+    document.getElementById('runClusteringBtn').addEventListener('click', runClustering);
+    
+    // Animation controls
+    document.getElementById('animateBtn').addEventListener('click', toggleAnimation);
+    document.getElementById('stepBtn').addEventListener('click', stepAnimation);
+    document.getElementById('resetBtn').addEventListener('click', resetAnimation);
+    
+    // Interactive controls
+    document.getElementById('clearPointsBtn').addEventListener('click', clearUserPoints);
+    
+    // Parameter changes
+    document.getElementById('datasetSelect').addEventListener('change', updateParameterVisibility);
+    document.getElementById('clustersInput').addEventListener('change', validateParameters);
+}
+
+function switchMode(mode) {
+    currentMode = mode;
+    
+    // Update button states
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    
+    // Update visibility
+    updateModeDescription();
+    updateParameterVisibility();
+    
+    // Clear current data
+    currentData = null;
+    currentClusters = null;
+    userPoints = [];
+    hideVisualization();
+    updateStatus('ready', 'Ready to generate data');
+}
+
+function updateModeDescription() {
+    document.getElementById('modeDescription').textContent = modeDescriptions[currentMode];
+}
+
+function updateParameterVisibility() {
+    const datasetGroup = document.getElementById('datasetGroup');
+    const pointsGroup = document.getElementById('pointsGroup');
+    const interactiveControls = document.getElementById('interactiveControls');
+    
+    if (currentMode === 'interactive') {
+        datasetGroup.style.display = 'none';
+        pointsGroup.style.display = 'none';
+        interactiveControls.style.display = 'block';
+    } else {
+        datasetGroup.style.display = 'block';
+        pointsGroup.style.display = 'block';
+        interactiveControls.style.display = 'none';
+    }
+}
+
+function validateParameters() {
+    const k = parseInt(document.getElementById('clustersInput').value);
+    const generateBtn = document.getElementById('generateDataBtn');
+    
+    if (k < 2 || k > 8) {
+        generateBtn.disabled = true;
+        updateStatus('error', 'K must be between 2 and 8');
+    } else {
+        generateBtn.disabled = false;
+        updateStatus('ready', 'Ready to generate data');
+    }
+}
+
+async function generateData() {
+    updateStatus('running', 'Generating data and calculating elbow method...');
+    const generateBtn = document.getElementById('generateDataBtn');
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<div class="loading-spinner"></div>Generating...';
+    
+    try {
+        if (currentMode === 'interactive') {
+            // For interactive mode, use user points or show click instructions
+            if (userPoints.length === 0) {
+                showInteractiveInstructions();
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-chart-area me-2"></i>Generate Data & Elbow Plot';
+                updateStatus('ready', 'Click on chart to add points');
+                return;
+            }
+            
+            currentData = userPoints;
+            showElbowMethod(currentData);
+            showClustering(currentData);
+        } else {
+            // Study mode - fetch data from backend
+            const dataset = document.getElementById('datasetSelect').value;
+            const nPoints = parseInt(document.getElementById('pointsInput').value);
+            
+            const response = await fetch(`${API_BASE_URL}/elbow/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    dataset_type: dataset,
+                    n_points: nPoints
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            currentData = data.data_points;
+            showElbowMethod(data);
+            showClustering(currentData);
+            
+            // Update optimal K suggestion
+            document.getElementById('clustersInput').value = data.optimal_k;
+        }
+        
+        document.getElementById('runClusteringBtn').disabled = false;
+        updateStatus('ready', 'Data generated. Ready to run clustering.');
+        
+    } catch (error) {
+        console.error('Error generating data:', error);
+        updateStatus('error', `Failed to generate data: ${error.message}`);
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="fas fa-chart-area me-2"></i>Generate Data & Elbow Plot';
+    }
+}
+
+function showInteractiveInstructions() {
+    const chartContainer = document.querySelector('.chart-container');
+    const placeholder = document.getElementById('chartPlaceholder');
+    const chart = document.getElementById('clusterChart');
+    
+    chart.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.innerHTML = `
+        <i class="fas fa-mouse-pointer"></i>
+        <h4>Interactive Mode</h4>
+        <p>Click anywhere on this area to add data points for clustering.</p>
+        <p class="text-secondary">Add at least 6 points to see meaningful clusters.</p>
+    `;
+    
+    // Setup click handler for adding points
+    chartContainer.onclick = (event) => {
+        if (currentMode !== 'interactive') return;
+        
+        const rect = chartContainer.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        
+        userPoints.push([x, y]);
+        updatePointCounter();
+        
+        if (userPoints.length >= 6) {
+            placeholder.style.display = 'none';
+            chart.style.display = 'block';
+            renderUserPoints();
+        }
+    };
+}
+
+function renderUserPoints() {
+    const svg = document.getElementById('clusterChart');
+    svg.innerHTML = '';
+    
+    // Set up SVG
+    const width = svg.clientWidth || 800;
+    const height = svg.clientHeight || 450;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    // Create scales
+    const margin = 40;
+    const xScale = (val) => margin + (val / 100) * (width - 2 * margin);
+    const yScale = (val) => margin + (val / 100) * (height - 2 * margin);
+    
+    // Draw axes
+    drawAxes(svg, width, height, margin);
+    
+    // Draw points
+    userPoints.forEach((point, i) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', xScale(point[0]));
+        circle.setAttribute('cy', yScale(point[1]));
+        circle.setAttribute('r', 6);
+        circle.setAttribute('fill', '#94A3B8');
+        circle.setAttribute('stroke', '#64FFDA');
+        circle.setAttribute('stroke-width', 1);
+        circle.setAttribute('class', 'point');
+        svg.appendChild(circle);
+    });
+}
+
+function updatePointCounter() {
+    document.getElementById('pointCounter').textContent = `Points added: ${userPoints.length}`;
+}
+
+function clearUserPoints() {
+    userPoints = [];
+    updatePointCounter();
+    hideVisualization();
+    showInteractiveInstructions();
+    updateStatus('ready', 'Points cleared. Click to add new points.');
+}
+
+function showElbowMethod(data) {
+    const elbowSection = document.getElementById('elbowSection');
+    const elbowSvg = document.getElementById('elbowSvg');
+    
+    elbowSection.style.display = 'block';
+    
+    if (data.k_values && data.wcss) {
+        renderElbowChart(elbowSvg, data.k_values, data.wcss, data.optimal_k);
+    }
+}
+
+function renderElbowChart(svg, kValues, wcss, optimalK) {
+    svg.innerHTML = '';
+    
+    const width = svg.clientWidth || 400;
+    const height = svg.clientHeight || 200;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    const margin = 40;
+    const chartWidth = width - 2 * margin;
+    const chartHeight = height - 2 * margin;
+    
+    // Scales
+    const maxK = Math.max(...kValues);
+    const maxWCSS = Math.max(...wcss);
+    const xScale = (k) => margin + ((k - 1) / (maxK - 1)) * chartWidth;
+    const yScale = (w) => margin + chartHeight - (w / maxWCSS) * chartHeight;
+    
+    // Draw axes
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', margin);
+    xAxis.setAttribute('y1', height - margin);
+    xAxis.setAttribute('x2', width - margin);
+    xAxis.setAttribute('y2', height - margin);
+    xAxis.setAttribute('stroke', '#64FFDA');
+    xAxis.setAttribute('stroke-width', 1);
+    svg.appendChild(xAxis);
+    
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', margin);
+    yAxis.setAttribute('y1', margin);
+    yAxis.setAttribute('x2', margin);
+    yAxis.setAttribute('y2', height - margin);
+    yAxis.setAttribute('stroke', '#64FFDA');
+    yAxis.setAttribute('stroke-width', 1);
+    svg.appendChild(yAxis);
+    
+    // Draw line
+    let pathData = '';
+    kValues.forEach((k, i) => {
+        const x = xScale(k);
+        const y = yScale(wcss[i]);
+        pathData += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`;
+    });
+    
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', pathData);
+    path.setAttribute('stroke', '#00D4FF');
+    path.setAttribute('stroke-width', 2);
+    path.setAttribute('fill', 'none');
+    svg.appendChild(path);
+    
+    // Draw points
+    kValues.forEach((k, i) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', xScale(k));
+        circle.setAttribute('cy', yScale(wcss[i]));
+        circle.setAttribute('r', k === optimalK ? 8 : 4);
+        circle.setAttribute('fill', k === optimalK ? '#00FF88' : '#00D4FF');
+        circle.setAttribute('stroke', '#FFFFFF');
+        circle.setAttribute('stroke-width', 1);
+        svg.appendChild(circle);
+    });
+    
+    // Labels
+    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xLabel.setAttribute('x', width / 2);
+    xLabel.setAttribute('y', height - 5);
+    xLabel.setAttribute('text-anchor', 'middle');
+    xLabel.setAttribute('fill', '#94A3B8');
+    xLabel.setAttribute('font-family', 'JetBrains Mono, monospace');
+    xLabel.setAttribute('font-size', '12');
+    xLabel.textContent = 'Number of Clusters (K)';
+    svg.appendChild(xLabel);
+    
+    const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yLabel.setAttribute('x', 15);
+    yLabel.setAttribute('y', height / 2);
+    yLabel.setAttribute('text-anchor', 'middle');
+    yLabel.setAttribute('fill', '#94A3B8');
+    yLabel.setAttribute('font-family', 'JetBrains Mono, monospace');
+    yLabel.setAttribute('font-size', '12');
+    yLabel.setAttribute('transform', `rotate(-90, 15, ${height / 2})`);
+    yLabel.textContent = 'WCSS';
+    svg.appendChild(yLabel);
+}
+
+function showClustering(dataPoints) {
+    const placeholder = document.getElementById('chartPlaceholder');
+    const chart = document.getElementById('clusterChart');
+    
+    placeholder.style.display = 'none';
+    chart.style.display = 'block';
+    
+    // Render initial scatter plot
+    renderScatterPlot(dataPoints);
+}
+
+function renderScatterPlot(dataPoints, clusters = null, centroids = null) {
+    const svg = document.getElementById('clusterChart');
+    svg.innerHTML = '';
+    
+    const width = svg.clientWidth || 800;
+    const height = svg.clientHeight || 450;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    const margin = 40;
+    
+    // Calculate scales
+    const allX = dataPoints.map(p => p[0]);
+    const allY = dataPoints.map(p => p[1]);
+    const xMin = Math.min(...allX);
+    const xMax = Math.max(...allX);
+    const yMin = Math.min(...allY);
+    const yMax = Math.max(...allY);
+    
+    const xRange = xMax - xMin;
+    const yRange = yMax - yMin;
+    const xPadding = xRange * 0.1;
+    const yPadding = yRange * 0.1;
+    
+    const xScale = (val) => margin + ((val - xMin + xPadding) / (xRange + 2 * xPadding)) * (width - 2 * margin);
+    const yScale = (val) => height - margin - ((val - yMin + yPadding) / (yRange + 2 * yPadding)) * (height - 2 * margin);
+    
+    // Draw axes
+    drawAxes(svg, width, height, margin);
+    
+    // Draw data points
+    dataPoints.forEach((point, i) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', xScale(point[0]));
+        circle.setAttribute('cy', yScale(point[1]));
+        circle.setAttribute('r', 6);
+        
+        if (clusters) {
+            const clusterIndex = clusters[i];
+            circle.setAttribute('fill', clusterColors[clusterIndex % clusterColors.length]);
+        } else {
+            circle.setAttribute('fill', '#94A3B8');
+        }
+        
+        circle.setAttribute('stroke', '#FFFFFF');
+        circle.setAttribute('stroke-width', 1);
+        circle.setAttribute('class', 'point');
+        svg.appendChild(circle);
+    });
+    
+    // Draw centroids if provided
+    if (centroids) {
+        centroids.forEach((centroid, i) => {
+            const star = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            const cx = xScale(centroid[0]);
+            const cy = yScale(centroid[1]);
+            const size = 12;
+            
+            // Create star shape
+            const points = [];
+            for (let j = 0; j < 10; j++) {
+                const angle = (j * Math.PI) / 5;
+                const radius = j % 2 === 0 ? size : size / 2;
+                const x = cx + radius * Math.cos(angle - Math.PI / 2);
+                const y = cy + radius * Math.sin(angle - Math.PI / 2);
+                points.push(`${x},${y}`);
+            }
+            
+            star.setAttribute('points', points.join(' '));
+            star.setAttribute('fill', clusterColors[i % clusterColors.length]);
+            star.setAttribute('stroke', '#FFFFFF');
+            star.setAttribute('stroke-width', 2);
+            star.setAttribute('class', 'centroid');
+            svg.appendChild(star);
+        });
+    }
+}
+
+function drawAxes(svg, width, height, margin) {
+    // X axis
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', margin);
+    xAxis.setAttribute('y1', height - margin);
+    xAxis.setAttribute('x2', width - margin);
+    xAxis.setAttribute('y2', height - margin);
+    xAxis.setAttribute('stroke', '#64FFDA');
+    xAxis.setAttribute('stroke-width', 1);
+    svg.appendChild(xAxis);
+    
+    // Y axis
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', margin);
+    yAxis.setAttribute('y1', margin);
+    yAxis.setAttribute('x2', margin);
+    yAxis.setAttribute('y2', height - margin);
+    yAxis.setAttribute('stroke', '#64FFDA');
+    yAxis.setAttribute('stroke-width', 1);
+    svg.appendChild(yAxis);
+    
+    // Axis labels
+    const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    xLabel.setAttribute('x', width / 2);
+    xLabel.setAttribute('y', height - 5);
+    xLabel.setAttribute('text-anchor', 'middle');
+    xLabel.setAttribute('fill', '#94A3B8');
+    xLabel.setAttribute('font-family', 'JetBrains Mono, monospace');
+    xLabel.setAttribute('font-size', '12');
+    xLabel.textContent = currentMode === 'study' ? 'Feature 1' : 'X Coordinate';
+    svg.appendChild(xLabel);
+    
+    const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    yLabel.setAttribute('x', 15);
+    yLabel.setAttribute('y', height / 2);
+    yLabel.setAttribute('text-anchor', 'middle');
+    yLabel.setAttribute('fill', '#94A3B8');
+    yLabel.setAttribute('font-family', 'JetBrains Mono, monospace');
+    yLabel.setAttribute('font-size', '12');
+    yLabel.setAttribute('transform', `rotate(-90, 15, ${height / 2})`);
+    yLabel.textContent = currentMode === 'study' ? 'Feature 2' : 'Y Coordinate';
+    svg.appendChild(yLabel);
+}
+
+async function runClustering() {
+    if (!currentData) {
+        updateStatus('error', 'No data available. Generate data first.');
+        return;
+    }
+    
+    updateStatus('running', 'Running K-means clustering...');
+    const runBtn = document.getElementById('runClusteringBtn');
+    runBtn.disabled = true;
+    runBtn.innerHTML = '<div class="loading-spinner"></div>Clustering...';
+    
+    try {
+        const k = parseInt(document.getElementById('clustersInput').value);
+        
+        const response = await fetch(`${API_BASE_URL}/cluster/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data_points: currentData,
+                k: k,
+                animate_steps: false
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        currentClusters = result;
+        renderScatterPlot(currentData, result.labels, result.centroids);
+        showClusterInfo(result);
+        
+        // Enable animation controls
+        document.getElementById('animationControls').style.display = 'flex';
+        
+        updateStatus('complete', 'Clustering completed successfully!');
+        
+    } catch (error) {
+        console.error('Error running clustering:', error);
+        updateStatus('error', `Clustering failed: ${error.message}`);
+    } finally {
+        runBtn.disabled = false;
+        runBtn.innerHTML = '<i class="fas fa-play me-2"></i>Run K-means Clustering';
+    }
+}
+
+function showClusterInfo(clusterResult) {
+    const clusterInfo = document.getElementById('clusterInfo');
+    const clusterStats = document.getElementById('clusterStats');
+    
+    clusterStats.innerHTML = '';
+    
+    Object.entries(clusterResult.cluster_performance).forEach(([clusterId, info]) => {
+        const statDiv = document.createElement('div');
+        statDiv.className = 'cluster-stat';
+        
+        const labelClass = info.label.toLowerCase() + '-performance';
+        
+        statDiv.innerHTML = `
+            <div class="cluster-label" style="color: ${clusterColors[clusterId]};">
+                Cluster ${parseInt(clusterId) + 1}
+            </div>
+            <div class="cluster-count">${info.size} points</div>
+            <div class="cluster-performance ${labelClass}">
+                ${info.label} Performance
+            </div>
+        `;
+        
+        clusterStats.appendChild(statDiv);
+    });
+    
+    clusterInfo.style.display = 'block';
+}
+
+async function toggleAnimation() {
+    if (isAnimating) {
+        stopAnimation();
+    } else {
+        await startAnimation();
+    }
+}
+
+async function startAnimation() {
+    if (!currentData) return;
+    
+    updateStatus('running', 'Generating animation steps...');
+    
+    try {
+        const k = parseInt(document.getElementById('clustersInput').value);
+        
+        const response = await fetch(`${API_BASE_URL}/cluster/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                data_points: currentData,
+                k: k,
+                animate_steps: true
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        
+        animationSteps = result.steps;
+        animationIndex = 0;
+        isAnimating = true;
+        
+        document.getElementById('animateBtn').innerHTML = '<i class="fas fa-pause me-1"></i>Pause';
+        document.getElementById('iterationCounter').style.display = 'block';
+        
+        playAnimation();
+        
+    } catch (error) {
+        console.error('Error starting animation:', error);
+        updateStatus('error', `Animation failed: ${error.message}`);
+    }
+}
+
+function playAnimation() {
+    if (!isAnimating || animationIndex >= animationSteps.length) {
+        stopAnimation();
+        return;
+    }
+    
+    const step = animationSteps[animationIndex];
+    renderAnimationStep(step);
+    
+    document.getElementById('currentIteration').textContent = step.iteration;
+    updateStatus('running', `Animation: ${step.phase} (Iteration ${step.iteration})`);
+    
+    animationIndex++;
+    
+    if (isAnimating) {
+        setTimeout(playAnimation, 1000); // 1 second delay between steps
+    }
+}
+
+function renderAnimationStep(step) {
+    const assignments = step.assignments;
+    const centroids = step.centroids;
+    
+    // Render points with current assignments
+    renderScatterPlot(currentData, assignments, centroids);
+}
+
+function stopAnimation() {
+    isAnimating = false;
+    document.getElementById('animateBtn').innerHTML = '<i class="fas fa-play me-1"></i>Animate';
+    updateStatus('complete', 'Animation stopped');
+}
+
+function stepAnimation() {
+    if (animationSteps.length === 0) return;
+    
+    if (animationIndex < animationSteps.length) {
+        const step = animationSteps[animationIndex];
+        renderAnimationStep(step);
+        document.getElementById('currentIteration').textContent = step.iteration;
+        updateStatus('running', `Step: ${step.phase} (Iteration ${step.iteration})`);
+        animationIndex++;
+    }
+    
+    if (animationIndex >= animationSteps.length) {
+        updateStatus('complete', 'Animation completed');
+    }
+}
+
+function resetAnimation() {
+    animationIndex = 0;
+    isAnimating = false;
+    document.getElementById('animateBtn').innerHTML = '<i class="fas fa-play me-1"></i>Animate';
+    document.getElementById('currentIteration').textContent = '0';
+    
+    if (currentClusters) {
+        renderScatterPlot(currentData, currentClusters.labels, currentClusters.centroids);
+    } else {
+        renderScatterPlot(currentData);
+    }
+    
+    updateStatus('ready', 'Animation reset');
+}
+
+function hideVisualization() {
+    document.getElementById('chartPlaceholder').style.display = 'flex';
+    document.getElementById('clusterChart').style.display = 'none';
+    document.getElementById('elbowSection').style.display = 'none';
+    document.getElementById('clusterInfo').style.display = 'none';
+    document.getElementById('animationControls').style.display = 'none';
+    document.getElementById('iterationCounter').style.display = 'none';
+    document.getElementById('runClusteringBtn').disabled = true;
+}
+
+function updateStatus(type, message) {
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusIcon = statusIndicator.querySelector('i');
+    const statusText = statusIndicator.querySelector('span');
+    
+    statusIndicator.className = `status-indicator status-${type}`;
+    statusText.textContent = message;
+    
+    switch (type) {
+        case 'ready':
+            statusIcon.className = 'fas fa-circle';
+            break;
+        case 'running':
+            statusIcon.className = 'fas fa-spinner fa-spin';
+            break;
+        case 'complete':
+            statusIcon.className = 'fas fa-check-circle';
+            break;
+        case 'error':
+            statusIcon.className = 'fas fa-exclamation-triangle';
+            break;
+    }
+}
+</script>
+{% endblock %}

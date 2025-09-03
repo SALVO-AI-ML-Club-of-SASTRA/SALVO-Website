@@ -367,6 +367,20 @@
 
 {% block content %}
 <div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-project-diagram me-2"></i>Decision Tree
+            </li>
+        </ol>
+    </nav>
+
     <!-- Page Header -->
     <div class="text-center mb-5 animate-on-scroll">
         <h1 class="page-title">Decision Tree Visualizer</h1>

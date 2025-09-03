@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}ML Visualizations Hub - SALVO{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Visualizations Hub Specific Styles */
+    .viz-card {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        position: relative;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(15px);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .viz-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.6s ease;
+    }
+
+    .viz-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--accent-green);
+        box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+    }
+
+    .viz-card:hover::before {
+        transform: translateX(100%);
+    }
+
+    .viz-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-align: center;
+    }
+
+    .viz-card:hover .viz-icon {
+        transform: scale(1.1) rotate(5deg);
+        filter: drop-shadow(0 0 15px currentColor);
+    }
+
+    .viz-title {
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .viz-description {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .viz-features {
+        margin-bottom: 2rem;
+    }
+
+    .viz-features ul {
+        list-style: none;
+        padding: 0;
+    }
+
+    .viz-features li {
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .viz-features li::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: var(--primary-cyan);
+    }
+
+    .viz-button {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        color: var(--dark-bg);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        text-align: center;
+        display: inline-block;
+        width: 100%;
+    }
+
+    .viz-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+        color: var(--dark-bg);
+        text-decoration: none;
+    }
+
+    .coming-soon-card {
+        background: rgba(30, 41, 59, 0.5);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        opacity: 0.7;
+    }
+
+    .coming-soon-card .viz-icon {
+        background: linear-gradient(45deg, var(--text-secondary), var(--text-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .coming-soon-card .viz-title {
+        color: var(--text-secondary);
+    }
+
+    .coming-soon-button {
+        background: linear-gradient(45deg, var(--text-secondary), var(--text-secondary));
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .coming-soon-button:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .stats-section {
+        background: var(--darker-bg);
+        border-top: 1px solid var(--border-glow);
+        border-bottom: 1px solid var(--border-glow);
+        padding: 60px 0;
+        margin: 60px 0;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .stat-number {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .algorithm-showcase {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 15px;
+        padding: 30px;
+        margin: 30px 0;
+        position: relative;
+    }
+
+    .algorithm-showcase::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-cyan), var(--accent-green), var(--neural-orange));
+        animation: code-scan 3s ease-in-out infinite;
+    }
+
+    @keyframes code-scan {
+        0%, 100% { transform: translateX(-100%); }
+        50% { transform: translateX(100%); }
+    }
+
+    .algorithm-title {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--accent-green);
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+
+    .algorithm-code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .keyword { color: var(--neural-orange); }
+    .string { color: var(--accent-green); }
+    .comment { color: var(--text-secondary); opacity: 0.7; }
+    .function { color: var(--data-yellow); }
+    .variable { color: var(--primary-cyan); }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .viz-card {
+            margin-bottom: 2rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="text-center mb-5 animate-on-scroll">
+        <h1 class="page-title">ML Visualizations Hub</h1>
+        <p class="text-secondary fs-5">Interactive machine learning algorithm visualizations and tutorials</p>
+        <div class="algorithm-showcase mt-4">
+            <div class="algorithm-title">ml_visualizations.py</div>
+            <div class="algorithm-code">
+                <span class="keyword">from</span> salvo_ml <span class="keyword">import</span> <span class="function">DecisionTree</span>, <span class="function">KMeans</span>, <span class="function">LinearRegression</span><br>
+                <span class="comment"># Interactive learning through visual algorithms</span><br>
+                <span class="variable">algorithms</span> = [<span class="string">"decision_trees"</span>, <span class="string">"clustering"</span>, <span class="string">"regression"</span>]<br>
+                <span class="keyword">for</span> algo <span class="keyword">in</span> <span class="variable">algorithms</span>:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">visualize</span>(algo, interactive=<span class="string">True</span>)
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Cards -->
+    <div class="row g-4 mb-5">
+        <!-- Decision Tree Visualizer -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h3 class="viz-title">Decision Tree Visualizer</h3>
+                <p class="viz-description">
+                    Build, visualize, and make predictions with interactive decision trees. Explore supervised learning 
+                    through multiple datasets and see how decisions are made at each node.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Multiple datasets (Iris, Wine, etc.)</li>
+                        <li>Interactive tree visualization</li>
+                        <li>Real-time predictions</li>
+                        <li>Path highlighting</li>
+                        <li>Confidence scores</li>
+                    </ul>
+                </div>
+                <a href="{% url 'visualizations:decision_tree_page' %}" class="viz-button">
+                    <i class="fas fa-play me-2"></i>Explore Decision Trees
+                </a>
+            </div>
+        </div>
+
+        <!-- K-means Clustering -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-circle-nodes"></i>
+                </div>
+                <h3 class="viz-title">K-means Clustering</h3>
+                <p class="viz-description">
+                    Discover patterns in data through unsupervised learning. Watch centroids move and see how 
+                    K-means groups similar data points together step by step.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Study & Interactive modes</li>
+                        <li>Elbow method for optimal K</li>
+                        <li>Animated clustering process</li>
+                        <li>Performance labeling</li>
+                        <li>Student data analysis</li>
+                    </ul>
+                </div>
+                <a href="{% url 'visualizations:kmeans_page' %}" class="viz-button">
+                    <i class="fas fa-play me-2"></i>Explore K-means
+                </a>
+            </div>
+        </div>
+
+        <!-- DBSCAN Clustering -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                <h3 class="viz-title">DBSCAN Clustering</h3>
+                <p class="viz-description">
+                    Density-based clustering that discovers clusters of varying shapes and automatically detects 
+                    outliers. No need to specify number of clusters beforehand.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Interactive point placement</li>
+                        <li>Step-by-step visualization</li>
+                        <li>Automatic noise detection</li>
+                        <li>Parameter adjustment</li>
+                        <li>Core/Border/Noise classification</li>
+                    </ul>
+                </div>
+                <a href="{% url 'visualizations:dbscan_page' %}" class="viz-button">
+                    <i class="fas fa-play me-2"></i>Explore DBSCAN
+                </a>
+            </div>
+        </div>
+
+        <!-- Linear Regression - Coming Soon -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card coming-soon-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="viz-title">Linear Regression</h3>
+                <p class="viz-description">
+                    Understand the fundamentals of regression analysis. Visualize how linear models fit data 
+                    and predict continuous values with interactive examples.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Line fitting visualization</li>
+                        <li>Gradient descent animation</li>
+                        <li>Error metrics display</li>
+                        <li>Multiple regression</li>
+                        <li>Feature scaling effects</li>
+                    </ul>
+                </div>
+                <span class="viz-button coming-soon-button">
+                    <i class="fas fa-clock me-2"></i>Coming Soon
+                </span>
+            </div>
+        </div>
+
+        <!-- Neural Networks - Coming Soon -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card coming-soon-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <h3 class="viz-title">Neural Networks</h3>
+                <p class="viz-description">
+                    Dive deep into artificial neural networks. See how neurons process information and 
+                    learn complex patterns through backpropagation.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Network architecture builder</li>
+                        <li>Forward propagation</li>
+                        <li>Backpropagation animation</li>
+                        <li>Weight visualization</li>
+                        <li>Training progress</li>
+                    </ul>
+                </div>
+                <span class="viz-button coming-soon-button">
+                    <i class="fas fa-clock me-2"></i>Coming Soon
+                </span>
+            </div>
+        </div>
+
+        <!-- SVM - Coming Soon -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card coming-soon-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-vector-square"></i>
+                </div>
+                <h3 class="viz-title">Support Vector Machines</h3>
+                <p class="viz-description">
+                    Explore the power of SVMs in finding optimal decision boundaries. Understand kernels 
+                    and how SVMs handle non-linear data.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Decision boundary visualization</li>
+                        <li>Kernel transformations</li>
+                        <li>Support vector highlighting</li>
+                        <li>Margin optimization</li>
+                        <li>Parameter tuning</li>
+                    </ul>
+                </div>
+                <span class="viz-button coming-soon-button">
+                    <i class="fas fa-clock me-2"></i>Coming Soon
+                </span>
+            </div>
+        </div>
+
+        <!-- Random Forest - Coming Soon -->
+        <div class="col-lg-4 col-md-6">
+            <div class="viz-card coming-soon-card animate-on-scroll">
+                <div class="viz-icon">
+                    <i class="fas fa-tree"></i>
+                </div>
+                <h3 class="viz-title">Random Forest</h3>
+                <p class="viz-description">
+                    See how ensemble methods combine multiple decision trees to create more robust and 
+                    accurate predictions through democratic voting.
+                </p>
+                <div class="viz-features">
+                    <ul>
+                        <li>Forest visualization</li>
+                        <li>Bootstrap sampling</li>
+                        <li>Feature randomness</li>
+                        <li>Voting mechanisms</li>
+                        <li>Feature importance</li>
+                    </ul>
+                </div>
+                <span class="viz-button coming-soon-button">
+                    <i class="fas fa-clock me-2"></i>Coming Soon
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="stats-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number">3</span>
+                        <div class="stat-label">Active Algorithms</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number">10+</span>
+                        <div class="stat-label">Datasets Available</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number">4</span>
+                        <div class="stat-label">More Coming Soon</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-item animate-on-scroll">
+                        <span class="stat-number">∞</span>
+                        <div class="stat-label">Learning Possibilities</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Path -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="algorithm-showcase animate-on-scroll">
+                <div class="algorithm-title">Recommended Learning Path</div>
+                <div class="algorithm-code">
+                    <span class="comment"># Start your ML journey with these visualizations</span><br>
+                    <span class="string">1.</span> <span class="function">explore_decision_trees</span>()  <span class="comment"># Understand supervised learning</span><br>
+                    <span class="string">2.</span> <span class="function">discover_kmeans</span>()       <span class="comment"># Learn unsupervised clustering</span><br>
+                    <span class="string">3.</span> <span class="function">master_dbscan</span>()        <span class="comment"># Density-based clustering with noise</span><br>
+                    <span class="string">4.</span> <span class="function">master_regression</span>()     <span class="comment"># Predict continuous values</span><br>
+                    <span class="string">5.</span> <span class="function">build_neural_nets</span>()     <span class="comment"># Deep learning fundamentals</span><br>
+                    <span class="comment"># Each visualization builds upon the previous concepts</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to coming soon cards
+    const comingSoonCards = document.querySelectorAll('.coming-soon-card');
+    comingSoonCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 10px 20px rgba(148, 163, 184, 0.2)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Animate stats on scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('.stat-number');
+                const finalNumber = statNumber.textContent;
+                
+                if (finalNumber !== '∞' && finalNumber !== '10+' && finalNumber !== '4') {
+                    animateNumber(statNumber, parseInt(finalNumber));
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    document.querySelectorAll('.stat-item').forEach(item => {
+        observer.observe(item);
+    });
+});
+
+function animateNumber(element, target) {
+    let current = 0;
+    const increment = target / 30;
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 50);
+}
+</script>
+{% endblock %}

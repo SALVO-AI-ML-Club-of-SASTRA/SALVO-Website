@@ -1,0 +1,764 @@
+{% extends 'base.html' %}
+
+{% block title %}DBSCAN Clustering - ML Visualizations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-project-diagram me-2"></i>DBSCAN Clustering
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="neural-card p-4 text-center">
+                <h1 class="neural-title mb-3">
+                    <i class="fas fa-project-diagram me-3" style="color: var(--accent-green);"></i>
+                    DBSCAN CLUSTERING VISUALIZER
+                </h1>
+                <p class="neural-subtitle mb-0">
+                    Density-Based Spatial Clustering of Applications with Noise
+                </p>
+                <div class="neural-divider my-3"></div>
+                <p class="text-muted" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    Interactive visualization of the DBSCAN algorithm • Step-by-step clustering process • Real-time parameter adjustment
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Left Panel: Controls -->
+        <div class="col-lg-4 mb-4">
+            <div class="neural-card p-4 h-100">
+                <h4 class="neural-section-title mb-4">
+                    <i class="fas fa-cogs me-2"></i>ALGORITHM CONTROLS
+                </h4>
+
+                <!-- Parameters Section -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">DBSCAN PARAMETERS</h6>
+                    
+                    <!-- Epsilon Parameter -->
+                    <div class="mb-3">
+                        <label for="epsilon" class="form-label neural-input-label">
+                            <i class="fas fa-circle-dot me-2"></i>Epsilon (ε) - Neighborhood Radius
+                        </label>
+                        <input type="range" 
+                               class="form-range neural-range" 
+                               id="epsilon" 
+                               min="0.1" 
+                               max="2.0" 
+                               step="0.05" 
+                               value="0.3">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">0.1</small>
+                            <span id="epsilonValue" class="neural-value">0.3</span>
+                            <small class="text-muted">2.0</small>
+                        </div>
+                    </div>
+
+                    <!-- MinPts Parameter -->
+                    <div class="mb-3">
+                        <label for="minPts" class="form-label neural-input-label">
+                            <i class="fas fa-users me-2"></i>MinPts - Minimum Points
+                        </label>
+                        <input type="range" 
+                               class="form-range neural-range" 
+                               id="minPts" 
+                               min="1" 
+                               max="10" 
+                               step="1" 
+                               value="3">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <span id="minPtsValue" class="neural-value">3</span>
+                            <small class="text-muted">10</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">QUICK ACTIONS</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn neural-btn-primary" id="loadSampleData">
+                            <i class="fas fa-download me-2"></i>Load Sample Data
+                        </button>
+                        <button class="btn neural-btn-secondary" id="clearCanvas">
+                            <i class="fas fa-eraser me-2"></i>Clear Canvas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Animation Controls -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">ANIMATION CONTROLS</h6>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn neural-btn-icon" id="runAnimation" title="Run DBSCAN">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="btn neural-btn-icon" id="pauseAnimation" title="Pause" style="display: none;">
+                            <i class="fas fa-pause"></i>
+                        </button>
+                        <button class="btn neural-btn-icon" id="resetAnimation" title="Reset">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button class="btn neural-btn-icon" id="stepAnimation" title="Step Forward">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Algorithm Info -->
+                <div class="neural-info-box">
+                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Algorithm Info</h6>
+                    <p class="small mb-1"><strong>Core Point:</strong> Has ≥ MinPts neighbors within ε</p>
+                    <p class="small mb-1"><strong>Border Point:</strong> In neighborhood of core point</p>
+                    <p class="small mb-0"><strong>Noise Point:</strong> Neither core nor border</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="col-lg-8">
+            <div class="neural-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="neural-section-title mb-0">
+                        <i class="fas fa-eye me-2"></i>INTERACTIVE CANVAS
+                    </h4>
+                    <div class="neural-status" id="algorithmStatus">
+                        Ready • Click to add points
+                    </div>
+                </div>
+
+                <!-- Canvas Area -->
+                <div class="text-center mb-4">
+                    <div class="canvas-container" style="display: inline-block; position: relative;">
+                        <canvas id="dbscanCanvas" 
+                                width="512" 
+                                height="512" 
+                                style="border: 2px solid var(--primary-cyan); border-radius: 10px; background: #0a0a0a; cursor: crosshair;">
+                        </canvas>
+                        
+                        <!-- Epsilon Circle Overlay -->
+                        <div id="epsilonOverlay" 
+                             style="position: absolute; top: 0; left: 0; pointer-events: none; display: none;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step Description -->
+                <div class="neural-info-box mb-4" id="stepDescription" style="min-height: 60px;">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lightbulb me-3" style="color: var(--accent-orange);"></i>
+                        <div>
+                            <h6 class="mb-1">Getting Started</h6>
+                            <p class="mb-0 small">Click on the canvas to add points, or load sample data to begin clustering visualization.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cluster Statistics -->
+                <div class="row" id="clusterStats" style="display: none;">
+                    <div class="col-12">
+                        <h6 class="neural-label mb-3">CLUSTER ANALYSIS</h6>
+                        <div class="row" id="statsContainer">
+                            <!-- Statistics will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    :root {
+        --card-bg: rgba(15, 23, 42, 0.8);
+        --primary-cyan: #00d4ff;
+        --accent-green: #39ff14;
+        --accent-orange: #ff6b35;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --border-color: rgba(0, 212, 255, 0.2);
+    }
+
+    .neural-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+    }
+
+    .neural-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 2.2rem;
+        color: var(--text-primary);
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .neural-subtitle {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+
+    .neural-section-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--primary-cyan);
+        font-size: 1.1rem;
+    }
+
+    .neural-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        color: var(--accent-green);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .neural-input-label {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .neural-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--accent-orange);
+        font-size: 0.9rem;
+    }
+
+    .neural-range {
+        accent-color: var(--primary-cyan);
+    }
+
+    .neural-btn-primary {
+        background: linear-gradient(135deg, var(--primary-cyan), #0099cc);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-primary:hover {
+        background: linear-gradient(135deg, #00b8e6, #0088bb);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-secondary {
+        background: linear-gradient(135deg, var(--accent-green), #2ed100);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-secondary:hover {
+        background: linear-gradient(135deg, #33e617, #28b800);
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-icon {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--primary-cyan);
+        color: var(--primary-cyan);
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-icon:hover {
+        background: var(--primary-cyan);
+        color: #000;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        transform: scale(1.1);
+    }
+
+    .neural-info-box {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        color: var(--text-secondary);
+    }
+
+    .neural-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--accent-green);
+        background: rgba(57, 255, 20, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(57, 255, 20, 0.2);
+    }
+
+    .neural-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+        border: none;
+    }
+
+    .canvas-container {
+        position: relative;
+    }
+
+    #dbscanCanvas {
+        transition: all 0.3s ease;
+    }
+
+    #dbscanCanvas:hover {
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+
+    .cluster-stat-card {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .cluster-stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.2);
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+class DBSCANVisualizer {
+    constructor() {
+        this.canvas = document.getElementById('dbscanCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.points = [];
+        this.isAnimating = false;
+        this.animationSteps = [];
+        this.currentStep = 0;
+        this.animationTimer = null;
+        
+        this.initializeEventListeners();
+        this.updateParameterDisplays();
+    }
+
+    initializeEventListeners() {
+        // Canvas click to add points
+        this.canvas.addEventListener('click', (e) => this.addPoint(e));
+        
+        // Parameter controls
+        document.getElementById('epsilon').addEventListener('input', () => this.updateParameterDisplays());
+        document.getElementById('minPts').addEventListener('input', () => this.updateParameterDisplays());
+        
+        // Action buttons
+        document.getElementById('loadSampleData').addEventListener('click', () => this.loadSampleData());
+        document.getElementById('clearCanvas').addEventListener('click', () => this.clearCanvas());
+        document.getElementById('runAnimation').addEventListener('click', () => this.runDBSCAN());
+        document.getElementById('pauseAnimation').addEventListener('click', () => this.pauseAnimation());
+        document.getElementById('resetAnimation').addEventListener('click', () => this.resetAnimation());
+        document.getElementById('stepAnimation').addEventListener('click', () => this.stepForward());
+    }
+
+    updateParameterDisplays() {
+        const epsilon = document.getElementById('epsilon').value;
+        const minPts = document.getElementById('minPts').value;
+        
+        document.getElementById('epsilonValue').textContent = epsilon;
+        document.getElementById('minPtsValue').textContent = minPts;
+    }
+
+    addPoint(event) {
+        if (this.isAnimating) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = Math.round(event.clientX - rect.left);
+        const y = Math.round(event.clientY - rect.top);
+        
+        this.points.push({ x, y });
+        this.drawCanvas();
+        this.updateStatus(`Added point (${x}, ${y}) • Total: ${this.points.length} points`);
+    }
+
+    async loadSampleData() {
+        try {
+            this.updateStatus('Loading sample data...');
+            const response = await fetch('/visualizations/api/dbscan/sample-data/');
+            const data = await response.json();
+            
+            this.points = data.points;
+            
+            // Update recommended parameters
+            document.getElementById('epsilon').value = data.recommended_epsilon;
+            document.getElementById('minPts').value = data.recommended_min_pts;
+            this.updateParameterDisplays();
+            
+            this.drawCanvas();
+            this.updateStatus(`Loaded ${this.points.length} sample points • Ready for clustering`);
+        } catch (error) {
+            console.error('Error loading sample data:', error);
+            this.updateStatus('Error loading sample data');
+        }
+    }
+
+    clearCanvas() {
+        this.points = [];
+        this.animationSteps = [];
+        this.currentStep = 0;
+        this.isAnimating = false;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.updateStatus('Canvas cleared • Click to add points');
+        this.hideClusterStats();
+        this.updateAnimationControls();
+    }
+
+    async runDBSCAN() {
+        if (this.points.length < 2) {
+            this.updateStatus('Need at least 2 points to run DBSCAN');
+            return;
+        }
+
+        try {
+            this.updateStatus('Running DBSCAN algorithm...');
+            const epsilon = parseFloat(document.getElementById('epsilon').value);
+            const minPts = parseInt(document.getElementById('minPts').value);
+
+            const response = await fetch('/visualizations/api/dbscan/cluster/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    points: this.points,
+                    epsilon: epsilon,
+                    min_pts: minPts,
+                    return_steps: true
+                })
+            });
+
+            const data = await response.json();
+            this.animationSteps = data.steps;
+            this.currentStep = 0;
+            this.isAnimating = true;
+            
+            this.updateAnimationControls();
+            this.startAnimation();
+            
+        } catch (error) {
+            console.error('Error running DBSCAN:', error);
+            this.updateStatus('Error running DBSCAN algorithm');
+        }
+    }
+
+    startAnimation() {
+        if (this.animationTimer) {
+            clearInterval(this.animationTimer);
+        }
+
+        this.animationTimer = setInterval(() => {
+            if (this.currentStep >= this.animationSteps.length) {
+                this.completeAnimation();
+                return;
+            }
+
+            this.displayStep(this.animationSteps[this.currentStep]);
+            this.currentStep++;
+        }, 1500); // 1.5 second per step
+    }
+
+    pauseAnimation() {
+        if (this.animationTimer) {
+            clearInterval(this.animationTimer);
+            this.animationTimer = null;
+        }
+        this.updateAnimationControls();
+    }
+
+    resetAnimation() {
+        this.pauseAnimation();
+        this.currentStep = 0;
+        this.isAnimating = false;
+        this.drawCanvas();
+        this.updateStatus('Animation reset • Ready to run DBSCAN');
+        this.updateAnimationControls();
+    }
+
+    stepForward() {
+        if (this.currentStep < this.animationSteps.length) {
+            this.displayStep(this.animationSteps[this.currentStep]);
+            this.currentStep++;
+            
+            if (this.currentStep >= this.animationSteps.length) {
+                this.completeAnimation();
+            }
+        }
+    }
+
+    displayStep(step) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw all points with their current labels and types
+        for (let i = 0; i < this.points.length; i++) {
+            const point = this.points[i];
+            const label = step.labels[i];
+            const pointType = step.point_types[i];
+            
+            // Choose color based on cluster label
+            let color = '#666666'; // Default gray for unassigned
+            if (label === -1) {
+                color = '#ff4444'; // Red for noise
+            } else if (label > 0) {
+                const colors = ['#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43'];
+                color = colors[(label - 1) % colors.length];
+            }
+            
+            // Draw point with size based on type
+            this.ctx.beginPath();
+            let radius = 6;
+            if (pointType === 'core') radius = 8;
+            else if (pointType === 'border') radius = 6;
+            else if (pointType === 'noise') radius = 4;
+            
+            this.ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
+            this.ctx.fillStyle = color;
+            this.ctx.fill();
+            
+            // Add border for current point
+            if (i === step.current_point) {
+                this.ctx.strokeStyle = '#ffff00';
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+            }
+        }
+        
+        // Draw epsilon circle around current point
+        if (step.current_point !== null) {
+            const currentPoint = this.points[step.current_point];
+            const epsilon = parseFloat(document.getElementById('epsilon').value) * 100;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(currentPoint.x, currentPoint.y, epsilon, 0, 2 * Math.PI);
+            this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+        }
+        
+        // Draw connections to neighbors
+        if (step.neighbors && step.current_point !== null) {
+            const currentPoint = this.points[step.current_point];
+            step.neighbors.forEach(neighborIdx => {
+                const neighbor = this.points[neighborIdx];
+                this.ctx.beginPath();
+                this.ctx.moveTo(currentPoint.x, currentPoint.y);
+                this.ctx.lineTo(neighbor.x, neighbor.y);
+                this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+            });
+        }
+        
+        // Update step description
+        this.updateStepDescription(step);
+    }
+
+    updateStepDescription(step) {
+        const stepDesc = document.getElementById('stepDescription');
+        const phaseIcons = {
+            'initialization': 'fa-play',
+            'examining': 'fa-search',
+            'core': 'fa-star',
+            'noise': 'fa-times',
+            'expanding': 'fa-expand-arrows-alt',
+            'assign': 'fa-plus',
+            'complete': 'fa-check'
+        };
+        
+        const phaseColors = {
+            'initialization': 'var(--primary-cyan)',
+            'examining': 'var(--accent-orange)',
+            'core': 'var(--accent-green)',
+            'noise': '#ff4444',
+            'expanding': 'var(--accent-orange)',
+            'assign': 'var(--accent-green)',
+            'complete': 'var(--accent-green)'
+        };
+        
+        const icon = phaseIcons[step.phase] || 'fa-info';
+        const color = phaseColors[step.phase] || 'var(--accent-orange)';
+        
+        stepDesc.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas ${icon} me-3" style="color: ${color};"></i>
+                <div>
+                    <h6 class="mb-1">Step ${step.step}: ${step.phase.toUpperCase()}</h6>
+                    <p class="mb-0 small">${step.description}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    completeAnimation() {
+        this.pauseAnimation();
+        this.isAnimating = false;
+        this.updateAnimationControls();
+        this.updateStatus('DBSCAN clustering complete');
+        this.showClusterStats();
+    }
+
+    showClusterStats() {
+        const finalStep = this.animationSteps[this.animationSteps.length - 1];
+        const labels = finalStep.labels;
+        const pointTypes = finalStep.point_types;
+        
+        // Calculate statistics
+        const clusters = {};
+        let noiseCount = 0;
+        
+        labels.forEach((label, idx) => {
+            if (label === -1) {
+                noiseCount++;
+            } else {
+                if (!clusters[label]) {
+                    clusters[label] = { count: 0, points: [] };
+                }
+                clusters[label].count++;
+                clusters[label].points.push(idx);
+            }
+        });
+        
+        // Display statistics
+        const statsContainer = document.getElementById('statsContainer');
+        const clusterStats = document.getElementById('clusterStats');
+        
+        let statsHTML = '';
+        
+        // Cluster stats
+        Object.keys(clusters).forEach(clusterId => {
+            const cluster = clusters[clusterId];
+            const colors = ['#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+            const color = colors[(clusterId - 1) % colors.length];
+            
+            statsHTML += `
+                <div class="col-md-3 mb-3">
+                    <div class="cluster-stat-card">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <div style="width: 20px; height: 20px; background: ${color}; border-radius: 50%; margin-right: 10px;"></div>
+                            <strong>Cluster ${clusterId}</strong>
+                        </div>
+                        <p class="mb-0">${cluster.count} points</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Noise stats
+        if (noiseCount > 0) {
+            statsHTML += `
+                <div class="col-md-3 mb-3">
+                    <div class="cluster-stat-card">
+                        <div class="d-flex align-items-center justify-content-center mb-2">
+                            <div style="width: 20px; height: 20px; background: #ff4444; border-radius: 50%; margin-right: 10px;"></div>
+                            <strong>Noise</strong>
+                        </div>
+                        <p class="mb-0">${noiseCount} points</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        statsContainer.innerHTML = statsHTML;
+        clusterStats.style.display = 'block';
+    }
+
+    hideClusterStats() {
+        document.getElementById('clusterStats').style.display = 'none';
+    }
+
+    updateAnimationControls() {
+        const runBtn = document.getElementById('runAnimation');
+        const pauseBtn = document.getElementById('pauseAnimation');
+        
+        if (this.isAnimating && this.animationTimer) {
+            runBtn.style.display = 'none';
+            pauseBtn.style.display = 'flex';
+        } else {
+            runBtn.style.display = 'flex';
+            pauseBtn.style.display = 'none';
+        }
+    }
+
+    drawCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw all points
+        this.points.forEach((point, index) => {
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, 6, 0, 2 * Math.PI);
+            this.ctx.fillStyle = '#00d4ff';
+            this.ctx.fill();
+            this.ctx.strokeStyle = '#ffffff';
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+        });
+    }
+
+    updateStatus(message) {
+        document.getElementById('algorithmStatus').textContent = message;
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+}
+
+// Initialize the visualizer when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const visualizer = new DBSCANVisualizer();
+});
+</script>
+{% endblock %}
