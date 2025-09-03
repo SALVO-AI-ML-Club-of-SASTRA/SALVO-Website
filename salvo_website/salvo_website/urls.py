@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from website.views import home, login, member_dashboard, account_dashboard, register_member, register_account, \
     create_post, verify_post, join_request, view_applications, upvote_application, update_application_status, like_post, \
     account_profile, member_profile, logout, delete_post
@@ -65,6 +65,9 @@ urlpatterns = [
     path('add_minutes/<str:code>/',v1.add_minutes),
     path('member_stats/',v1.member_stats),
     path('meeting_stats/',v1.meeting_stats),
+
+    # Visualizations URLs
+    path('visualizations/', include('visualizations.urls')),
 ]
 
 if settings.DEBUG:

@@ -5,3 +5,9 @@ matplotlib
 tensorflow
 nltk
 opencv-python
+# Decision Tree Dependencies
+djangorestframework==3.14.0
+django-cors-headers==4.2.0
+pandas==2.0.3
+joblib==1.5.1
+scipy==1.15.3

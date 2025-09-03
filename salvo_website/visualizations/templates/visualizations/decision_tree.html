@@ -1,0 +1,966 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Decision Tree Visualizer - SALVO{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Decision Tree Specific Styles */
+    .tree-container {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 0;
+        backdrop-filter: blur(15px);
+        overflow: hidden;
+        min-height: 600px;
+    }
+
+    .control-panel {
+        background: var(--darker-bg);
+        border-bottom: 1px solid var(--border-glow);
+        padding: 20px;
+    }
+
+    .tree-builder, .prediction-form {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        backdrop-filter: blur(15px);
+    }
+
+    .tree-builder h3, .prediction-form h3 {
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .dataset-selector {
+        margin-bottom: 20px;
+    }
+
+    .dataset-selector label {
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .dataset-selector select {
+        width: 100%;
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        color: var(--text-primary);
+        border-radius: 8px;
+        padding: 10px;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .dataset-info {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 8px;
+        padding: 12px;
+        margin: 15px 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .build-btn, .predict-btn, .defaults-btn {
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        border: none;
+        padding: 12px 25px;
+        border-radius: 25px;
+        color: var(--dark-bg);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .build-btn:hover, .predict-btn:hover, .defaults-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+    }
+
+    .build-btn:disabled, .predict-btn:disabled, .defaults-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .feature-inputs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+
+    .feature-input {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feature-input label {
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        margin-bottom: 5px;
+        text-transform: capitalize;
+    }
+
+    .feature-input input {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        color: var(--text-primary);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.9rem;
+    }
+
+    .feature-input input:focus {
+        border-color: var(--accent-green);
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+    }
+
+    .server-status {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .server-online {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        color: var(--accent-green);
+    }
+
+    .server-offline {
+        background: rgba(255, 107, 53, 0.1);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        color: var(--neural-orange);
+    }
+
+    .server-loading {
+        background: rgba(255, 210, 63, 0.1);
+        border: 1px solid rgba(255, 210, 63, 0.3);
+        color: var(--data-yellow);
+    }
+
+    .tree-visualization {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 12px;
+        padding: 20px;
+        min-height: 500px;
+        overflow: auto;
+        position: relative;
+    }
+
+    .tree-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 400px;
+        color: var(--text-secondary);
+        font-family: 'JetBrains Mono', monospace;
+        text-align: center;
+        flex-direction: column;
+    }
+
+    .tree-placeholder i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: var(--primary-cyan);
+        opacity: 0.6;
+    }
+
+    .error-message {
+        background: rgba(255, 107, 53, 0.1);
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        color: var(--neural-orange);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+    }
+
+    .prediction-result {
+        background: rgba(0, 255, 136, 0.1);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+        border-radius: 8px;
+        padding: 15px;
+        margin: 15px 0;
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .prediction-result h4 {
+        margin-bottom: 10px;
+        color: var(--accent-green);
+    }
+
+    .result-class {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .result-confidence {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .probability-bar {
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+        font-size: 0.8rem;
+    }
+
+    .class-name {
+        min-width: 80px;
+        color: var(--text-accent);
+    }
+
+    .bar-container {
+        flex: 1;
+        height: 20px;
+        background: rgba(148, 163, 184, 0.2);
+        border-radius: 10px;
+        margin: 0 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .bar {
+        height: 100%;
+        background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+
+    .percentage {
+        min-width: 40px;
+        text-align: right;
+        color: var(--text-secondary);
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(0, 212, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: var(--primary-cyan);
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 10px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* SVG Tree Styling */
+    .tree-svg {
+        width: 100%;
+        height: 600px;
+        background: var(--code-bg);
+        border-radius: 8px;
+    }
+
+    .tree-node {
+        cursor: pointer;
+    }
+
+    .tree-node rect {
+        transition: all 0.3s ease;
+    }
+
+    .tree-node:hover rect {
+        filter: brightness(1.2);
+    }
+
+    .tree-branch {
+        stroke: var(--border-glow);
+        stroke-width: 2;
+        transition: all 0.3s ease;
+    }
+
+    .tree-branch.active {
+        stroke: var(--accent-green);
+        stroke-width: 3;
+    }
+
+    .sample-values {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    .sample-values h4 {
+        color: var(--accent-green);
+        font-family: 'JetBrains Mono', monospace;
+        margin-bottom: 15px;
+    }
+
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+    }
+
+    .value-item {
+        background: var(--card-bg);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 6px;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+    }
+
+    .value-label {
+        color: var(--text-accent);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .value-number {
+        color: var(--text-primary);
+        font-weight: bold;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .feature-inputs {
+            grid-template-columns: 1fr;
+        }
+        
+        .tree-svg {
+            height: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Page Header -->
+    <div class="text-center mb-5 animate-on-scroll">
+        <h1 class="page-title">Decision Tree Visualizer</h1>
+        <p class="text-secondary fs-5">Build, visualize, and make predictions with intelligent decision trees</p>
+        <div class="algorithm-showcase mt-4">
+            <div class="algorithm-code">
+                <span class="keyword">from</span> sklearn.tree <span class="keyword">import</span> <span class="function">DecisionTreeClassifier</span><br>
+                <span class="variable">model</span> = <span class="function">DecisionTreeClassifier</span>(random_state=<span class="string">42</span>)<br>
+                <span class="variable">model</span>.<span class="function">fit</span>(X_train, y_train)<br>
+                <span class="comment"># Visualize the decision boundary</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Panel - Controls -->
+        <div class="col-lg-4">
+            <!-- Server Status -->
+            <div id="serverStatus" class="server-status server-loading animate-on-scroll">
+                <div class="loading-spinner"></div>
+                <span>Checking server status...</span>
+            </div>
+
+            <!-- Tree Builder -->
+            <div class="tree-builder animate-on-scroll">
+                <h3><i class="fas fa-project-diagram me-2"></i>Build Decision Tree</h3>
+                
+                <div class="dataset-selector">
+                    <label for="datasetSelect">Select Dataset:</label>
+                    <select id="datasetSelect">
+                        <option value="iris">Iris Dataset (Classification)</option>
+                        <option value="wine">Wine Dataset (Classification)</option>
+                        <option value="breast_cancer">Breast Cancer Dataset (Classification)</option>
+                        <option value="diabetes">Diabetes Dataset (Regression)</option>
+                    </select>
+                </div>
+                
+                <div id="datasetInfo" class="dataset-info">
+                    The Iris dataset contains 3 classes of 50 instances each, where each class refers to a type of iris plant.
+                </div>
+                
+                <button id="buildTreeBtn" class="build-btn" disabled>
+                    <i class="fas fa-cogs me-2"></i>Build Decision Tree
+                </button>
+                
+                <div id="buildError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <!-- Prediction Form -->
+            <div class="prediction-form animate-on-scroll">
+                <h3><i class="fas fa-brain me-2"></i>Make Prediction</h3>
+                
+                <div class="mb-3">
+                    <p class="text-secondary">Enter values for the features below to make a prediction:</p>
+                    <button id="useDefaultsBtn" class="defaults-btn" disabled>
+                        <i class="fas fa-magic me-2"></i>Use Example Values
+                    </button>
+                </div>
+                
+                <div id="featureInputs" class="feature-inputs">
+                    <p class="text-secondary">Build a model first to enable predictions</p>
+                </div>
+                
+                <button id="predictBtn" class="predict-btn" disabled>
+                    <i class="fas fa-search me-2"></i>Make Prediction
+                </button>
+                
+                <div id="predictionResult" class="prediction-result" style="display: none;"></div>
+                <div id="predictError" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Visualization -->
+        <div class="col-lg-8">
+            <div class="tree-container animate-on-scroll">
+                <div class="control-panel">
+                    <h3 class="mb-0" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                        <i class="fas fa-sitemap me-2"></i>Decision Tree Visualization
+                    </h3>
+                </div>
+                
+                <div class="tree-visualization">
+                    <div id="treePlaceholder" class="tree-placeholder">
+                        <i class="fas fa-project-diagram"></i>
+                        <h4>No Tree Built Yet</h4>
+                        <p>Build a decision tree using the panel on the left to see the visualization here.</p>
+                    </div>
+                    <svg id="treeSvg" class="tree-svg" style="display: none;"></svg>
+                </div>
+                
+                <div id="sampleValues" class="sample-values" style="display: none;">
+                    <h4><i class="fas fa-list-ul me-2"></i>Current Sample Values</h4>
+                    <div id="valuesGrid" class="values-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let currentTreeData = null;
+let serverOnline = false;
+let isLoading = false;
+
+// Dataset information
+const datasetInfo = {
+    'iris': 'The Iris dataset contains 3 classes of 50 instances each, where each class refers to a type of iris plant.',
+    'wine': 'The Wine dataset contains the results of a chemical analysis of wines grown in the same region in Italy.',
+    'breast_cancer': 'The Breast Cancer dataset contains features computed from breast cancer cell nuclei images.',
+    'diabetes': 'The Diabetes dataset is a regression problem with 10 baseline variables for diabetes patients.'
+};
+
+// API Base URL
+const API_BASE_URL = window.location.origin + '/visualizations/api';
+
+// Utility functions
+function showLoading(btn, text = 'Loading...') {
+    btn.disabled = true;
+    btn.innerHTML = `<div class="loading-spinner"></div>${text}`;
+}
+
+function hideLoading(btn, originalText) {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+}
+
+function showError(elementId, message) {
+    const errorDiv = document.getElementById(elementId);
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+}
+
+// Check server status
+async function checkServerStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/status/`);
+        const data = await response.json();
+        
+        if (data.status === 'online') {
+            serverOnline = true;
+            updateServerStatus('online', 'Server Online');
+            enableControls();
+        } else {
+            throw new Error('Server not responding');
+        }
+    } catch (error) {
+        serverOnline = false;
+        updateServerStatus('offline', 'Server Offline');
+        disableControls();
+        console.error('Server status check failed:', error);
+    }
+}
+
+function updateServerStatus(status, message) {
+    const statusDiv = document.getElementById('serverStatus');
+    statusDiv.className = `server-status server-${status}`;
+    
+    let icon = status === 'online' ? 'check-circle' : 'exclamation-triangle';
+    statusDiv.innerHTML = `<i class="fas fa-${icon} me-2"></i>${message}`;
+}
+
+function enableControls() {
+    document.getElementById('buildTreeBtn').disabled = false;
+    updateDatasetInfo();
+}
+
+function disableControls() {
+    document.getElementById('buildTreeBtn').disabled = true;
+    document.getElementById('predictBtn').disabled = true;
+    document.getElementById('useDefaultsBtn').disabled = true;
+}
+
+// Dataset handling
+function updateDatasetInfo() {
+    const select = document.getElementById('datasetSelect');
+    const infoDiv = document.getElementById('datasetInfo');
+    infoDiv.textContent = datasetInfo[select.value];
+}
+
+// Build tree
+async function buildTree() {
+    if (!serverOnline || isLoading) return;
+    
+    const buildBtn = document.getElementById('buildTreeBtn');
+    const dataset = document.getElementById('datasetSelect').value;
+    
+    isLoading = true;
+    showLoading(buildBtn, 'Building Decision Tree...');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/build-tree/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ dataset })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        currentTreeData = data;
+        renderTree(data);
+        setupPredictionForm(data);
+        
+        hideLoading(buildBtn, '<i class="fas fa-cogs me-2"></i>Build Decision Tree');
+        
+    } catch (error) {
+        showError('buildError', `Failed to build tree: ${error.message}`);
+        hideLoading(buildBtn, '<i class="fas fa-cogs me-2"></i>Build Decision Tree');
+    } finally {
+        isLoading = false;
+    }
+}
+
+// Render tree visualization
+function renderTree(treeData) {
+    const placeholder = document.getElementById('treePlaceholder');
+    const svg = document.getElementById('treeSvg');
+    
+    placeholder.style.display = 'none';
+    svg.style.display = 'block';
+    
+    // Clear previous tree
+    svg.innerHTML = '';
+    
+    // Set SVG dimensions
+    const width = svg.clientWidth || 800;
+    const height = 600;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    
+    // Render tree recursively
+    renderTreeNode(svg, treeData.tree, width / 2, 60, 0, treeData);
+}
+
+function renderTreeNode(svg, node, x, y, level, treeData, parentX = null, parentY = null) {
+    if (!node) return;
+    
+    // Draw connection to parent
+    if (parentX !== null && parentY !== null) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', parentX);
+        line.setAttribute('y1', parentY + 35);
+        line.setAttribute('x2', x);
+        line.setAttribute('y2', y - 35);
+        line.setAttribute('class', 'tree-branch');
+        svg.appendChild(line);
+    }
+    
+    // Node dimensions
+    const isLeaf = !node.left && !node.right;
+    const nodeWidth = isLeaf ? 110 : 150;
+    const nodeHeight = isLeaf ? 70 : 90;
+    
+    // Create node group
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'tree-node');
+    g.setAttribute('transform', `translate(${x - nodeWidth/2}, ${y - nodeHeight/2})`);
+    
+    // Node rectangle
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('width', nodeWidth);
+    rect.setAttribute('height', nodeHeight);
+    rect.setAttribute('rx', 12);
+    rect.setAttribute('fill', 'var(--card-bg)');
+    rect.setAttribute('stroke', 'rgba(0, 212, 255, 0.5)');
+    rect.setAttribute('stroke-width', 1.5);
+    g.appendChild(rect);
+    
+    // Node text
+    if (isLeaf) {
+        // Leaf node
+        const classText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        classText.setAttribute('x', nodeWidth / 2);
+        classText.setAttribute('y', nodeHeight / 2 - 10);
+        classText.setAttribute('text-anchor', 'middle');
+        classText.setAttribute('fill', 'var(--accent-green)');
+        classText.setAttribute('font-family', 'JetBrains Mono, monospace');
+        classText.setAttribute('font-size', '12');
+        classText.setAttribute('font-weight', 'bold');
+        
+        let className = 'Unknown';
+        if (treeData.problem_type === 'classification' && node.class !== undefined) {
+            className = treeData.targetNames[node.class] || `Class ${node.class}`;
+        } else if (treeData.problem_type === 'regression' && node.value !== undefined) {
+            className = `Value: ${node.value.toFixed(2)}`;
+        }
+        
+        classText.textContent = className;
+        g.appendChild(classText);
+        
+        // Samples count
+        const samplesText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        samplesText.setAttribute('x', nodeWidth / 2);
+        samplesText.setAttribute('y', nodeHeight / 2 + 15);
+        samplesText.setAttribute('text-anchor', 'middle');
+        samplesText.setAttribute('fill', 'var(--text-secondary)');
+        samplesText.setAttribute('font-family', 'JetBrains Mono, monospace');
+        samplesText.setAttribute('font-size', '10');
+        samplesText.textContent = `${node.samples} samples`;
+        g.appendChild(samplesText);
+        
+    } else {
+        // Decision node
+        const featureText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        featureText.setAttribute('x', nodeWidth / 2);
+        featureText.setAttribute('y', nodeHeight / 2 - 15);
+        featureText.setAttribute('text-anchor', 'middle');
+        featureText.setAttribute('fill', 'var(--primary-cyan)');
+        featureText.setAttribute('font-family', 'JetBrains Mono, monospace');
+        featureText.setAttribute('font-size', '11');
+        featureText.setAttribute('font-weight', 'bold');
+        featureText.textContent = (node.feature || 'feature').replace(/_/g, ' ');
+        g.appendChild(featureText);
+        
+        // Threshold
+        const thresholdText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        thresholdText.setAttribute('x', nodeWidth / 2);
+        thresholdText.setAttribute('y', nodeHeight / 2 + 5);
+        thresholdText.setAttribute('text-anchor', 'middle');
+        thresholdText.setAttribute('fill', 'var(--text-primary)');
+        thresholdText.setAttribute('font-family', 'JetBrains Mono, monospace');
+        thresholdText.setAttribute('font-size', '10');
+        thresholdText.textContent = `≤ ${node.threshold.toFixed(2)}`;
+        g.appendChild(thresholdText);
+        
+        // Samples count
+        const samplesText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        samplesText.setAttribute('x', nodeWidth / 2);
+        samplesText.setAttribute('y', nodeHeight / 2 + 25);
+        samplesText.setAttribute('text-anchor', 'middle');
+        samplesText.setAttribute('fill', 'var(--text-secondary)');
+        samplesText.setAttribute('font-family', 'JetBrains Mono, monospace');
+        samplesText.setAttribute('font-size', '9');
+        samplesText.textContent = `${node.samples} samples`;
+        g.appendChild(samplesText);
+    }
+    
+    svg.appendChild(g);
+    
+    // Render children
+    const horizontalSpacing = Math.max(180, 400 / (level + 2));
+    const verticalSpacing = 140;
+    
+    if (node.left) {
+        renderTreeNode(svg, node.left, x - horizontalSpacing, y + verticalSpacing, level + 1, treeData, x, y);
+    }
+    
+    if (node.right) {
+        renderTreeNode(svg, node.right, x + horizontalSpacing, y + verticalSpacing, level + 1, treeData, x, y);
+    }
+}
+
+// Setup prediction form
+function setupPredictionForm(treeData) {
+    const container = document.getElementById('featureInputs');
+    container.innerHTML = '';
+    
+    // Show first 8 features to avoid clutter
+    const featuresToShow = treeData.featureNames.slice(0, 8);
+    
+    featuresToShow.forEach(feature => {
+        const div = document.createElement('div');
+        div.className = 'feature-input';
+        
+        const label = document.createElement('label');
+        label.textContent = feature.replace(/_/g, ' ');
+        label.setAttribute('for', `feature_${feature}`);
+        
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.step = '0.01';
+        input.id = `feature_${feature}`;
+        input.placeholder = `Enter ${feature.replace(/_/g, ' ')}`;
+        
+        div.appendChild(label);
+        div.appendChild(input);
+        container.appendChild(div);
+    });
+    
+    if (treeData.featureNames.length > 8) {
+        const note = document.createElement('p');
+        note.className = 'text-secondary mt-3';
+        note.style.fontSize = '0.8rem';
+        note.textContent = `Showing first 8 of ${treeData.featureNames.length} features. Other features will use default values.`;
+        container.appendChild(note);
+    }
+    
+    // Enable prediction controls
+    document.getElementById('predictBtn').disabled = false;
+    document.getElementById('useDefaultsBtn').disabled = false;
+}
+
+// Load default values
+async function loadDefaultValues() {
+    if (!currentTreeData || !serverOnline) return;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/get-defaults/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ dataset: currentTreeData.dataset })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Fill inputs with default values
+        Object.entries(data.defaults).forEach(([feature, value]) => {
+            const input = document.getElementById(`feature_${feature}`);
+            if (input) {
+                input.value = value;
+            }
+        });
+        
+    } catch (error) {
+        console.error('Failed to load default values:', error);
+    }
+}
+
+// Make prediction
+async function makePrediction() {
+    if (!currentTreeData || !serverOnline || isLoading) return;
+    
+    const predictBtn = document.getElementById('predictBtn');
+    
+    // Collect feature values
+    const features = {};
+    currentTreeData.featureNames.forEach(feature => {
+        const input = document.getElementById(`feature_${feature}`);
+        if (input && input.value) {
+            features[feature] = parseFloat(input.value);
+        }
+    });
+    
+    if (Object.keys(features).length === 0) {
+        showError('predictError', 'Please enter at least one feature value');
+        return;
+    }
+    
+    isLoading = true;
+    showLoading(predictBtn, 'Making Prediction...');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/predict/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                features,
+                featureNames: currentTreeData.featureNames,
+                dataset: currentTreeData.dataset
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        displayPredictionResult(data, features);
+        hideLoading(predictBtn, '<i class="fas fa-search me-2"></i>Make Prediction');
+        
+    } catch (error) {
+        showError('predictError', `Prediction failed: ${error.message}`);
+        hideLoading(predictBtn, '<i class="fas fa-search me-2"></i>Make Prediction');
+    } finally {
+        isLoading = false;
+    }
+}
+
+// Display prediction result
+function displayPredictionResult(result, features) {
+    const resultDiv = document.getElementById('predictionResult');
+    
+    let resultHtml = '<h4><i class="fas fa-chart-line me-2"></i>Prediction Result</h4>';
+    
+    if (currentTreeData.problem_type === 'classification') {
+        const className = result.className || currentTreeData.targetNames[result.prediction] || `Class ${result.prediction}`;
+        const confidence = (Math.max(...result.probabilities) * 100).toFixed(2);
+        
+        resultHtml += `
+            <div class="result-class">
+                <i class="fas fa-tag me-2"></i>Predicted: <strong>${className}</strong>
+            </div>
+            <div class="result-confidence">
+                <i class="fas fa-percentage me-2"></i>Confidence: <strong>${confidence}%</strong>
+            </div>
+        `;
+        
+        // Show probability bars
+        if (result.probabilities && result.probabilities.length > 1) {
+            resultHtml += '<div class="mt-3">';
+            result.probabilities.forEach((prob, index) => {
+                const name = currentTreeData.targetNames[index] || `Class ${index}`;
+                const percentage = (prob * 100).toFixed(1);
+                resultHtml += `
+                    <div class="probability-bar">
+                        <span class="class-name">${name}:</span>
+                        <div class="bar-container">
+                            <div class="bar" style="width: ${prob * 100}%"></div>
+                        </div>
+                        <span class="percentage">${percentage}%</span>
+                    </div>
+                `;
+            });
+            resultHtml += '</div>';
+        }
+    } else {
+        // Regression
+        resultHtml += `
+            <div class="result-class">
+                <i class="fas fa-calculator me-2"></i>Predicted Value: <strong>${result.prediction.toFixed(4)}</strong>
+            </div>
+        `;
+    }
+    
+    resultDiv.innerHTML = resultHtml;
+    resultDiv.style.display = 'block';
+    
+    // Show sample values
+    displaySampleValues(features);
+}
+
+// Display current sample values
+function displaySampleValues(features) {
+    const sampleDiv = document.getElementById('sampleValues');
+    const valuesGrid = document.getElementById('valuesGrid');
+    
+    valuesGrid.innerHTML = '';
+    
+    Object.entries(features).forEach(([feature, value]) => {
+        const div = document.createElement('div');
+        div.className = 'value-item';
+        
+        const label = document.createElement('span');
+        label.className = 'value-label';
+        label.textContent = feature.replace(/_/g, ' ');
+        
+        const number = document.createElement('span');
+        number.className = 'value-number';
+        number.textContent = typeof value === 'number' ? value.toFixed(4) : value;
+        
+        div.appendChild(label);
+        div.appendChild(number);
+        valuesGrid.appendChild(div);
+    });
+    
+    sampleDiv.style.display = 'block';
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Check server status on load
+    checkServerStatus();
+    
+    // Dataset selector change
+    document.getElementById('datasetSelect').addEventListener('change', updateDatasetInfo);
+    
+    // Build tree button
+    document.getElementById('buildTreeBtn').addEventListener('click', buildTree);
+    
+    // Prediction button
+    document.getElementById('predictBtn').addEventListener('click', makePrediction);
+    
+    // Default values button
+    document.getElementById('useDefaultsBtn').addEventListener('click', loadDefaultValues);
+    
+    // Check server status periodically
+    setInterval(checkServerStatus, 30000);
+});
+</script>
+{% endblock %}
