@@ -794,13 +794,13 @@ function startPredictionCycle() {
         //    }
         //}
 
-        if (elapsed > 15 && hints.length < 1) {
+        if (elapsed > 15 && hints.length < 1) {   //number of hints =0 and elapsed time >15 and word length >=3
             revealHint();
-        } else if (elapsed > 25 && hints.length < 2) {
+        } else if (elapsed > 25 && hints.length < 2) {  //number of hints=1
             revealHint();
-        } else if (elapsed > 35 && hints.length < 3) {
+        } else if (elapsed > 35 && hints.length < 3 && currentWord.length>3) {
             revealHint();
-        } else if (elapsed > 50 && hints.length < 4) {
+        } else if (elapsed > 50 && hints.length < 4 && currentWord.length>4) {
             revealHint();
         }
 
@@ -824,7 +824,7 @@ function startPredictionCycle() {
     }
 
     function scheduleNext() {
-        const buffer = 300; // add a small buffer in ms
+        const buffer = 1000; // add a small buffer in ms
 
         //const delay = 1000+ Math.random() * 1000;
         const delay = lastInferenceTime + buffer;

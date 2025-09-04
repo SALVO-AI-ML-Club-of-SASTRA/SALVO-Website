@@ -663,29 +663,30 @@ def predict(request):
             - 8 models: 45%
             - 15+ models: 100%
             """
-            if num_models <= 1:
-                return 0.0
-            elif num_models == 2:
-                return 15.0
-            elif num_models >= 15:
-                return 100.0
-            else:
-                # Linear interpolation for values between known points
-                # Using key points: (2,15), (4,25), (6,35), (8,45), (15,100)
+            # if num_models <= 1:
+            #     return 0.0
+            # elif num_models == 2:
+            #     return 15.0
+            # elif num_models >= 15:
+            #     return 100.0
+            # else:
+            #     # Linear interpolation for values between known points
+            #     # Using key points: (2,15), (4,25), (6,35), (8,45), (15,100)
                 
-                if num_models <= 4:
-                    # Between 2 and 4: 15% to 25%
-                    return 15.0 + (num_models - 2) * (25.0 - 15.0) / (4 - 2)
-                elif num_models <= 6:
-                    # Between 4 and 6: 25% to 35%
-                    return 25.0 + (num_models - 4) * (35.0 - 25.0) / (6 - 4)
-                elif num_models <= 8:
-                    # Between 6 and 8: 35% to 45%
-                    return 35.0 + (num_models - 6) * (45.0 - 35.0) / (8 - 6)
-                else:
-                    # Between 8 and 15: 45% to 100%
-                    return 45.0 + (num_models - 8) * (100.0 - 45.0) / (15 - 8)
-
+            #     if num_models <= 4:
+            #         # Between 2 and 4: 15% to 25%
+            #         return 15.0 + (num_models - 2) * (25.0 - 15.0) / (4 - 2)
+            #     elif num_models <= 6:
+            #         # Between 4 and 6: 25% to 35%
+            #         return 25.0 + (num_models - 4) * (35.0 - 25.0) / (6 - 4)
+            #     elif num_models <= 8:
+            #         # Between 6 and 8: 35% to 45%
+            #         return 35.0 + (num_models - 6) * (45.0 - 35.0) / (8 - 6)
+            #     else:
+            #         # Between 8 and 15: 45% to 100%
+            #         return 45.0 + (num_models - 8) * (100.0 - 45.0) / (15 - 8)
+            return 90
+        
         num_models = len(shuffled_model_list)
         early_return_chance = get_early_return_chance(num_models)
         from concurrent.futures import ThreadPoolExecutor, as_completed
