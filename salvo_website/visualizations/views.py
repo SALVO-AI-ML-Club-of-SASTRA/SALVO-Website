@@ -30,6 +30,11 @@ def dbscan_page(request):
     return render(request, 'visualizations/dbscan.html')
 
 
+def linear_regression_page(request):
+    """Main Linear Regression visualization page"""
+    return render(request, 'visualizations/linear_regression.html')
+
+
 @csrf_exempt
 def server_status(request):
     """Simple endpoint to check if server is online"""
@@ -1034,3 +1039,340 @@ def generate_dbscan_sample_data():
         points.append({'x': int(x), 'y': int(y)})
     
     return points
+
+
+# ===========================
+# LINEAR REGRESSION ENDPOINTS  
+# ===========================
+
+@csrf_exempt
+def linear_regression_fit(request):
+    """API endpoint to fit linear regression model"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            
+            if len(points) < 2:
+                return JsonResponse({'error': 'Need at least 2 points for regression'}, status=400)
+            
+            # Extract X and y values
+            X = np.array([p['x'] for p in points])
+            y = np.array([p['y'] for p in points])
+            
+            # Fit linear regression using least squares
+            model_params = fit_linear_regression(X, y)
+            
+            # Generate predictions for line visualization
+            x_min, x_max = X.min(), X.max()
+            x_range = x_max - x_min
+            x_line = np.linspace(x_min - 0.1*x_range, x_max + 0.1*x_range, 100)
+            y_line = model_params['intercept'] + model_params['slope'] * x_line
+            
+            # Calculate model metrics
+            y_pred = model_params['intercept'] + model_params['slope'] * X
+            metrics = calculate_regression_metrics(y, y_pred)
+            
+            return JsonResponse({
+                'model_params': model_params,
+                'regression_line': {
+                    'x': x_line.tolist(),
+                    'y': y_line.tolist()
+                },
+                'metrics': metrics,
+                'predictions': y_pred.tolist()
+            })
+            
+        except Exception as e:
+            print(f"Error in linear_regression_fit: {e}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def linear_regression_predict(request):
+    """API endpoint to make predictions with fitted model"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            model_params = data.get('model_params', {})
+            x_values = data.get('x_values', [])
+            
+            if not model_params or not x_values:
+                return JsonResponse({'error': 'Model parameters and x values required'}, status=400)
+            
+            # Make predictions
+            x_array = np.array(x_values)
+            predictions = model_params['intercept'] + model_params['slope'] * x_array
+            
+            return JsonResponse({
+                'predictions': predictions.tolist(),
+                'x_values': x_values
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def linear_regression_gradient_descent(request):
+    """API endpoint to demonstrate gradient descent optimization"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            learning_rate = float(data.get('learning_rate', 0.01))
+            max_iterations = int(data.get('max_iterations', 100))
+            
+            if len(points) < 2:
+                return JsonResponse({'error': 'Need at least 2 points for gradient descent'}, status=400)
+            
+            # Extract X and y values
+            X = np.array([p['x'] for p in points])
+            y = np.array([p['y'] for p in points])
+            
+            # Perform gradient descent with step tracking
+            descent_steps = perform_gradient_descent(X, y, learning_rate, max_iterations)
+            
+            return JsonResponse({
+                'steps': descent_steps,
+                'final_params': descent_steps[-1] if descent_steps else {},
+                'converged': len(descent_steps) < max_iterations
+            })
+            
+        except Exception as e:
+            print(f"Error in linear_regression_gradient_descent: {e}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def linear_regression_sample_data(request):
+    """API endpoint to get sample datasets for regression demonstration"""
+    if request.method == 'GET':
+        try:
+            dataset_type = request.GET.get('type', 'simple')
+            sample_data = generate_regression_sample_data(dataset_type)
+            
+            return JsonResponse({
+                'points': sample_data['points'],
+                'description': sample_data['description'],
+                'dataset_type': dataset_type
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def linear_regression_load_csv(request):
+    """API endpoint to load CSV data for regression"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            csv_type = data.get('csv_type', 'train')  # 'train' or 'test'
+            
+            # Load data from the Linear-Regression CSV files
+            csv_data = load_csv_data(csv_type)
+            
+            return JsonResponse({
+                'points': csv_data,
+                'count': len(csv_data),
+                'csv_type': csv_type
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# Helper functions for Linear Regression
+
+def fit_linear_regression(X, y):
+    """Fit linear regression using least squares method"""
+    # Add bias term (intercept)
+    X_b = np.c_[np.ones((len(X), 1)), X]
+    
+    # Normal equation: theta = (X^T * X)^(-1) * X^T * y
+    theta_best = np.linalg.inv(X_b.T.dot(X_b)).dot(X_b.T).dot(y)
+    
+    intercept = theta_best[0]
+    slope = theta_best[1]
+    
+    return {
+        'intercept': float(intercept),
+        'slope': float(slope),
+        'equation': f'y = {slope:.3f}x + {intercept:.3f}'
+    }
+
+
+def calculate_regression_metrics(y_true, y_pred):
+    """Calculate regression performance metrics"""
+    # Mean Squared Error
+    mse = np.mean((y_true - y_pred) ** 2)
+    
+    # Root Mean Squared Error  
+    rmse = np.sqrt(mse)
+    
+    # R-squared (coefficient of determination)
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    r2 = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+    
+    # Mean Absolute Error
+    mae = np.mean(np.abs(y_true - y_pred))
+    
+    return {
+        'mse': float(mse),
+        'rmse': float(rmse),
+        'r2': float(r2),
+        'mae': float(mae)
+    }
+
+
+def perform_gradient_descent(X, y, learning_rate=0.01, max_iterations=100):
+    """Perform gradient descent optimization with step tracking"""
+    # Normalize features for better convergence
+    X_mean = np.mean(X)
+    X_std = np.std(X)
+    X_norm = (X - X_mean) / X_std if X_std != 0 else X - X_mean
+    
+    # Initialize parameters
+    m = len(X)
+    theta_0 = 0.0  # intercept
+    theta_1 = 0.0  # slope
+    
+    steps = []
+    
+    for i in range(max_iterations):
+        # Forward pass - make predictions
+        y_pred = theta_0 + theta_1 * X_norm
+        
+        # Calculate cost (MSE)
+        cost = np.mean((y_pred - y) ** 2)
+        
+        # Calculate gradients
+        dtheta_0 = (2/m) * np.sum(y_pred - y)
+        dtheta_1 = (2/m) * np.sum((y_pred - y) * X_norm)
+        
+        # Update parameters
+        theta_0 -= learning_rate * dtheta_0
+        theta_1 -= learning_rate * dtheta_1
+        
+        # Convert back to original scale for display
+        original_slope = theta_1 / X_std if X_std != 0 else theta_1
+        original_intercept = theta_0 - (theta_1 * X_mean / X_std) if X_std != 0 else theta_0
+        
+        # Store step information
+        steps.append({
+            'iteration': i + 1,
+            'cost': float(cost),
+            'intercept': float(original_intercept),
+            'slope': float(original_slope),
+            'gradient_intercept': float(dtheta_0),
+            'gradient_slope': float(dtheta_1),
+            'equation': f'y = {original_slope:.3f}x + {original_intercept:.3f}'
+        })
+        
+        # Check for convergence
+        if i > 0 and abs(steps[i]['cost'] - steps[i-1]['cost']) < 1e-8:
+            break
+    
+    return steps
+
+
+def generate_regression_sample_data(dataset_type='simple'):
+    """Generate sample datasets for regression demonstration"""
+    np.random.seed(42)
+    
+    datasets = {
+        'simple': {
+            'description': 'Simple linear relationship with low noise',
+            'points': []
+        },
+        'noisy': {
+            'description': 'Linear relationship with high noise',
+            'points': []
+        },
+        'polynomial': {
+            'description': 'Non-linear relationship (polynomial)',
+            'points': []
+        },
+        'outliers': {
+            'description': 'Linear relationship with outliers',
+            'points': []
+        }
+    }
+    
+    if dataset_type == 'simple':
+        # Simple linear relationship: y = 2x + 1 + noise
+        x_vals = np.linspace(0, 10, 20)
+        y_vals = 2 * x_vals + 1 + np.random.normal(0, 0.5, len(x_vals))
+        
+    elif dataset_type == 'noisy':
+        # Noisy linear relationship
+        x_vals = np.linspace(0, 10, 25)
+        y_vals = 1.5 * x_vals + 3 + np.random.normal(0, 2, len(x_vals))
+        
+    elif dataset_type == 'polynomial':
+        # Non-linear (quadratic) relationship
+        x_vals = np.linspace(0, 5, 20)
+        y_vals = 0.5 * x_vals**2 + x_vals + 2 + np.random.normal(0, 0.3, len(x_vals))
+        
+    elif dataset_type == 'outliers':
+        # Linear with outliers
+        x_vals = np.linspace(1, 8, 15)
+        y_vals = 1.2 * x_vals + 2 + np.random.normal(0, 0.3, len(x_vals))
+        # Add outliers
+        x_vals = np.append(x_vals, [2, 6, 7])
+        y_vals = np.append(y_vals, [15, 2, 18])
+    
+    else:
+        # Default to simple
+        x_vals = np.array([1, 2, 3, 4, 5])
+        y_vals = np.array([6, 7, 8, 9, 10])
+    
+    # Convert to point format
+    points = [{'x': float(x), 'y': float(y)} for x, y in zip(x_vals, y_vals)]
+    datasets[dataset_type]['points'] = points
+    
+    return datasets[dataset_type]
+
+
+def load_csv_data(csv_type='train'):
+    """Load data from the Linear-Regression CSV files"""
+    try:
+        # For demo purposes, generate sample data mimicking the CSV structure
+        # In a real implementation, you would read from the actual CSV files
+        np.random.seed(42 if csv_type == 'train' else 123)
+        
+        if csv_type == 'train':
+            # Generate training data (larger dataset)
+            n_points = 50
+            x_vals = np.random.uniform(0, 100, n_points)
+            y_vals = x_vals + np.random.normal(0, 5, n_points)  # y ≈ x with noise
+        else:
+            # Generate test data (smaller dataset)
+            n_points = 20
+            x_vals = np.random.uniform(0, 100, n_points)
+            y_vals = x_vals + np.random.normal(0, 5, n_points)  # y ≈ x with noise
+        
+        # Convert to point format
+        points = [{'x': float(x), 'y': float(y)} for x, y in zip(x_vals, y_vals)]
+        return points
+        
+    except Exception as e:
+        print(f"Error loading CSV data: {e}")
+        # Return default data on error
+        return [{'x': 1, 'y': 6}, {'x': 2, 'y': 7}, {'x': 3, 'y': 8}, {'x': 4, 'y': 9}, {'x': 5, 'y': 10}]

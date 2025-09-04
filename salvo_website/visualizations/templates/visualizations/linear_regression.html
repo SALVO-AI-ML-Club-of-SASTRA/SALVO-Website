@@ -1,0 +1,1155 @@
+{% extends 'base.html' %}
+
+{% block title %}Linear Regression - ML Visualizations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-chart-line me-2"></i>Linear Regression
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="neural-card p-4 text-center">
+                <h1 class="neural-title mb-3">
+                    <i class="fas fa-chart-line me-3" style="color: var(--accent-orange);"></i>
+                    LINEAR REGRESSION VISUALIZER
+                </h1>
+                <p class="neural-subtitle mb-0">
+                    Supervised Learning for Continuous Value Prediction
+                </p>
+                <div class="neural-divider my-3"></div>
+                <p class="text-muted" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    Interactive line fitting • Gradient descent animation • Real-time model metrics • Multiple datasets
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Left Panel: Controls -->
+        <div class="col-lg-4 mb-4">
+            <div class="neural-card p-4 h-100">
+                <h4 class="neural-section-title mb-4">
+                    <i class="fas fa-cogs me-2"></i>MODEL CONTROLS
+                </h4>
+
+                <!-- Data Input Section -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">DATA INPUT</h6>
+                    
+                    <!-- Add Point Form -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-plus me-2"></i>Add Data Point
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-5">
+                                <input type="number" 
+                                       class="form-control neural-input" 
+                                       id="inputX" 
+                                       placeholder="X value"
+                                       step="0.1">
+                            </div>
+                            <div class="col-5">
+                                <input type="number" 
+                                       class="form-control neural-input" 
+                                       id="inputY" 
+                                       placeholder="Y value"
+                                       step="0.1">
+                            </div>
+                            <div class="col-2">
+                                <button class="btn neural-btn-icon" id="addPoint" title="Add Point">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sample Data Options -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-database me-2"></i>Sample Datasets
+                        </label>
+                        <select class="form-select neural-select" id="sampleDataType">
+                            <option value="simple">Simple Linear</option>
+                            <option value="noisy">Noisy Linear</option>
+                            <option value="polynomial">Non-linear (Polynomial)</option>
+                            <option value="outliers">With Outliers</option>
+                        </select>
+                        <button class="btn neural-btn-secondary w-100 mt-2" id="loadSampleData">
+                            <i class="fas fa-download me-2"></i>Load Sample Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Options -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">MODEL OPTIONS</h6>
+                    
+                    <!-- Algorithm Selection -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-brain me-2"></i>Fitting Method
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="fitMethod" id="leastSquares" value="least_squares" checked>
+                            <label class="btn neural-btn-outline" for="leastSquares">Least Squares</label>
+                            
+                            <input type="radio" class="btn-check" name="fitMethod" id="gradientDescent" value="gradient_descent">
+                            <label class="btn neural-btn-outline" for="gradientDescent">Gradient Descent</label>
+                        </div>
+                    </div>
+
+                    <!-- Gradient Descent Parameters -->
+                    <div id="gradientParams" style="display: none;">
+                        <div class="mb-2">
+                            <label for="learningRate" class="form-label neural-input-label">
+                                Learning Rate: <span id="learningRateValue" class="neural-value">0.01</span>
+                            </label>
+                            <input type="range" 
+                                   class="form-range neural-range" 
+                                   id="learningRate" 
+                                   min="0.001" 
+                                   max="0.1" 
+                                   step="0.001" 
+                                   value="0.01">
+                        </div>
+                        <div class="mb-2">
+                            <label for="maxIterations" class="form-label neural-input-label">
+                                Max Iterations: <span id="maxIterationsValue" class="neural-value">100</span>
+                            </label>
+                            <input type="range" 
+                                   class="form-range neural-range" 
+                                   id="maxIterations" 
+                                   min="10" 
+                                   max="500" 
+                                   step="10" 
+                                   value="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">ACTIONS</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn neural-btn-primary" id="fitModel">
+                            <i class="fas fa-play me-2"></i>Fit Model
+                        </button>
+                        <button class="btn neural-btn-secondary" id="clearData">
+                            <i class="fas fa-eraser me-2"></i>Clear Data
+                        </button>
+                        <button class="btn neural-btn-gradient" id="animateGradient" style="display: none;">
+                            <i class="fas fa-magic me-2"></i>Animate Gradient Descent
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Prediction Section -->
+                <div class="neural-info-box" id="predictionSection" style="display: none;">
+                    <h6 class="mb-2"><i class="fas fa-magic me-2"></i>Make Prediction</h6>
+                    <div class="row g-2">
+                        <div class="col-8">
+                            <input type="number" 
+                                   class="form-control neural-input-sm" 
+                                   id="predictX" 
+                                   placeholder="X value"
+                                   step="0.1">
+                        </div>
+                        <div class="col-4">
+                            <button class="btn neural-btn-icon-sm" id="predictBtn">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="predictionResult" class="mt-2 text-center" style="display: none;">
+                        <span class="neural-value" id="predictionValue"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="col-lg-8">
+            <div class="neural-card p-4 h-100">
+                <!-- Top Section: Visualization -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="neural-section-title mb-0">
+                                <i class="fas fa-eye me-2"></i>REGRESSION VISUALIZATION
+                            </h4>
+                            <div class="neural-status" id="modelStatus">
+                                No model fitted • Add data points to begin
+                            </div>
+                        </div>
+
+                        <!-- SVG Canvas Area -->
+                        <div class="text-center mb-3">
+                            <div class="canvas-container" style="display: inline-block; position: relative;">
+                                <svg id="regressionSvg" 
+                                     width="600" 
+                                     height="400" 
+                                     style="border: 2px solid var(--primary-cyan); border-radius: 10px; background: #0a0a0a;">
+                                    <!-- Grid lines will be drawn here -->
+                                    <defs>
+                                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 212, 255, 0.1)" stroke-width="1"/>
+                                        </pattern>
+                                    </defs>
+                                    <rect width="100%" height="100%" fill="url(#grid)" />
+                                    
+                                    <!-- Axes -->
+                                    <g id="axes"></g>
+                                    
+                                    <!-- Data points -->
+                                    <g id="dataPoints"></g>
+                                    
+                                    <!-- Regression line -->
+                                    <g id="regressionLine"></g>
+                                    
+                                    <!-- Gradient descent animation -->
+                                    <g id="gradientAnimation"></g>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Model Information -->
+                <div class="row">
+                    <!-- Model Equation -->
+                    <div class="col-md-6 mb-3">
+                        <div class="neural-info-box">
+                            <h6 class="mb-2"><i class="fas fa-function me-2"></i>Model Equation</h6>
+                            <div id="modelEquation" class="text-center">
+                                <code class="neural-code">No model fitted</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model Metrics -->
+                    <div class="col-md-6 mb-3">
+                        <div class="neural-info-box">
+                            <h6 class="mb-2"><i class="fas fa-chart-bar me-2"></i>Model Metrics</h6>
+                            <div id="modelMetrics">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value" id="r2Value">--</div>
+                                            <div class="metric-label">R²</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="metric-item">
+                                            <div class="metric-value" id="rmseValue">--</div>
+                                            <div class="metric-label">RMSE</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Points Table -->
+                    <div class="col-12">
+                        <div class="neural-info-box">
+                            <h6 class="mb-2"><i class="fas fa-table me-2"></i>Data Points (<span id="pointCount">0</span>)</h6>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-dark table-sm" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>X</th>
+                                            <th>Y</th>
+                                            <th>Predicted</th>
+                                            <th>Error</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <!-- Data points will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    :root {
+        --card-bg: rgba(15, 23, 42, 0.8);
+        --primary-cyan: #00d4ff;
+        --accent-green: #39ff14;
+        --accent-orange: #ff6b35;
+        --gradient-purple: #8b5cf6;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --border-color: rgba(0, 212, 255, 0.2);
+    }
+
+    .neural-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+    }
+
+    .neural-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 2.2rem;
+        color: var(--text-primary);
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+    }
+
+    .neural-subtitle {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+
+    .neural-section-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--primary-cyan);
+        font-size: 1.1rem;
+    }
+
+    .neural-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        color: var(--accent-green);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .neural-input-label {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .neural-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--accent-orange);
+        font-size: 0.9rem;
+    }
+
+    .neural-input {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .neural-input:focus {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--primary-cyan);
+        color: var(--text-primary);
+        box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+    }
+
+    .neural-input-sm {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+    }
+
+    .neural-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .neural-range {
+        accent-color: var(--primary-cyan);
+    }
+
+    .neural-btn-primary {
+        background: linear-gradient(135deg, var(--primary-cyan), #0099cc);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-primary:hover {
+        background: linear-gradient(135deg, #00b8e6, #0088bb);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-secondary {
+        background: linear-gradient(135deg, var(--accent-green), #2ed100);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-secondary:hover {
+        background: linear-gradient(135deg, #33e617, #28b800);
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-gradient {
+        background: linear-gradient(135deg, var(--gradient-purple), #a855f7);
+        border: none;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-gradient:hover {
+        background: linear-gradient(135deg, #9333ea, #9333ea);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-outline {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--primary-cyan);
+        color: var(--primary-cyan);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-outline:hover,
+    .neural-btn-outline.active {
+        background: var(--primary-cyan);
+        color: #000;
+    }
+
+    .neural-btn-icon {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--primary-cyan);
+        color: var(--primary-cyan);
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-icon:hover {
+        background: var(--primary-cyan);
+        color: #000;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+        transform: scale(1.05);
+    }
+
+    .neural-btn-icon-sm {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid var(--primary-cyan);
+        color: var(--primary-cyan);
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-icon-sm:hover {
+        background: var(--primary-cyan);
+        color: #000;
+        transform: scale(1.05);
+    }
+
+    .neural-info-box {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        color: var(--text-secondary);
+    }
+
+    .neural-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--accent-green);
+        background: rgba(57, 255, 20, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(57, 255, 20, 0.2);
+    }
+
+    .neural-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--primary-cyan), transparent);
+        border: none;
+    }
+
+    .neural-code {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        color: var(--accent-orange);
+        background: rgba(255, 107, 53, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 107, 53, 0.2);
+    }
+
+    .metric-item {
+        padding: 8px;
+    }
+
+    .metric-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-cyan);
+    }
+
+    .metric-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .table-dark {
+        --bs-table-bg: transparent;
+        --bs-table-border-color: rgba(0, 212, 255, 0.2);
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+
+    .canvas-container {
+        position: relative;
+    }
+
+    #regressionSvg {
+        transition: all 0.3s ease;
+    }
+
+    #regressionSvg:hover {
+        box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+    }
+
+    /* Button group styling */
+    .btn-check:checked + .neural-btn-outline {
+        background: var(--primary-cyan);
+        color: #000;
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+class LinearRegressionVisualizer {
+    constructor() {
+        this.svg = document.getElementById('regressionSvg');
+        this.svgWidth = 600;
+        this.svgHeight = 400;
+        this.margin = { top: 20, right: 20, bottom: 40, left: 60 };
+        this.plotWidth = this.svgWidth - this.margin.left - this.margin.right;
+        this.plotHeight = this.svgHeight - this.margin.top - this.margin.bottom;
+        
+        this.dataPoints = [];
+        this.currentModel = null;
+        this.gradientSteps = [];
+        this.isAnimating = false;
+        
+        this.initializeEventListeners();
+        this.setupSVG();
+        this.updateParameterDisplays();
+    }
+
+    initializeEventListeners() {
+        // Data input
+        document.getElementById('addPoint').addEventListener('click', () => this.addDataPoint());
+        document.getElementById('inputX').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addDataPoint();
+        });
+        document.getElementById('inputY').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addDataPoint();
+        });
+
+        // Sample data
+        document.getElementById('loadSampleData').addEventListener('click', () => this.loadSampleData());
+
+        // Model controls
+        document.getElementById('fitModel').addEventListener('click', () => this.fitModel());
+        document.getElementById('clearData').addEventListener('click', () => this.clearData());
+        document.getElementById('animateGradient').addEventListener('click', () => this.animateGradientDescent());
+
+        // Method selection
+        document.querySelectorAll('input[name="fitMethod"]').forEach(radio => {
+            radio.addEventListener('change', () => this.updateMethodControls());
+        });
+
+        // Parameter controls
+        document.getElementById('learningRate').addEventListener('input', () => this.updateParameterDisplays());
+        document.getElementById('maxIterations').addEventListener('input', () => this.updateParameterDisplays());
+
+        // Prediction
+        document.getElementById('predictBtn').addEventListener('click', () => this.makePrediction());
+        document.getElementById('predictX').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.makePrediction();
+        });
+    }
+
+    setupSVG() {
+        // Clear existing content
+        this.svg.innerHTML = `
+            <defs>
+                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 212, 255, 0.1)" stroke-width="1"/>
+                </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+            <g id="axes"></g>
+            <g id="dataPoints"></g>
+            <g id="regressionLine"></g>
+            <g id="gradientAnimation"></g>
+        `;
+        
+        this.drawAxes();
+    }
+
+    drawAxes() {
+        const axesGroup = document.getElementById('axes');
+        axesGroup.innerHTML = '';
+
+        // X-axis
+        const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        xAxis.setAttribute('x1', this.margin.left);
+        xAxis.setAttribute('y1', this.svgHeight - this.margin.bottom);
+        xAxis.setAttribute('x2', this.svgWidth - this.margin.right);
+        xAxis.setAttribute('y2', this.svgHeight - this.margin.bottom);
+        xAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.5)');
+        xAxis.setAttribute('stroke-width', '2');
+        axesGroup.appendChild(xAxis);
+
+        // Y-axis
+        const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        yAxis.setAttribute('x1', this.margin.left);
+        yAxis.setAttribute('y1', this.margin.top);
+        yAxis.setAttribute('x2', this.margin.left);
+        yAxis.setAttribute('y2', this.svgHeight - this.margin.bottom);
+        yAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.5)');
+        yAxis.setAttribute('stroke-width', '2');
+        axesGroup.appendChild(yAxis);
+
+        // Axis labels
+        const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xLabel.setAttribute('x', this.svgWidth / 2);
+        xLabel.setAttribute('y', this.svgHeight - 10);
+        xLabel.setAttribute('text-anchor', 'middle');
+        xLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
+        xLabel.setAttribute('font-family', 'JetBrains Mono');
+        xLabel.setAttribute('font-size', '12');
+        xLabel.textContent = 'X';
+        axesGroup.appendChild(xLabel);
+
+        const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yLabel.setAttribute('x', 15);
+        yLabel.setAttribute('y', this.svgHeight / 2);
+        yLabel.setAttribute('text-anchor', 'middle');
+        yLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
+        yLabel.setAttribute('font-family', 'JetBrains Mono');
+        yLabel.setAttribute('font-size', '12');
+        yLabel.setAttribute('transform', `rotate(-90, 15, ${this.svgHeight / 2})`);
+        yLabel.textContent = 'Y';
+        axesGroup.appendChild(yLabel);
+    }
+
+    updateParameterDisplays() {
+        const learningRate = document.getElementById('learningRate').value;
+        const maxIterations = document.getElementById('maxIterations').value;
+        
+        document.getElementById('learningRateValue').textContent = learningRate;
+        document.getElementById('maxIterationsValue').textContent = maxIterations;
+    }
+
+    updateMethodControls() {
+        const method = document.querySelector('input[name="fitMethod"]:checked').value;
+        const gradientParams = document.getElementById('gradientParams');
+        const animateBtn = document.getElementById('animateGradient');
+        
+        if (method === 'gradient_descent') {
+            gradientParams.style.display = 'block';
+            if (this.currentModel) animateBtn.style.display = 'block';
+        } else {
+            gradientParams.style.display = 'none';
+            animateBtn.style.display = 'none';
+        }
+    }
+
+    addDataPoint() {
+        const xInput = document.getElementById('inputX');
+        const yInput = document.getElementById('inputY');
+        
+        const x = parseFloat(xInput.value);
+        const y = parseFloat(yInput.value);
+        
+        if (isNaN(x) || isNaN(y)) {
+            this.updateStatus('Please enter valid numeric values for X and Y');
+            return;
+        }
+        
+        this.dataPoints.push({ x, y });
+        
+        // Clear inputs
+        xInput.value = '';
+        yInput.value = '';
+        
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateStatus(`Added point (${x.toFixed(2)}, ${y.toFixed(2)}) • Total: ${this.dataPoints.length} points`);
+    }
+
+    async loadSampleData() {
+        try {
+            const datasetType = document.getElementById('sampleDataType').value;
+            this.updateStatus('Loading sample data...');
+            
+            const response = await fetch(`/visualizations/api/regression/sample-data/?type=${datasetType}`);
+            const data = await response.json();
+            
+            this.dataPoints = data.points;
+            this.updateVisualization();
+            this.updateDataTable();
+            this.updateStatus(`Loaded ${this.dataPoints.length} sample points: ${data.description}`);
+            
+        } catch (error) {
+            console.error('Error loading sample data:', error);
+            this.updateStatus('Error loading sample data');
+        }
+    }
+
+    async fitModel() {
+        if (this.dataPoints.length < 2) {
+            this.updateStatus('Need at least 2 data points to fit a model');
+            return;
+        }
+
+        try {
+            const method = document.querySelector('input[name="fitMethod"]:checked').value;
+            this.updateStatus('Fitting regression model...');
+
+            if (method === 'least_squares') {
+                await this.fitLeastSquares();
+            } else {
+                await this.fitGradientDescent();
+            }
+
+        } catch (error) {
+            console.error('Error fitting model:', error);
+            this.updateStatus('Error fitting regression model');
+        }
+    }
+
+    async fitLeastSquares() {
+        const response = await fetch('/visualizations/api/regression/fit/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                points: this.dataPoints
+            })
+        });
+
+        const data = await response.json();
+        this.currentModel = data.model_params;
+        
+        this.updateVisualization();
+        this.updateModelInfo(data);
+        this.updateStatus(`Model fitted: ${this.currentModel.equation}`);
+        
+        // Show prediction section
+        document.getElementById('predictionSection').style.display = 'block';
+    }
+
+    async fitGradientDescent() {
+        const learningRate = parseFloat(document.getElementById('learningRate').value);
+        const maxIterations = parseInt(document.getElementById('maxIterations').value);
+
+        const response = await fetch('/visualizations/api/regression/gradient-descent/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                points: this.dataPoints,
+                learning_rate: learningRate,
+                max_iterations: maxIterations
+            })
+        });
+
+        const data = await response.json();
+        this.gradientSteps = data.steps;
+        this.currentModel = data.final_params;
+        
+        this.updateVisualization();
+        this.updateModelInfo(data);
+        this.updateStatus(`Gradient descent converged in ${data.steps.length} iterations`);
+        
+        // Show animation button and prediction section
+        document.getElementById('animateGradient').style.display = 'block';
+        document.getElementById('predictionSection').style.display = 'block';
+    }
+
+    animateGradientDescent() {
+        if (!this.gradientSteps.length || this.isAnimating) return;
+        
+        this.isAnimating = true;
+        let stepIndex = 0;
+        
+        const animateStep = () => {
+            if (stepIndex < this.gradientSteps.length) {
+                const step = this.gradientSteps[stepIndex];
+                
+                // Update regression line for current step
+                this.drawRegressionLine(step);
+                
+                // Update equation display
+                document.getElementById('modelEquation').innerHTML = 
+                    `<code class="neural-code">${step.equation}</code>`;
+                
+                this.updateStatus(`Gradient Descent Step ${step.iteration} • Cost: ${step.cost.toFixed(4)}`);
+                
+                stepIndex++;
+                setTimeout(animateStep, 200); // 200ms between steps
+            } else {
+                this.isAnimating = false;
+                this.updateStatus('Gradient descent animation complete');
+                this.updateVisualization(); // Show final state
+            }
+        };
+        
+        animateStep();
+    }
+
+    clearData() {
+        this.dataPoints = [];
+        this.currentModel = null;
+        this.gradientSteps = [];
+        
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateModelInfo(null);
+        this.updateStatus('All data cleared • Add points to begin');
+        
+        // Hide additional controls
+        document.getElementById('animateGradient').style.display = 'none';
+        document.getElementById('predictionSection').style.display = 'none';
+    }
+
+    async makePrediction() {
+        if (!this.currentModel) {
+            this.updateStatus('Please fit a model first');
+            return;
+        }
+
+        const xValue = parseFloat(document.getElementById('predictX').value);
+        if (isNaN(xValue)) {
+            this.updateStatus('Please enter a valid X value for prediction');
+            return;
+        }
+
+        try {
+            const response = await fetch('/visualizations/api/regression/predict/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    model_params: this.currentModel,
+                    x_values: [xValue]
+                })
+            });
+
+            const data = await response.json();
+            const prediction = data.predictions[0];
+            
+            document.getElementById('predictionResult').style.display = 'block';
+            document.getElementById('predictionValue').textContent = 
+                `y = ${prediction.toFixed(3)}`;
+            
+            // Highlight prediction on graph
+            this.highlightPrediction(xValue, prediction);
+            
+        } catch (error) {
+            console.error('Error making prediction:', error);
+            this.updateStatus('Error making prediction');
+        }
+    }
+
+    updateVisualization() {
+        this.drawDataPoints();
+        if (this.currentModel) {
+            this.drawRegressionLine(this.currentModel);
+        }
+    }
+
+    drawDataPoints() {
+        const pointsGroup = document.getElementById('dataPoints');
+        pointsGroup.innerHTML = '';
+
+        if (this.dataPoints.length === 0) return;
+
+        // Calculate scales
+        const xValues = this.dataPoints.map(p => p.x);
+        const yValues = this.dataPoints.map(p => p.y);
+        
+        const xMin = Math.min(...xValues);
+        const xMax = Math.max(...xValues);
+        const yMin = Math.min(...yValues);
+        const yMax = Math.max(...yValues);
+        
+        // Add padding
+        const xPadding = (xMax - xMin) * 0.1 || 1;
+        const yPadding = (yMax - yMin) * 0.1 || 1;
+        
+        this.xScale = {
+            min: xMin - xPadding,
+            max: xMax + xPadding,
+            range: (xMax + xPadding) - (xMin - xPadding)
+        };
+        
+        this.yScale = {
+            min: yMin - yPadding,
+            max: yMax + yPadding,
+            range: (yMax + yPadding) - (yMin - yPadding)
+        };
+
+        // Draw points
+        this.dataPoints.forEach((point, index) => {
+            const x = this.margin.left + ((point.x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+            const y = this.svgHeight - this.margin.bottom - ((point.y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', 5);
+            circle.setAttribute('fill', '#00d4ff');
+            circle.setAttribute('stroke', 'white');
+            circle.setAttribute('stroke-width', 2);
+            circle.setAttribute('opacity', 0.8);
+            circle.style.cursor = 'pointer';
+            
+            // Add hover effect
+            circle.addEventListener('mouseenter', () => {
+                circle.setAttribute('r', 7);
+                circle.setAttribute('opacity', 1);
+            });
+            
+            circle.addEventListener('mouseleave', () => {
+                circle.setAttribute('r', 5);
+                circle.setAttribute('opacity', 0.8);
+            });
+            
+            // Add click to remove
+            circle.addEventListener('click', () => {
+                this.removeDataPoint(index);
+            });
+            
+            pointsGroup.appendChild(circle);
+        });
+    }
+
+    drawRegressionLine(modelParams) {
+        const lineGroup = document.getElementById('regressionLine');
+        lineGroup.innerHTML = '';
+
+        if (!modelParams || !this.xScale) return;
+
+        // Calculate line endpoints
+        const x1 = this.xScale.min;
+        const x2 = this.xScale.max;
+        const y1 = modelParams.intercept + modelParams.slope * x1;
+        const y2 = modelParams.intercept + modelParams.slope * x2;
+
+        // Convert to SVG coordinates
+        const svgX1 = this.margin.left + ((x1 - this.xScale.min) / this.xScale.range) * this.plotWidth;
+        const svgY1 = this.svgHeight - this.margin.bottom - ((y1 - this.yScale.min) / this.yScale.range) * this.plotHeight;
+        const svgX2 = this.margin.left + ((x2 - this.xScale.min) / this.xScale.range) * this.plotWidth;
+        const svgY2 = this.svgHeight - this.margin.bottom - ((y2 - this.yScale.min) / this.yScale.range) * this.plotHeight;
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', svgX1);
+        line.setAttribute('y1', svgY1);
+        line.setAttribute('x2', svgX2);
+        line.setAttribute('y2', svgY2);
+        line.setAttribute('stroke', '#ff6b35');
+        line.setAttribute('stroke-width', 3);
+        line.setAttribute('opacity', 0.9);
+        
+        lineGroup.appendChild(line);
+    }
+
+    highlightPrediction(x, y) {
+        // Remove existing prediction highlight
+        const existing = document.getElementById('predictionHighlight');
+        if (existing) existing.remove();
+
+        if (!this.xScale || !this.yScale) return;
+
+        // Convert to SVG coordinates
+        const svgX = this.margin.left + ((x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+        const svgY = this.svgHeight - this.margin.bottom - ((y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+
+        const predictionPoint = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        predictionPoint.setAttribute('id', 'predictionHighlight');
+        predictionPoint.setAttribute('cx', svgX);
+        predictionPoint.setAttribute('cy', svgY);
+        predictionPoint.setAttribute('r', 8);
+        predictionPoint.setAttribute('fill', '#39ff14');
+        predictionPoint.setAttribute('stroke', 'white');
+        predictionPoint.setAttribute('stroke-width', 3);
+        predictionPoint.setAttribute('opacity', 0.9);
+
+        document.getElementById('regressionLine').appendChild(predictionPoint);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+            if (predictionPoint.parentNode) {
+                predictionPoint.remove();
+            }
+        }, 3000);
+    }
+
+    removeDataPoint(index) {
+        this.dataPoints.splice(index, 1);
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateStatus(`Removed data point • ${this.dataPoints.length} points remaining`);
+        
+        if (this.dataPoints.length < 2) {
+            this.currentModel = null;
+            this.updateModelInfo(null);
+            document.getElementById('predictionSection').style.display = 'none';
+        }
+    }
+
+    updateDataTable() {
+        const tbody = document.getElementById('dataTableBody');
+        const pointCount = document.getElementById('pointCount');
+        
+        tbody.innerHTML = '';
+        pointCount.textContent = this.dataPoints.length;
+        
+        this.dataPoints.forEach((point, index) => {
+            const row = document.createElement('tr');
+            
+            let predicted = '--';
+            let error = '--';
+            
+            if (this.currentModel) {
+                const pred = this.currentModel.intercept + this.currentModel.slope * point.x;
+                predicted = pred.toFixed(3);
+                error = Math.abs(point.y - pred).toFixed(3);
+            }
+            
+            row.innerHTML = `
+                <td>${point.x.toFixed(2)}</td>
+                <td>${point.y.toFixed(2)}</td>
+                <td>${predicted}</td>
+                <td>${error}</td>
+                <td><button class="btn btn-sm btn-outline-danger" onclick="visualizer.removeDataPoint(${index})">×</button></td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    updateModelInfo(data) {
+        if (!data) {
+            document.getElementById('modelEquation').innerHTML = '<code class="neural-code">No model fitted</code>';
+            document.getElementById('r2Value').textContent = '--';
+            document.getElementById('rmseValue').textContent = '--';
+            return;
+        }
+        
+        // Update equation
+        document.getElementById('modelEquation').innerHTML = 
+            `<code class="neural-code">${this.currentModel.equation}</code>`;
+        
+        // Update metrics
+        if (data.metrics) {
+            document.getElementById('r2Value').textContent = data.metrics.r2.toFixed(3);
+            document.getElementById('rmseValue').textContent = data.metrics.rmse.toFixed(3);
+        }
+        
+        // Update data table with predictions
+        this.updateDataTable();
+    }
+
+    updateStatus(message) {
+        document.getElementById('modelStatus').textContent = message;
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+}
+
+// Initialize the visualizer when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.visualizer = new LinearRegressionVisualizer();
+});
+</script>
+{% endblock %}
