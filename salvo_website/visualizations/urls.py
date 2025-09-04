@@ -11,6 +11,7 @@ urlpatterns = [
     path('kmeans/', views.kmeans_page, name='kmeans_page'),
     path('dbscan/', views.dbscan_page, name='dbscan_page'),
     path('linear-regression/', views.linear_regression_page, name='linear_regression_page'),
+    path('svm/', views.svm_page, name='svm_page'),
     
     # Decision Tree API endpoints
     path('api/status/', views.server_status, name='server_status'),
@@ -34,4 +35,10 @@ urlpatterns = [
     path('api/regression/gradient-descent/', views.linear_regression_gradient_descent, name='linear_regression_gradient_descent'),
     path('api/regression/sample-data/', views.linear_regression_sample_data, name='linear_regression_sample_data'),
     path('api/regression/load-csv/', views.linear_regression_load_csv, name='linear_regression_load_csv'),
+    
+    # SVM API endpoints
+    path('api/svm/train/', views.svm_train, name='svm_train'),
+    path('api/svm/predict/', views.svm_predict, name='svm_predict'),
+    path('api/svm/sample-data/', views.svm_sample_data, name='svm_sample_data'),
+    path('api/svm/kernel-comparison/', views.svm_kernel_comparison, name='svm_kernel_comparison'),
 ]

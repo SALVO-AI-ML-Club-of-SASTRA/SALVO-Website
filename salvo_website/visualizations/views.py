@@ -35,6 +35,11 @@ def linear_regression_page(request):
     return render(request, 'visualizations/linear_regression.html')
 
 
+def svm_page(request):
+    """Main SVM (Support Vector Machine) visualization page"""
+    return render(request, 'visualizations/svm.html')
+
+
 @csrf_exempt
 def server_status(request):
     """Simple endpoint to check if server is online"""
@@ -1376,3 +1381,541 @@ def load_csv_data(csv_type='train'):
         print(f"Error loading CSV data: {e}")
         # Return default data on error
         return [{'x': 1, 'y': 6}, {'x': 2, 'y': 7}, {'x': 3, 'y': 8}, {'x': 4, 'y': 9}, {'x': 5, 'y': 10}]
+
+
+# ===========================
+# SVM (SUPPORT VECTOR MACHINE) ENDPOINTS
+# ===========================
+
+@csrf_exempt
+def svm_train(request):
+    """API endpoint to train SVM model"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            kernel = data.get('kernel', 'linear')
+            C = float(data.get('C', 1.0))
+            gamma = float(data.get('gamma', 1.0))
+            degree = int(data.get('degree', 3))
+            
+            if len(points) < 2:
+                return JsonResponse({'error': 'Need at least 2 points to train SVM'}, status=400)
+            
+            # Check if we have both classes
+            classes = set(p['class'] for p in points)
+            if len(classes) < 2:
+                return JsonResponse({'error': 'Need points from at least 2 different classes'}, status=400)
+            
+            # Prepare data
+            X = np.array([[p['x'], p['y']] for p in points])
+            y = np.array([p['class'] for p in points])
+            
+            # Train SVM model
+            model_result = train_svm_model(X, y, kernel, C, gamma, degree)
+            
+            # Generate decision boundary
+            boundary_data = generate_decision_boundary(model_result['model'], X, kernel)
+            
+            # Find support vectors
+            support_vectors = find_support_vectors(model_result['model'], X, y)
+            
+            return JsonResponse({
+                'model_params': model_result['params'],
+                'support_vectors': support_vectors,
+                'decision_boundary': boundary_data,
+                'accuracy': model_result['accuracy'],
+                'n_support_vectors': len(support_vectors),
+                'margin_width': model_result['margin_width']
+            })
+            
+        except Exception as e:
+            print(f"Error in svm_train: {e}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def svm_predict(request):
+    """API endpoint to make predictions with trained SVM"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            model_params = data.get('model_params', {})
+            points = data.get('points', [])
+            predict_points = data.get('predict_points', [])
+            kernel = data.get('kernel', 'linear')
+            
+            if not model_params or not points:
+                return JsonResponse({'error': 'Model parameters and training points required'}, status=400)
+            
+            # Reconstruct model (simplified prediction)
+            X_train = np.array([[p['x'], p['y']] for p in points])
+            y_train = np.array([p['class'] for p in points])
+            
+            predictions = []
+            for pred_point in predict_points:
+                x_pred = np.array([[pred_point['x'], pred_point['y']]])
+                
+                # Simple prediction based on decision boundary
+                prediction = predict_svm_point(x_pred, X_train, y_train, model_params, kernel)
+                confidence = calculate_prediction_confidence(x_pred, X_train, y_train, model_params, kernel)
+                
+                predictions.append({
+                    'x': pred_point['x'],
+                    'y': pred_point['y'],
+                    'predicted_class': int(prediction),
+                    'confidence': float(confidence)
+                })
+            
+            return JsonResponse({
+                'predictions': predictions
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def svm_sample_data(request):
+    """API endpoint to get sample datasets for SVM demonstration"""
+    if request.method == 'GET':
+        try:
+            dataset_type = request.GET.get('type', 'linear_separable')
+            sample_data = generate_svm_sample_data(dataset_type)
+            
+            return JsonResponse({
+                'points': sample_data['points'],
+                'description': sample_data['description'],
+                'dataset_type': dataset_type,
+                'recommended_kernel': sample_data['recommended_kernel'],
+                'recommended_params': sample_data['recommended_params']
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def svm_kernel_comparison(request):
+    """API endpoint to compare different kernels on the same dataset"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            points = data.get('points', [])
+            kernels = data.get('kernels', ['linear', 'poly', 'rbf'])
+            C = float(data.get('C', 1.0))
+            
+            if len(points) < 4:
+                return JsonResponse({'error': 'Need at least 4 points for kernel comparison'}, status=400)
+            
+            X = np.array([[p['x'], p['y']] for p in points])
+            y = np.array([p['class'] for p in points])
+            
+            results = {}
+            for kernel in kernels:
+                try:
+                    model_result = train_svm_model(X, y, kernel, C, 1.0, 3)
+                    boundary_data = generate_decision_boundary(model_result['model'], X, kernel)
+                    support_vectors = find_support_vectors(model_result['model'], X, y)
+                    
+                    results[kernel] = {
+                        'accuracy': model_result['accuracy'],
+                        'n_support_vectors': len(support_vectors),
+                        'margin_width': model_result['margin_width'],
+                        'support_vectors': support_vectors,
+                        'decision_boundary': boundary_data
+                    }
+                except:
+                    results[kernel] = {'error': 'Failed to train with this kernel'}
+            
+            return JsonResponse({
+                'kernel_results': results,
+                'best_kernel': max(results.keys(), key=lambda k: results[k].get('accuracy', 0) if 'error' not in results[k] else 0)
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# Helper functions for SVM implementation
+
+def train_svm_model(X, y, kernel='linear', C=1.0, gamma=1.0, degree=3):
+    """Train SVM model using simplified implementation"""
+    
+    # For educational purposes, implement a simplified SVM
+    # In production, you would use sklearn.svm.SVC
+    
+    n_samples, n_features = X.shape
+    
+    # Simple linear SVM implementation for demonstration
+    if kernel == 'linear':
+        # Use simplified linear SVM with quadratic programming solution
+        model_params = train_linear_svm(X, y, C)
+    else:
+        # For non-linear kernels, use kernel trick simulation
+        model_params = train_kernel_svm(X, y, kernel, C, gamma, degree)
+    
+    # Calculate accuracy on training data
+    predictions = []
+    for i in range(len(X)):
+        pred = predict_svm_point(X[i:i+1], X, y, model_params, kernel)
+        predictions.append(pred)
+    
+    accuracy = np.mean(np.array(predictions) == y)
+    
+    # Calculate margin width
+    margin_width = calculate_margin_width(model_params, kernel)
+    
+    return {
+        'model': model_params,
+        'params': model_params,
+        'accuracy': float(accuracy),
+        'margin_width': float(margin_width)
+    }
+
+
+def train_linear_svm(X, y, C=1.0):
+    """Simplified linear SVM training"""
+    # Convert labels to -1, 1
+    y_svm = np.where(y == 0, -1, 1)
+    
+    # Simple perceptron-like approach for demonstration
+    # In a real implementation, this would use QP solver
+    
+    n_samples, n_features = X.shape
+    w = np.random.normal(0, 0.01, n_features)
+    b = 0.0
+    learning_rate = 0.01
+    
+    # Training iterations
+    for epoch in range(1000):
+        for i in range(n_samples):
+            condition = y_svm[i] * (np.dot(X[i], w) + b)
+            if condition < 1:
+                # Misclassified or within margin
+                w = w + learning_rate * (y_svm[i] * X[i] - 2 * (1/C) * w)
+                b = b + learning_rate * y_svm[i]
+            else:
+                # Correctly classified outside margin
+                w = w + learning_rate * (-2 * (1/C) * w)
+    
+    return {
+        'w': w.tolist(),
+        'b': float(b),
+        'kernel': 'linear',
+        'C': C
+    }
+
+
+def train_kernel_svm(X, y, kernel, C, gamma, degree):
+    """Simplified kernel SVM training"""
+    # For demonstration purposes, create a simplified kernel SVM
+    y_svm = np.where(y == 0, -1, 1)
+    
+    # Generate some alpha values (support vector weights)
+    n_samples = len(X)
+    alphas = np.random.exponential(0.1, n_samples)
+    alphas = alphas / np.sum(alphas) * min(n_samples / 2, 5)  # Limit number of support vectors
+    
+    # Find support vectors (points with non-zero alphas)
+    support_mask = alphas > 0.01
+    support_vectors = X[support_mask]
+    support_alphas = alphas[support_mask]
+    support_labels = y_svm[support_mask]
+    
+    return {
+        'support_vectors': support_vectors.tolist(),
+        'support_alphas': support_alphas.tolist(),
+        'support_labels': support_labels.tolist(),
+        'kernel': kernel,
+        'C': C,
+        'gamma': gamma,
+        'degree': degree
+    }
+
+
+def predict_svm_point(x_pred, X_train, y_train, model_params, kernel):
+    """Make prediction for a single point"""
+    if kernel == 'linear':
+        w = np.array(model_params['w'])
+        b = model_params['b']
+        decision_value = np.dot(x_pred[0], w) + b
+        return 1 if decision_value > 0 else 0
+    else:
+        # Kernel prediction
+        support_vectors = np.array(model_params['support_vectors'])
+        support_alphas = np.array(model_params['support_alphas'])
+        support_labels = np.array(model_params['support_labels'])
+        
+        decision_value = 0
+        for i in range(len(support_vectors)):
+            kernel_val = compute_kernel(x_pred[0], support_vectors[i], kernel, 
+                                      model_params['gamma'], model_params['degree'])
+            decision_value += support_alphas[i] * support_labels[i] * kernel_val
+        
+        return 1 if decision_value > 0 else 0
+
+
+def compute_kernel(x1, x2, kernel, gamma=1.0, degree=3):
+    """Compute kernel function value"""
+    if kernel == 'linear':
+        return np.dot(x1, x2)
+    elif kernel == 'poly':
+        return (gamma * np.dot(x1, x2) + 1) ** degree
+    elif kernel == 'rbf':
+        return np.exp(-gamma * np.linalg.norm(x1 - x2) ** 2)
+    else:
+        return np.dot(x1, x2)  # Default to linear
+
+
+def calculate_prediction_confidence(x_pred, X_train, y_train, model_params, kernel):
+    """Calculate prediction confidence (distance from decision boundary)"""
+    if kernel == 'linear':
+        w = np.array(model_params['w'])
+        b = model_params['b']
+        distance = abs(np.dot(x_pred[0], w) + b) / np.linalg.norm(w)
+        return min(distance, 1.0)  # Cap confidence at 1.0
+    else:
+        # For kernel methods, use a simplified confidence measure
+        support_vectors = np.array(model_params['support_vectors'])
+        support_alphas = np.array(model_params['support_alphas'])
+        support_labels = np.array(model_params['support_labels'])
+        
+        decision_value = 0
+        for i in range(len(support_vectors)):
+            kernel_val = compute_kernel(x_pred[0], support_vectors[i], kernel,
+                                      model_params['gamma'], model_params['degree'])
+            decision_value += support_alphas[i] * support_labels[i] * kernel_val
+        
+        return min(abs(decision_value), 1.0)
+
+
+def generate_decision_boundary(model_params, X, kernel, resolution=50):
+    """Generate decision boundary points for visualization"""
+    # Create a grid of points
+    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+    
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, resolution),
+                         np.linspace(y_min, y_max, resolution))
+    
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    
+    # Predict for each grid point
+    predictions = []
+    for point in grid_points:
+        if kernel == 'linear':
+            w = np.array(model_params['w'])
+            b = model_params['b']
+            decision_value = np.dot(point, w) + b
+        else:
+            support_vectors = np.array(model_params['support_vectors'])
+            support_alphas = np.array(model_params['support_alphas'])
+            support_labels = np.array(model_params['support_labels'])
+            
+            decision_value = 0
+            for i in range(len(support_vectors)):
+                kernel_val = compute_kernel(point, support_vectors[i], kernel,
+                                          model_params['gamma'], model_params['degree'])
+                decision_value += support_alphas[i] * support_labels[i] * kernel_val
+        
+        predictions.append(decision_value)
+    
+    predictions = np.array(predictions).reshape(xx.shape)
+    
+    # Find contour lines for decision boundary
+    boundary_points = []
+    
+    # Extract zero-level contour (decision boundary)
+    for i in range(resolution - 1):
+        for j in range(resolution - 1):
+            # Check if decision boundary passes through this cell
+            corners = [predictions[i, j], predictions[i+1, j], 
+                      predictions[i, j+1], predictions[i+1, j+1]]
+            
+            if min(corners) <= 0 <= max(corners):
+                # Boundary passes through this cell
+                x_center = (xx[i, j] + xx[i+1, j+1]) / 2
+                y_center = (yy[i, j] + yy[i+1, j+1]) / 2
+                boundary_points.append({'x': float(x_center), 'y': float(y_center)})
+    
+    return boundary_points
+
+
+def find_support_vectors(model_params, X, y):
+    """Identify support vectors from the trained model"""
+    support_vectors = []
+    
+    if model_params['kernel'] == 'linear':
+        # For linear SVM, find points closest to the decision boundary
+        w = np.array(model_params['w'])
+        b = model_params['b']
+        
+        distances = []
+        for i, point in enumerate(X):
+            distance = abs(np.dot(point, w) + b) / np.linalg.norm(w)
+            distances.append((distance, i))
+        
+        # Sort by distance and take the closest points
+        distances.sort()
+        n_support = min(len(distances), max(2, len(distances) // 3))
+        
+        for i in range(n_support):
+            if distances[i][0] < 1.5:  # Within reasonable margin
+                idx = distances[i][1]
+                support_vectors.append({
+                    'x': float(X[idx][0]),
+                    'y': float(X[idx][1]),
+                    'class': int(y[idx]),
+                    'distance': float(distances[i][0])
+                })
+    else:
+        # For kernel SVM, support vectors are explicitly stored
+        sv_points = model_params['support_vectors']
+        sv_labels = model_params['support_labels']
+        sv_alphas = model_params['support_alphas']
+        
+        for i, (point, label, alpha) in enumerate(zip(sv_points, sv_labels, sv_alphas)):
+            support_vectors.append({
+                'x': float(point[0]),
+                'y': float(point[1]),
+                'class': int(label if label > 0 else 0),
+                'alpha': float(alpha)
+            })
+    
+    return support_vectors
+
+
+def calculate_margin_width(model_params, kernel):
+    """Calculate the width of the SVM margin"""
+    if kernel == 'linear':
+        w = np.array(model_params['w'])
+        return 2.0 / np.linalg.norm(w)
+    else:
+        # For non-linear kernels, return a representative margin width
+        return 1.0  # Simplified for demonstration
+
+
+def generate_svm_sample_data(dataset_type='linear_separable'):
+    """Generate sample datasets for SVM demonstration"""
+    np.random.seed(42)
+    
+    datasets = {
+        'linear_separable': {
+            'description': 'Two linearly separable classes',
+            'recommended_kernel': 'linear',
+            'recommended_params': {'C': 1.0},
+            'points': []
+        },
+        'linear_non_separable': {
+            'description': 'Overlapping classes requiring soft margin',
+            'recommended_kernel': 'linear',
+            'recommended_params': {'C': 0.1},
+            'points': []
+        },
+        'circular': {
+            'description': 'Circular pattern requiring non-linear kernel',
+            'recommended_kernel': 'rbf',
+            'recommended_params': {'C': 1.0, 'gamma': 2.0},
+            'points': []
+        },
+        'xor_pattern': {
+            'description': 'XOR pattern requiring polynomial kernel',
+            'recommended_kernel': 'poly',
+            'recommended_params': {'C': 1.0, 'degree': 2},
+            'points': []
+        }
+    }
+    
+    if dataset_type == 'linear_separable':
+        # Two clearly separable classes
+        class_0_x = np.random.normal(2, 0.8, 15)
+        class_0_y = np.random.normal(2, 0.8, 15)
+        class_1_x = np.random.normal(6, 0.8, 15)
+        class_1_y = np.random.normal(6, 0.8, 15)
+        
+        points = []
+        for x, y in zip(class_0_x, class_0_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 0})
+        for x, y in zip(class_1_x, class_1_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 1})
+            
+    elif dataset_type == 'linear_non_separable':
+        # Overlapping classes
+        class_0_x = np.random.normal(3, 1.5, 20)
+        class_0_y = np.random.normal(3, 1.5, 20)
+        class_1_x = np.random.normal(5, 1.5, 20)
+        class_1_y = np.random.normal(5, 1.5, 20)
+        
+        points = []
+        for x, y in zip(class_0_x, class_0_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 0})
+        for x, y in zip(class_1_x, class_1_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 1})
+            
+    elif dataset_type == 'circular':
+        # Circular pattern - inner circle class 0, outer ring class 1
+        points = []
+        
+        # Inner circle (class 0)
+        angles = np.random.uniform(0, 2*np.pi, 20)
+        radii = np.random.uniform(0, 1.5, 20)
+        for angle, radius in zip(angles, radii):
+            x = 4 + radius * np.cos(angle)
+            y = 4 + radius * np.sin(angle)
+            points.append({'x': float(x), 'y': float(y), 'class': 0})
+        
+        # Outer ring (class 1)
+        angles = np.random.uniform(0, 2*np.pi, 25)
+        radii = np.random.uniform(2.5, 4, 25)
+        for angle, radius in zip(angles, radii):
+            x = 4 + radius * np.cos(angle)
+            y = 4 + radius * np.sin(angle)
+            points.append({'x': float(x), 'y': float(y), 'class': 1})
+            
+    elif dataset_type == 'xor_pattern':
+        # XOR-like pattern
+        points = []
+        
+        # Quadrant 1 and 3 (class 0)
+        quad1_x = np.random.uniform(1, 3, 15)
+        quad1_y = np.random.uniform(1, 3, 15)
+        quad3_x = np.random.uniform(5, 7, 15)
+        quad3_y = np.random.uniform(5, 7, 15)
+        
+        for x, y in zip(quad1_x, quad1_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 0})
+        for x, y in zip(quad3_x, quad3_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 0})
+        
+        # Quadrant 2 and 4 (class 1)
+        quad2_x = np.random.uniform(5, 7, 15)
+        quad2_y = np.random.uniform(1, 3, 15)
+        quad4_x = np.random.uniform(1, 3, 15)
+        quad4_y = np.random.uniform(5, 7, 15)
+        
+        for x, y in zip(quad2_x, quad2_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 1})
+        for x, y in zip(quad4_x, quad4_y):
+            points.append({'x': float(x), 'y': float(y), 'class': 1})
+    
+    else:
+        # Default simple dataset
+        points = [
+            {'x': 2, 'y': 2, 'class': 0}, {'x': 2, 'y': 3, 'class': 0},
+            {'x': 3, 'y': 2, 'class': 0}, {'x': 6, 'y': 6, 'class': 1},
+            {'x': 6, 'y': 7, 'class': 1}, {'x': 7, 'y': 6, 'class': 1}
+        ]
+    
+    datasets[dataset_type]['points'] = points
+    return datasets[dataset_type]

@@ -1,0 +1,1217 @@
+{% extends 'base.html' %}
+
+{% block title %}Support Vector Machines - ML Visualizations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-vector-square me-2"></i>Support Vector Machines
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="neural-card p-4 text-center">
+                <h1 class="neural-title mb-3">
+                    <i class="fas fa-vector-square me-3" style="color: var(--gradient-purple);"></i>
+                    SUPPORT VECTOR MACHINE VISUALIZER
+                </h1>
+                <p class="neural-subtitle mb-0">
+                    Maximum Margin Classification with Kernel Transformations
+                </p>
+                <div class="neural-divider my-3"></div>
+                <p class="text-muted" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    Interactive decision boundaries • Multiple kernels • Support vector highlighting • Margin optimization
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Left Panel: Controls -->
+        <div class="col-lg-4 mb-4">
+            <div class="neural-card p-4 h-100">
+                <h4 class="neural-section-title mb-4">
+                    <i class="fas fa-sliders-h me-2"></i>SVM CONTROLS
+                </h4>
+
+                <!-- Data Input Section -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">DATA INPUT</h6>
+                    
+                    <!-- Class Selection -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-palette me-2"></i>Current Class
+                        </label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="currentClass" id="class0" value="0" checked>
+                            <label class="btn neural-btn-class-0" for="class0">Class 0</label>
+                            
+                            <input type="radio" class="btn-check" name="currentClass" id="class1" value="1">
+                            <label class="btn neural-btn-class-1" for="class1">Class 1</label>
+                        </div>
+                        <small class="text-muted">Click canvas to add points of selected class</small>
+                    </div>
+
+                    <!-- Sample Data Options -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-database me-2"></i>Sample Datasets
+                        </label>
+                        <select class="form-select neural-select" id="sampleDataType">
+                            <option value="linear_separable">Linearly Separable</option>
+                            <option value="linear_non_separable">Non-separable (Soft Margin)</option>
+                            <option value="circular">Circular Pattern (RBF)</option>
+                            <option value="xor_pattern">XOR Pattern (Polynomial)</option>
+                        </select>
+                        <button class="btn neural-btn-secondary w-100 mt-2" id="loadSampleData">
+                            <i class="fas fa-download me-2"></i>Load Sample Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kernel Configuration -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">KERNEL CONFIGURATION</h6>
+                    
+                    <!-- Kernel Selection -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-cog me-2"></i>Kernel Function
+                        </label>
+                        <select class="form-select neural-select" id="kernelType">
+                            <option value="linear">Linear Kernel</option>
+                            <option value="poly">Polynomial Kernel</option>
+                            <option value="rbf">RBF (Gaussian) Kernel</option>
+                        </select>
+                    </div>
+
+                    <!-- Regularization Parameter -->
+                    <div class="mb-3">
+                        <label for="parameterC" class="form-label neural-input-label">
+                            C (Regularization): <span id="parameterCValue" class="neural-value">1.0</span>
+                        </label>
+                        <input type="range" 
+                               class="form-range neural-range" 
+                               id="parameterC" 
+                               min="0.1" 
+                               max="10" 
+                               step="0.1" 
+                               value="1.0">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Soft margin</small>
+                            <small class="text-muted">Hard margin</small>
+                        </div>
+                    </div>
+
+                    <!-- Kernel-specific Parameters -->
+                    <div id="polyParams" style="display: none;">
+                        <div class="mb-2">
+                            <label for="degree" class="form-label neural-input-label">
+                                Degree: <span id="degreeValue" class="neural-value">3</span>
+                            </label>
+                            <input type="range" 
+                                   class="form-range neural-range" 
+                                   id="degree" 
+                                   min="2" 
+                                   max="6" 
+                                   step="1" 
+                                   value="3">
+                        </div>
+                    </div>
+
+                    <div id="rbfParams" style="display: none;">
+                        <div class="mb-2">
+                            <label for="gamma" class="form-label neural-input-label">
+                                Gamma: <span id="gammaValue" class="neural-value">1.0</span>
+                            </label>
+                            <input type="range" 
+                                   class="form-range neural-range" 
+                                   id="gamma" 
+                                   min="0.1" 
+                                   max="5.0" 
+                                   step="0.1" 
+                                   value="1.0">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">ACTIONS</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn neural-btn-primary" id="trainSVM">
+                            <i class="fas fa-play me-2"></i>Train SVM
+                        </button>
+                        <button class="btn neural-btn-secondary" id="clearData">
+                            <i class="fas fa-eraser me-2"></i>Clear Data
+                        </button>
+                        <button class="btn neural-btn-gradient" id="compareKernels">
+                            <i class="fas fa-balance-scale me-2"></i>Compare Kernels
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Model Information -->
+                <div class="neural-info-box" id="modelInfo" style="display: none;">
+                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Model Information</h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="accuracyValue">--</div>
+                                <div class="metric-label">Accuracy</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="supportVectorCount">--</div>
+                                <div class="metric-label">Support Vectors</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">Margin Width: <span id="marginWidth" class="neural-value">--</span></small>
+                    </div>
+                </div>
+
+                <!-- Prediction Tool -->
+                <div class="neural-info-box" id="predictionTool" style="display: none;">
+                    <h6 class="mb-2"><i class="fas fa-crosshairs me-2"></i>Prediction Mode</h6>
+                    <p class="small mb-2">Click on canvas to predict class for new points</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="predictionMode">
+                        <label class="form-check-label" for="predictionMode">
+                            Enable prediction mode
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="col-lg-8">
+            <div class="neural-card p-4 h-100">
+                <!-- Top Section: Visualization -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="neural-section-title mb-0">
+                                <i class="fas fa-eye me-2"></i>SVM VISUALIZATION
+                            </h4>
+                            <div class="neural-status" id="svmStatus">
+                                Add data points to begin • Click canvas to place points
+                            </div>
+                        </div>
+
+                        <!-- SVG Canvas Area -->
+                        <div class="text-center mb-3">
+                            <div class="canvas-container" style="display: inline-block; position: relative;">
+                                <svg id="svmSvg" 
+                                     width="600" 
+                                     height="400" 
+                                     style="border: 2px solid var(--primary-cyan); border-radius: 10px; background: #0a0a0a; cursor: crosshair;">
+                                    <!-- Grid and background -->
+                                    <defs>
+                                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 212, 255, 0.1)" stroke-width="1"/>
+                                        </pattern>
+                                        
+                                        <!-- Gradients for decision regions -->
+                                        <linearGradient id="class0Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:0.1" />
+                                            <stop offset="100%" style="stop-color:#ff6b6b;stop-opacity:0.05" />
+                                        </linearGradient>
+                                        
+                                        <linearGradient id="class1Gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#4ecdc4;stop-opacity:0.1" />
+                                            <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:0.05" />
+                                        </linearGradient>
+                                    </defs>
+                                    
+                                    <rect width="100%" height="100%" fill="url(#grid)" />
+                                    
+                                    <!-- Axes -->
+                                    <g id="axes"></g>
+                                    
+                                    <!-- Decision regions (background) -->
+                                    <g id="decisionRegions"></g>
+                                    
+                                    <!-- Decision boundary -->
+                                    <g id="decisionBoundary"></g>
+                                    
+                                    <!-- Margin lines -->
+                                    <g id="marginLines"></g>
+                                    
+                                    <!-- Data points -->
+                                    <g id="dataPoints"></g>
+                                    
+                                    <!-- Support vectors highlighting -->
+                                    <g id="supportVectors"></g>
+                                    
+                                    <!-- Prediction points -->
+                                    <g id="predictionPoints"></g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="neural-info-box">
+                                    <h6 class="mb-2"><i class="fas fa-legend me-2"></i>Legend</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 15px; height: 15px; background: #ff6b6b; border-radius: 50%; margin-right: 8px;"></div>
+                                                <small>Class 0 (Red)</small>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 15px; height: 15px; background: #4ecdc4; border-radius: 50%; margin-right: 8px;"></div>
+                                                <small>Class 1 (Cyan)</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 15px; height: 3px; background: var(--accent-orange); margin-right: 8px;"></div>
+                                                <small>Decision Boundary</small>
+                                            </div>
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div style="width: 15px; height: 15px; border: 2px solid var(--accent-green); border-radius: 50%; margin-right: 8px;"></div>
+                                                <small>Support Vectors</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Data Analysis -->
+                <div class="row">
+                    <!-- Data Points Table -->
+                    <div class="col-md-6 mb-3">
+                        <div class="neural-info-box">
+                            <h6 class="mb-2"><i class="fas fa-table me-2"></i>Data Points (<span id="pointCount">0</span>)</h6>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                <table class="table table-dark table-sm" id="dataTable">
+                                    <thead>
+                                        <tr>
+                                            <th>X</th>
+                                            <th>Y</th>
+                                            <th>Class</th>
+                                            <th>Support Vector</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dataTableBody">
+                                        <!-- Data points will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Kernel Comparison Results -->
+                    <div class="col-md-6 mb-3">
+                        <div class="neural-info-box" id="kernelComparison" style="display: none;">
+                            <h6 class="mb-2"><i class="fas fa-chart-bar me-2"></i>Kernel Comparison</h6>
+                            <div id="kernelResults">
+                                <!-- Kernel comparison results will be shown here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Algorithm Explanation (when no comparison) -->
+                        <div class="neural-info-box" id="algorithmExplanation">
+                            <h6 class="mb-2"><i class="fas fa-graduation-cap me-2"></i>SVM Concepts</h6>
+                            <div class="small">
+                                <p class="mb-2"><strong>Support Vectors:</strong> Data points that lie closest to the decision boundary and define the margin.</p>
+                                <p class="mb-2"><strong>Margin:</strong> The distance between the decision boundary and the nearest training points.</p>
+                                <p class="mb-2"><strong>Kernel Trick:</strong> Transform data to higher dimensions where it becomes linearly separable.</p>
+                                <p class="mb-0"><strong>C Parameter:</strong> Controls trade-off between margin width and classification errors.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    :root {
+        --card-bg: rgba(15, 23, 42, 0.8);
+        --primary-cyan: #00d4ff;
+        --accent-green: #39ff14;
+        --accent-orange: #ff6b35;
+        --gradient-purple: #8b5cf6;
+        --class-0-color: #ff6b6b;
+        --class-1-color: #4ecdc4;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --border-color: rgba(0, 212, 255, 0.2);
+    }
+
+    .neural-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+    }
+
+    .neural-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 2.2rem;
+        color: var(--text-primary);
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .neural-subtitle {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+
+    .neural-section-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--primary-cyan);
+        font-size: 1.1rem;
+    }
+
+    .neural-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        color: var(--accent-green);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .neural-input-label {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .neural-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--accent-orange);
+        font-size: 0.9rem;
+    }
+
+    .neural-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .neural-range {
+        accent-color: var(--primary-cyan);
+    }
+
+    .neural-btn-primary {
+        background: linear-gradient(135deg, var(--primary-cyan), #0099cc);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-primary:hover {
+        background: linear-gradient(135deg, #00b8e6, #0088bb);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-secondary {
+        background: linear-gradient(135deg, var(--accent-green), #2ed100);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-secondary:hover {
+        background: linear-gradient(135deg, #33e617, #28b800);
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-gradient {
+        background: linear-gradient(135deg, var(--gradient-purple), #a855f7);
+        border: none;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-gradient:hover {
+        background: linear-gradient(135deg, #9333ea, #9333ea);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-class-0 {
+        background: rgba(255, 107, 107, 0.2);
+        border: 1px solid var(--class-0-color);
+        color: var(--class-0-color);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-class-0:hover,
+    .neural-btn-class-0.active {
+        background: var(--class-0-color);
+        color: #000;
+    }
+
+    .neural-btn-class-1 {
+        background: rgba(78, 205, 196, 0.2);
+        border: 1px solid var(--class-1-color);
+        color: var(--class-1-color);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-class-1:hover,
+    .neural-btn-class-1.active {
+        background: var(--class-1-color);
+        color: #000;
+    }
+
+    .neural-info-box {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        color: var(--text-secondary);
+    }
+
+    .neural-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--accent-green);
+        background: rgba(57, 255, 20, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(57, 255, 20, 0.2);
+    }
+
+    .neural-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--gradient-purple), transparent);
+        border: none;
+    }
+
+    .metric-item {
+        padding: 8px;
+    }
+
+    .metric-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-cyan);
+    }
+
+    .metric-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .table-dark {
+        --bs-table-bg: transparent;
+        --bs-table-border-color: rgba(0, 212, 255, 0.2);
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+    }
+
+    .canvas-container {
+        position: relative;
+    }
+
+    #svmSvg {
+        transition: all 0.3s ease;
+    }
+
+    #svmSvg:hover {
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Button group styling */
+    .btn-check:checked + .neural-btn-class-0 {
+        background: var(--class-0-color);
+        color: #000;
+    }
+
+    .btn-check:checked + .neural-btn-class-1 {
+        background: var(--class-1-color);
+        color: #000;
+    }
+
+    /* Kernel comparison styling */
+    .kernel-result-item {
+        background: rgba(139, 92, 246, 0.05);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .kernel-result-item.best-kernel {
+        border-color: var(--accent-green);
+        background: rgba(57, 255, 20, 0.05);
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+class SVMVisualizer {
+    constructor() {
+        this.svg = document.getElementById('svmSvg');
+        this.svgWidth = 600;
+        this.svgHeight = 400;
+        this.margin = { top: 20, right: 20, bottom: 40, left: 60 };
+        this.plotWidth = this.svgWidth - this.margin.left - this.margin.right;
+        this.plotHeight = this.svgHeight - this.margin.top - this.margin.bottom;
+        
+        this.dataPoints = [];
+        this.currentModel = null;
+        this.supportVectors = [];
+        this.decisionBoundary = [];
+        this.predictionMode = false;
+        
+        this.initializeEventListeners();
+        this.setupSVG();
+        this.updateParameterDisplays();
+    }
+
+    initializeEventListeners() {
+        // Canvas interactions
+        this.svg.addEventListener('click', (e) => this.handleCanvasClick(e));
+
+        // Data controls
+        document.getElementById('loadSampleData').addEventListener('click', () => this.loadSampleData());
+        document.getElementById('clearData').addEventListener('click', () => this.clearData());
+
+        // Model training
+        document.getElementById('trainSVM').addEventListener('click', () => this.trainSVM());
+        document.getElementById('compareKernels').addEventListener('click', () => this.compareKernels());
+
+        // Parameter controls
+        document.getElementById('kernelType').addEventListener('change', () => this.updateKernelParams());
+        document.getElementById('parameterC').addEventListener('input', () => this.updateParameterDisplays());
+        document.getElementById('gamma').addEventListener('input', () => this.updateParameterDisplays());
+        document.getElementById('degree').addEventListener('input', () => this.updateParameterDisplays());
+
+        // Prediction mode
+        document.getElementById('predictionMode').addEventListener('change', (e) => {
+            this.predictionMode = e.target.checked;
+            this.updateCanvasCursor();
+        });
+
+        this.updateKernelParams();
+    }
+
+    setupSVG() {
+        this.drawAxes();
+    }
+
+    drawAxes() {
+        const axesGroup = document.getElementById('axes');
+        axesGroup.innerHTML = '';
+
+        // X-axis
+        const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        xAxis.setAttribute('x1', this.margin.left);
+        xAxis.setAttribute('y1', this.svgHeight - this.margin.bottom);
+        xAxis.setAttribute('x2', this.svgWidth - this.margin.right);
+        xAxis.setAttribute('y2', this.svgHeight - this.margin.bottom);
+        xAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.5)');
+        xAxis.setAttribute('stroke-width', '2');
+        axesGroup.appendChild(xAxis);
+
+        // Y-axis
+        const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        yAxis.setAttribute('x1', this.margin.left);
+        yAxis.setAttribute('y1', this.margin.top);
+        yAxis.setAttribute('x2', this.margin.left);
+        yAxis.setAttribute('y2', this.svgHeight - this.margin.bottom);
+        yAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.5)');
+        yAxis.setAttribute('stroke-width', '2');
+        axesGroup.appendChild(yAxis);
+
+        // Axis labels
+        const xLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        xLabel.setAttribute('x', this.svgWidth / 2);
+        xLabel.setAttribute('y', this.svgHeight - 10);
+        xLabel.setAttribute('text-anchor', 'middle');
+        xLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
+        xLabel.setAttribute('font-family', 'JetBrains Mono');
+        xLabel.setAttribute('font-size', '12');
+        xLabel.textContent = 'Feature 1';
+        axesGroup.appendChild(xLabel);
+
+        const yLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        yLabel.setAttribute('x', 15);
+        yLabel.setAttribute('y', this.svgHeight / 2);
+        yLabel.setAttribute('text-anchor', 'middle');
+        yLabel.setAttribute('fill', 'rgba(255, 255, 255, 0.7)');
+        yLabel.setAttribute('font-family', 'JetBrains Mono');
+        yLabel.setAttribute('font-size', '12');
+        yLabel.setAttribute('transform', `rotate(-90, 15, ${this.svgHeight / 2})`);
+        yLabel.textContent = 'Feature 2';
+        axesGroup.appendChild(yLabel);
+    }
+
+    updateParameterDisplays() {
+        const C = document.getElementById('parameterC').value;
+        const gamma = document.getElementById('gamma').value;
+        const degree = document.getElementById('degree').value;
+        
+        document.getElementById('parameterCValue').textContent = C;
+        document.getElementById('gammaValue').textContent = gamma;
+        document.getElementById('degreeValue').textContent = degree;
+    }
+
+    updateKernelParams() {
+        const kernel = document.getElementById('kernelType').value;
+        
+        // Hide all parameter sections
+        document.getElementById('polyParams').style.display = 'none';
+        document.getElementById('rbfParams').style.display = 'none';
+        
+        // Show relevant parameters
+        if (kernel === 'poly') {
+            document.getElementById('polyParams').style.display = 'block';
+        } else if (kernel === 'rbf') {
+            document.getElementById('rbfParams').style.display = 'block';
+        }
+    }
+
+    updateCanvasCursor() {
+        if (this.predictionMode) {
+            this.svg.style.cursor = 'crosshair';
+        } else {
+            this.svg.style.cursor = 'crosshair';
+        }
+    }
+
+    handleCanvasClick(event) {
+        const rect = this.svg.getBoundingClientRect();
+        const x = event.clientX - rect.left - this.margin.left;
+        const y = event.clientY - rect.top - this.margin.top;
+        
+        // Convert to data coordinates
+        const dataX = (x / this.plotWidth) * 10; // Scale to 0-10 range
+        const dataY = ((this.plotHeight - y) / this.plotHeight) * 10; // Invert Y and scale
+        
+        if (this.predictionMode && this.currentModel) {
+            this.makePrediction(dataX, dataY);
+        } else {
+            this.addDataPoint(dataX, dataY);
+        }
+    }
+
+    addDataPoint(x, y) {
+        const currentClass = parseInt(document.querySelector('input[name="currentClass"]:checked').value);
+        
+        this.dataPoints.push({
+            x: x,
+            y: y,
+            class: currentClass
+        });
+        
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateStatus(`Added ${currentClass === 0 ? 'Class 0' : 'Class 1'} point (${x.toFixed(2)}, ${y.toFixed(2)}) • Total: ${this.dataPoints.length} points`);
+    }
+
+    async makePrediction(x, y) {
+        if (!this.currentModel) return;
+
+        try {
+            const response = await fetch('/visualizations/api/svm/predict/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    model_params: this.currentModel,
+                    points: this.dataPoints,
+                    predict_points: [{ x: x, y: y }],
+                    kernel: document.getElementById('kernelType').value
+                })
+            });
+
+            const data = await response.json();
+            const prediction = data.predictions[0];
+            
+            this.addPredictionVisualization(prediction);
+            this.updateStatus(`Prediction: Class ${prediction.predicted_class} (Confidence: ${prediction.confidence.toFixed(3)})`);
+            
+        } catch (error) {
+            console.error('Error making prediction:', error);
+            this.updateStatus('Error making prediction');
+        }
+    }
+
+    async loadSampleData() {
+        try {
+            const datasetType = document.getElementById('sampleDataType').value;
+            this.updateStatus('Loading sample data...');
+            
+            const response = await fetch(`/visualizations/api/svm/sample-data/?type=${datasetType}`);
+            const data = await response.json();
+            
+            this.dataPoints = data.points;
+            
+            // Update recommended parameters
+            if (data.recommended_kernel) {
+                document.getElementById('kernelType').value = data.recommended_kernel;
+                this.updateKernelParams();
+            }
+            
+            if (data.recommended_params) {
+                if (data.recommended_params.C) {
+                    document.getElementById('parameterC').value = data.recommended_params.C;
+                }
+                if (data.recommended_params.gamma) {
+                    document.getElementById('gamma').value = data.recommended_params.gamma;
+                }
+                if (data.recommended_params.degree) {
+                    document.getElementById('degree').value = data.recommended_params.degree;
+                }
+                this.updateParameterDisplays();
+            }
+            
+            this.updateVisualization();
+            this.updateDataTable();
+            this.updateStatus(`Loaded ${this.dataPoints.length} sample points: ${data.description}`);
+            
+        } catch (error) {
+            console.error('Error loading sample data:', error);
+            this.updateStatus('Error loading sample data');
+        }
+    }
+
+    async trainSVM() {
+        if (this.dataPoints.length < 4) {
+            this.updateStatus('Need at least 4 data points to train SVM');
+            return;
+        }
+
+        // Check if we have both classes
+        const classes = new Set(this.dataPoints.map(p => p.class));
+        if (classes.size < 2) {
+            this.updateStatus('Need points from both classes to train SVM');
+            return;
+        }
+
+        try {
+            this.updateStatus('Training SVM model...');
+            
+            const kernel = document.getElementById('kernelType').value;
+            const C = parseFloat(document.getElementById('parameterC').value);
+            const gamma = parseFloat(document.getElementById('gamma').value);
+            const degree = parseInt(document.getElementById('degree').value);
+
+            const response = await fetch('/visualizations/api/svm/train/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    points: this.dataPoints,
+                    kernel: kernel,
+                    C: C,
+                    gamma: gamma,
+                    degree: degree
+                })
+            });
+
+            const data = await response.json();
+            
+            this.currentModel = data.model_params;
+            this.supportVectors = data.support_vectors;
+            this.decisionBoundary = data.decision_boundary;
+            
+            this.updateVisualization();
+            this.updateModelInfo(data);
+            this.updateDataTable();
+            this.updateStatus(`SVM trained successfully • Accuracy: ${(data.accuracy * 100).toFixed(1)}%`);
+            
+            // Show model info and prediction tool
+            document.getElementById('modelInfo').style.display = 'block';
+            document.getElementById('predictionTool').style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error training SVM:', error);
+            this.updateStatus('Error training SVM model');
+        }
+    }
+
+    async compareKernels() {
+        if (this.dataPoints.length < 4) {
+            this.updateStatus('Need at least 4 data points for kernel comparison');
+            return;
+        }
+
+        try {
+            this.updateStatus('Comparing kernels...');
+            
+            const C = parseFloat(document.getElementById('parameterC').value);
+            
+            const response = await fetch('/visualizations/api/svm/kernel-comparison/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    points: this.dataPoints,
+                    kernels: ['linear', 'poly', 'rbf'],
+                    C: C
+                })
+            });
+
+            const data = await response.json();
+            
+            this.showKernelComparison(data);
+            this.updateStatus(`Kernel comparison complete • Best: ${data.best_kernel}`);
+            
+        } catch (error) {
+            console.error('Error comparing kernels:', error);
+            this.updateStatus('Error comparing kernels');
+        }
+    }
+
+    clearData() {
+        this.dataPoints = [];
+        this.currentModel = null;
+        this.supportVectors = [];
+        this.decisionBoundary = [];
+        
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateStatus('All data cleared • Click canvas to add points');
+        
+        // Hide additional controls
+        document.getElementById('modelInfo').style.display = 'none';
+        document.getElementById('predictionTool').style.display = 'none';
+        document.getElementById('kernelComparison').style.display = 'none';
+        document.getElementById('algorithmExplanation').style.display = 'block';
+        
+        // Clear prediction mode
+        document.getElementById('predictionMode').checked = false;
+        this.predictionMode = false;
+        this.updateCanvasCursor();
+    }
+
+    updateVisualization() {
+        this.clearSVGGroups();
+        
+        if (this.dataPoints.length > 0) {
+            this.calculateScales();
+            this.drawDataPoints();
+            
+            if (this.currentModel) {
+                this.drawDecisionBoundary();
+                this.drawSupportVectors();
+            }
+        }
+    }
+
+    calculateScales() {
+        if (this.dataPoints.length === 0) return;
+
+        const xValues = this.dataPoints.map(p => p.x);
+        const yValues = this.dataPoints.map(p => p.y);
+        
+        const xMin = Math.min(...xValues);
+        const xMax = Math.max(...xValues);
+        const yMin = Math.min(...yValues);
+        const yMax = Math.max(...yValues);
+        
+        // Add padding
+        const xPadding = (xMax - xMin) * 0.1 || 1;
+        const yPadding = (yMax - yMin) * 0.1 || 1;
+        
+        this.xScale = {
+            min: xMin - xPadding,
+            max: xMax + xPadding,
+            range: (xMax + xPadding) - (xMin - xPadding)
+        };
+        
+        this.yScale = {
+            min: yMin - yPadding,
+            max: yMax + yPadding,
+            range: (yMax + yPadding) - (yMin - yPadding)
+        };
+    }
+
+    drawDataPoints() {
+        const pointsGroup = document.getElementById('dataPoints');
+        pointsGroup.innerHTML = '';
+
+        this.dataPoints.forEach((point, index) => {
+            const x = this.margin.left + ((point.x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+            const y = this.svgHeight - this.margin.bottom - ((point.y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', 6);
+            circle.setAttribute('fill', point.class === 0 ? '#ff6b6b' : '#4ecdc4');
+            circle.setAttribute('stroke', 'white');
+            circle.setAttribute('stroke-width', 2);
+            circle.setAttribute('opacity', 0.8);
+            circle.style.cursor = 'pointer';
+            
+            // Add hover effect
+            circle.addEventListener('mouseenter', () => {
+                circle.setAttribute('r', 8);
+                circle.setAttribute('opacity', 1);
+            });
+            
+            circle.addEventListener('mouseleave', () => {
+                circle.setAttribute('r', 6);
+                circle.setAttribute('opacity', 0.8);
+            });
+            
+            // Add click to remove
+            circle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeDataPoint(index);
+            });
+            
+            pointsGroup.appendChild(circle);
+        });
+    }
+
+    drawDecisionBoundary() {
+        if (!this.decisionBoundary || this.decisionBoundary.length === 0) return;
+
+        const boundaryGroup = document.getElementById('decisionBoundary');
+        boundaryGroup.innerHTML = '';
+
+        // Draw boundary points
+        this.decisionBoundary.forEach(point => {
+            const x = this.margin.left + ((point.x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+            const y = this.svgHeight - this.margin.bottom - ((point.y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', 2);
+            circle.setAttribute('fill', '#ff6b35');
+            circle.setAttribute('opacity', 0.8);
+            
+            boundaryGroup.appendChild(circle);
+        });
+    }
+
+    drawSupportVectors() {
+        if (!this.supportVectors || this.supportVectors.length === 0) return;
+
+        const svGroup = document.getElementById('supportVectors');
+        svGroup.innerHTML = '';
+
+        this.supportVectors.forEach(sv => {
+            const x = this.margin.left + ((sv.x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+            const y = this.svgHeight - this.margin.bottom - ((sv.y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+            
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', x);
+            circle.setAttribute('cy', y);
+            circle.setAttribute('r', 10);
+            circle.setAttribute('fill', 'none');
+            circle.setAttribute('stroke', '#39ff14');
+            circle.setAttribute('stroke-width', 3);
+            circle.setAttribute('opacity', 0.9);
+            
+            svGroup.appendChild(circle);
+        });
+    }
+
+    addPredictionVisualization(prediction) {
+        const predGroup = document.getElementById('predictionPoints');
+        
+        const x = this.margin.left + ((prediction.x - this.xScale.min) / this.xScale.range) * this.plotWidth;
+        const y = this.svgHeight - this.margin.bottom - ((prediction.y - this.yScale.min) / this.yScale.range) * this.plotHeight;
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', 8);
+        circle.setAttribute('fill', prediction.predicted_class === 0 ? '#ff6b6b' : '#4ecdc4');
+        circle.setAttribute('stroke', '#ffffff');
+        circle.setAttribute('stroke-width', 3);
+        circle.setAttribute('opacity', 0.7);
+        circle.setAttribute('stroke-dasharray', '4,2');
+        
+        predGroup.appendChild(circle);
+        
+        // Remove prediction point after 3 seconds
+        setTimeout(() => {
+            if (circle.parentNode) {
+                circle.remove();
+            }
+        }, 3000);
+    }
+
+    clearSVGGroups() {
+        document.getElementById('dataPoints').innerHTML = '';
+        document.getElementById('decisionBoundary').innerHTML = '';
+        document.getElementById('supportVectors').innerHTML = '';
+        document.getElementById('predictionPoints').innerHTML = '';
+    }
+
+    removeDataPoint(index) {
+        this.dataPoints.splice(index, 1);
+        this.updateVisualization();
+        this.updateDataTable();
+        this.updateStatus(`Removed data point • ${this.dataPoints.length} points remaining`);
+        
+        if (this.dataPoints.length < 4) {
+            this.currentModel = null;
+            this.supportVectors = [];
+            this.decisionBoundary = [];
+            document.getElementById('modelInfo').style.display = 'none';
+            document.getElementById('predictionTool').style.display = 'none';
+        }
+    }
+
+    updateDataTable() {
+        const tbody = document.getElementById('dataTableBody');
+        const pointCount = document.getElementById('pointCount');
+        
+        tbody.innerHTML = '';
+        pointCount.textContent = this.dataPoints.length;
+        
+        this.dataPoints.forEach((point, index) => {
+            const row = document.createElement('tr');
+            
+            let isSupportVector = false;
+            if (this.supportVectors) {
+                isSupportVector = this.supportVectors.some(sv => 
+                    Math.abs(sv.x - point.x) < 0.1 && Math.abs(sv.y - point.y) < 0.1
+                );
+            }
+            
+            row.innerHTML = `
+                <td>${point.x.toFixed(2)}</td>
+                <td>${point.y.toFixed(2)}</td>
+                <td><span style="color: ${point.class === 0 ? '#ff6b6b' : '#4ecdc4'}">Class ${point.class}</span></td>
+                <td>${isSupportVector ? '<span style="color: #39ff14">✓</span>' : ''}</td>
+                <td><button class="btn btn-sm btn-outline-danger" onclick="visualizer.removeDataPoint(${index})">×</button></td>
+            `;
+            
+            tbody.appendChild(row);
+        });
+    }
+
+    updateModelInfo(data) {
+        document.getElementById('accuracyValue').textContent = (data.accuracy * 100).toFixed(1) + '%';
+        document.getElementById('supportVectorCount').textContent = data.n_support_vectors;
+        document.getElementById('marginWidth').textContent = data.margin_width.toFixed(3);
+    }
+
+    showKernelComparison(data) {
+        const kernelResults = document.getElementById('kernelResults');
+        const kernelComparison = document.getElementById('kernelComparison');
+        const algorithmExplanation = document.getElementById('algorithmExplanation');
+        
+        let html = '';
+        
+        Object.entries(data.kernel_results).forEach(([kernel, result]) => {
+            if (result.error) {
+                html += `
+                    <div class="kernel-result-item">
+                        <strong>${kernel.toUpperCase()}</strong>: ${result.error}
+                    </div>
+                `;
+            } else {
+                const isBest = kernel === data.best_kernel;
+                html += `
+                    <div class="kernel-result-item ${isBest ? 'best-kernel' : ''}">
+                        <div class="d-flex justify-content-between">
+                            <strong>${kernel.toUpperCase()}</strong>
+                            ${isBest ? '<span style="color: var(--accent-green)">★ BEST</span>' : ''}
+                        </div>
+                        <small>Accuracy: ${(result.accuracy * 100).toFixed(1)}% | SVs: ${result.n_support_vectors}</small>
+                    </div>
+                `;
+            }
+        });
+        
+        kernelResults.innerHTML = html;
+        kernelComparison.style.display = 'block';
+        algorithmExplanation.style.display = 'none';
+    }
+
+    updateStatus(message) {
+        document.getElementById('svmStatus').textContent = message;
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+}
+
+// Initialize the visualizer when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.visualizer = new SVMVisualizer();
+});
+</script>
+{% endblock %}
