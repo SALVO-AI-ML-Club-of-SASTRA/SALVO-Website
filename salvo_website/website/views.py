@@ -9,6 +9,7 @@ from .tagger import PostTagger
 from .tag_dataset import AIdict
 import json
 
+from . import safe_parse_tree as spt
 
 
 tagger = PostTagger(AIdict, title_weight=2.0, max_tags=5, min_score=0.05)
@@ -175,6 +176,7 @@ def create_post(request):
             title = request.POST['title']
             content = request.POST['content']
             tags = request.POST.getlist('tags[]')
+            print("SOME TAGS",tags)
             reg_no = request.session.get('register_no')
             member = Member.objects.filter(register_no=reg_no).first()
             post = Post.objects.create(
@@ -191,11 +193,54 @@ def create_post(request):
             title = request.POST['title']
             content = request.POST['content']
             out_tags = tagger.tag_post(title, content)
+            print(out_tags)
+            check_dictionary=spt.safety_check(title+"\n"+content, ENGLISH_RATIO_THRESHOLD=0.95)
+            print(check_dictionary)
+            # english_status, ai_label_ratio, nsfw_status
+            english_status=check_dictionary['check_english']['status'] # fails implies more than 30% is non-english ("PASS" or "FAIL")
+            ai_label_ratio=check_dictionary['check_english']['ai_label_ratio'] # fails implies ai label relevance is bad (0 to 100 percentage)
+            non_english_words=check_dictionary['check_english']['non_english_words']
+            recommendations=[]
+            # English check
+            if english_status != "PASS" or check_dictionary['check_english']['english_ratio']<90:
+                recommendations.append(f"⚠️ The content contains too much non-English text such as {non_english_words[:4]} making it harder to evaluate properly.")
+        
+                # AI label relevance
+                if ai_label_ratio < 50:  # threshold can be tuned
+                    recommendations.append(f"⚠️ The content may not be relevant (AI relevance is low).")
+            else:
+                nsfw_status=check_dictionary['check_direct_nsfw']['status'] # fails implies contains explicit words/leet-speak nsfw words ("SFW" or "NSFW/Vulgar")
+                regex_offensive=set(check_dictionary['check_direct_nsfw']['nsfw_match_words']\
+                            +check_dictionary['check_direct_nsfw']['nsfw_match_words_on_clean']\
+                            +check_dictionary['check_direct_nsfw']['nsfw_match_words_on_ultra_clean']) # builds set of explicit words
+                
+                # Direct NSFW / vulgarity
+                if nsfw_status != "SFW":
+                    recommendations.append("🚫 The content includes explicit or vulgar words that may not be appropriate.")
+                    # Regex detected offensive words
+                    if regex_offensive:
+                        offensive_list = ", ".join(sorted(regex_offensive))
+                        recommendations.append(f"🚫 Detected offensive terms: {offensive_list}")
+                else:
+                    lstm_status=check_dictionary['check_lstm_attention_nsfw']['status'] # reveals lstms opinion (for offensive speech) ("SAFE" OR "UNSAFE")
+                    
+
+                    # LSTM opinion
+                    if lstm_status != "SAFE":
+                        recommendations.append("🚫 Our AI model predicts the content could be unsafe or offensive.")
+
+            # Final message
+            if not recommendations:
+                recommendations = ["✅ Your content looks safe to upload."]
+            else:
+                recommendations = recommendations
+
             return render(request, 'confirm_tags.html', {
                 'title': title,
                 'content': content,
                 'tags': out_tags,
-                'available_tags': sorted(list(AIdict.keys()))
+                'available_tags': sorted(list(AIdict.keys())),
+                'recommendations': recommendations
             })
 
     return render(request, 'create_post.html', {'user_type': request.session['user_type']})
@@ -356,3 +401,4 @@ def logout(request):
     request.session.flush()
     messages.success(request, "You have been logged out successfully!")
     return redirect(home)
+

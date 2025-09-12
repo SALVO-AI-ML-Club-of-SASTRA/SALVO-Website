@@ -213,12 +213,18 @@
                 <!-- AI Code Snippet -->
                 <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
                     <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;">
+                        <div style="color: var(--text-primary);">
+                            {% for r in recommendations %}
+                                {{r}}<br>
+                            {%endfor%}
+                            <br><br>
+                        </div>
                         <div><span style="color: var(--neural-orange);">def</span> <span style="color: var(--data-yellow);">process_tags</span>(<span style="color: var(--primary-cyan);">post</span>):</div>
                         <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">tags</span> = <span style="color: var(--data-yellow);">extract_metadata</span>(<span style="color: var(--primary-cyan);">post</span>)</div>
                         <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">for</span> <span style="color: var(--primary-cyan);">tag</span> <span style="color: var(--neural-orange);">in</span> <span style="color: var(--primary-cyan);">tags</span>:</div>
                         <div style="margin-left: 40px;"><span style="color: var(--primary-cyan);">ai_engine</span>.<span style="color: var(--data-yellow);">categorize</span>(<span style="color: var(--primary-cyan);">tag</span>)</div>
                         <div style="margin-left: 20px;"><span style="color: var(--neural-orange);">return</span> <span style="color: var(--accent-green)">"Tags processed successfully!"</span></div>
-                        <div style="color: var(--text-secondary);"># AI-powered content categorization</div>
+                       
                     </div>
                 </div>
             </div>
