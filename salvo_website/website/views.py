@@ -194,20 +194,20 @@ def create_post(request):
             content = request.POST['content']
             out_tags = tagger.tag_post(title, content)
             print(out_tags)
-            check_dictionary=spt.safety_check(title+"\n"+content, ENGLISH_RATIO_THRESHOLD=0.95)
+            check_dictionary=spt.safety_check(title+"\n"+content, ENGLISH_RATIO_THRESHOLD =0.75, AI_LABEL_THRESHOLD=0.55)
             print(check_dictionary)
             # english_status, ai_label_ratio, nsfw_status
-            english_status=check_dictionary['check_english']['status'] # fails implies more than 30% is non-english ("PASS" or "FAIL")
-            ai_label_ratio=check_dictionary['check_english']['ai_label_ratio'] # fails implies ai label relevance is bad (0 to 100 percentage)
+            english_status=check_dictionary['check_english']['status'] # fails implies more than 30% is non-english and less than 50% non ai("PASS" or "FAIL")
+            ai_label_ratio=check_dictionary['check_english']['ai_label_ratio'] # implies ai label relevance is bad or good (0 to 100 percentage)
             non_english_words=check_dictionary['check_english']['non_english_words']
             recommendations=[]
             # English check
-            if english_status != "PASS" or check_dictionary['check_english']['english_ratio']<90:
-                recommendations.append(f"⚠️ The content contains too much non-English text such as {non_english_words[:4]} making it harder to evaluate properly.")
+            if english_status != "PASS":
+                recommendations.append(f"⚠️❌ The post content contains too much non-English text such as {non_english_words[:4]} making it harder to evaluate properly.")
         
                 # AI label relevance
-                if ai_label_ratio < 50:  # threshold can be tuned
-                    recommendations.append(f"⚠️ The content may not be relevant (AI relevance is low).")
+                if ai_label_ratio < 25:  # threshold can be tuned
+                    recommendations.append(f"⚠️❌ The post content may not be relevant (AI relevance is low).")
             else:
                 nsfw_status=check_dictionary['check_direct_nsfw']['status'] # fails implies contains explicit words/leet-speak nsfw words ("SFW" or "NSFW/Vulgar")
                 regex_offensive=set(check_dictionary['check_direct_nsfw']['nsfw_match_words']\
@@ -216,22 +216,22 @@ def create_post(request):
                 
                 # Direct NSFW / vulgarity
                 if nsfw_status != "SFW":
-                    recommendations.append("🚫 The content includes explicit or vulgar words that may not be appropriate.")
+                    recommendations.append("🚫❌ The post content includes explicit or vulgar words that may not be appropriate.")
                     # Regex detected offensive words
                     if regex_offensive:
                         offensive_list = ", ".join(sorted(regex_offensive))
-                        recommendations.append(f"🚫 Detected offensive terms: {offensive_list}")
+                        recommendations.append(f"🚫❌ Detected offensive terms: {offensive_list}")
                 else:
                     lstm_status=check_dictionary['check_lstm_attention_nsfw']['status'] # reveals lstms opinion (for offensive speech) ("SAFE" OR "UNSAFE")
                     
 
                     # LSTM opinion
                     if lstm_status != "SAFE":
-                        recommendations.append("🚫 Our AI model predicts the content could be unsafe or offensive.")
-
+                        recommendations.append("🚫❌ Our AI model predicts the post content may be unsafe or offensive or unprofessional.")
+                        recommendations.append(" Ignore, if no such content is actually present in your post.")
             # Final message
             if not recommendations:
-                recommendations = ["✅ Your content looks safe to upload."]
+                recommendations = ["✅ Your post content looks safe to upload."]
             else:
                 recommendations = recommendations
 
