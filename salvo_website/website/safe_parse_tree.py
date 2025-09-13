@@ -4,7 +4,7 @@ import numpy as np
 import re
 import warnings
 warnings.filterwarnings('ignore')
-
+import time
 import tensorflow as tf
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
@@ -18,23 +18,67 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import classification_report, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-import re
 from wordfreq import zipf_frequency
+import string
+import os
+from collections import defaultdict
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+import pickle
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import load_model
+
+#DYNAMICALLY FIND THE PATH TO THIS VIEWS.PY'S DIRECTORY
+UNIQUE_AI_LABELS_PATH = os.path.join(os.path.dirname(__file__), "unique_ai_labels.txt")
+
+TOKENIZER_PATH= os.path.join(os.path.dirname(__file__), "tokenizer.pkl")
+REGEX_PATH= os.path.join(os.path.dirname(__file__), "regex_pattern.txt")
+LSTM_PATH= os.path.join(os.path.dirname(__file__), "best_hate_speech_model3.keras")
+ATTENTION_MODEL_PATH= os.path.join(os.path.dirname(__file__), "LSTM_attention_model3.keras")
 
 def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD=0.7,AI_LABEL_THRESHOLD=0.5,MAX_LSTM_INPUT_CONTEXT_WORD_LENGTH=50,MIN_LSTM_INPUT_CONTEXT_WORD_LENGTH=10):
     
+    #fill default values for all (FAIL, 0, UNSAFE, NSFW/Vulgar etc are the default values, for dict values, default is {} )
+    final_result = {
+        "check_english": {
+            "status": "FAIL",
+            "paragraph": "",
+            "total_words": 0,
+            "english_words": 0,
+            "english_ratio": 0.0,
+            "ai_label_ratio": 0.0,
+            "ai_labels_found": [],
+            "non_english_words": [],
+        },
+        "check_direct_nsfw": {
+            "status": "NSFW/Vulgar",
+            "nsfw_match_words": [],
+            "nsfw_match_words_on_clean": [],
+            "nsfw_match_words_on_ultra_clean": [],
+        },
+        "check_lstm_attention_nsfw": {
+            "status": "UNSAFE",
+            "avg_confidence": 0.0,
+            "avg_score": 0.0,
+            "avg_raw_prob": 0.0,
+            "top_influential_words": [],
+            "top_unique_influential_words": [],
+            "processed_sentences": [],
+            "oov_words": [],
+        },
+        "overall_safety": "",
+        "guidelines": "",
+    }
     
-    final_result={"check_english":{'status':"", 'ai_label_ratio':0},"check_direct_nsfw":{'nsfw_match_words':[],'nsfw_match_words_on_clean':[],'nsfw_match_words_on_ultra_clean':[],'status':"FAIL",},"check_lstm_attention_nsfw":{'status':"FAIL"},"overall_safety":"","guidelines":""}
-    
-    final_result={}
-    def load_ai_labels(filepath="website\\regex_pattern.txt"):
+    def load_ai_labels(filepath=UNIQUE_AI_LABELS_PATH):
         """Load AI labels from file into a set"""
         with open(filepath, "r", encoding="utf-8") as f:
             return set(line.strip().lower() for line in f if line.strip())
         
     
     
-    def is_english_word(word, threshold=-1):
+    def is_english_word(word):
         """
         Check if a word is English using wordfreq.
         zipf_frequency returns a log frequency value.
@@ -72,17 +116,21 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
             }
 
         # Case 2: Check non-English words against AI labels
-        if non_english and ai_label_ratio >= AI_LABEL_THRESHOLD:
-            return {
-                "status": "PASS",
-                "paragraph": paragraph,
-                "total_words": total,
-                "english_words": english_count,
-                "english_ratio": round(english_ratio * 100, 2),
-                "ai_label_ratio": round(ai_label_ratio * 100, 2),
-                "ai_labels_found": ai_labels_found,
-                "non_english_words": non_english,
-            }
+        #if more than 50% of the words in non_english set are ai labels, then pass
+        if non_english:
+            non_english_ai_count = sum(1 for w in non_english if w in ai_labels)
+            non_english_ai_ratio = non_english_ai_count / len(non_english)
+            if non_english_ai_ratio >= AI_LABEL_THRESHOLD:
+                return {
+                    "status": "PASS",
+                    "paragraph": paragraph,
+                    "total_words": total,
+                    "english_words": english_count,
+                    "english_ratio": round(english_ratio * 100, 2),
+                    "ai_label_ratio": round(ai_label_ratio * 100, 2),
+                    "ai_labels_found": ai_labels_found,
+                    "non_english_words": non_english,
+                }
 
         # FAIL
         return {
@@ -98,14 +146,14 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
     
     
     
-    ai_labels = load_ai_labels("website\\unique_ai_labels.txt")
+    ai_labels = load_ai_labels(UNIQUE_AI_LABELS_PATH)
     check1_result = check_paragraph(input_text, ai_labels)
     
     final_result["check_english"]=check1_result
     
     if final_result["check_english"]["status"]=="PASS":
         
-        import string
+        
 
         # Mapping of leetspeak/symbols to normal chars
         leet_map = {
@@ -177,7 +225,7 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
             else:
                 return "SFW", [], [], []
             
-        pattern_reg = load_pattern("website\\regex_pattern.txt")
+        pattern_reg = load_pattern(REGEX_PATH)
         check2_result_tuple=check_message(input_text, pattern_reg)
         check2_result={
             "status": check2_result_tuple[0],
@@ -499,18 +547,13 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
 
                     
 
-            from tensorflow.keras.preprocessing.sequence import pad_sequences
-            from collections import defaultdict
-
-            import nltk
-            nltk.download('stopwords')
-            from nltk.corpus import stopwords
+            
 
             #stop_words = set(stopwords.words('english'))
 
 
             def interactive_test_paragraph(model, attention_model, tokenizer, text):
-                import re
+                
 
                 # NLTK stop words
                 stop_words = set(stopwords.words('english'))
@@ -639,7 +682,7 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
                 Returns:
                     dict: Contains original words, their positions, and OOV information
                 """
-                import re
+                
                 
                 # Clean text the same way as in your model
                 def clean_text(text):
@@ -768,9 +811,7 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
                         
 
                     
-            import pickle
-            from tensorflow.keras.preprocessing.sequence import pad_sequences
-            from tensorflow.keras.models import load_model
+            
             def load_model_method2():
                 """Load model by accessing AttentionLayer from HateSpeechDetector class"""
                 
@@ -784,8 +825,8 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
                 }
                 
                 try:
-                    model = load_model("website\\best_hate_speech_model3.keras", custom_objects=custom_objects,compile=False)
-                    attention_model = load_model("website\\LSTM_attention_model3.keras", 
+                    model = load_model(LSTM_PATH, custom_objects=custom_objects,compile=False)
+                    attention_model = load_model(ATTENTION_MODEL_PATH, 
                                             custom_objects=custom_objects, 
                                             compile=False)
                     print("Model and attention model loaded successfully")
@@ -799,7 +840,7 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
 
 
             # Load tokenizer
-            with open("website\\tokenizer.pkl", "rb") as f:
+            with open(TOKENIZER_PATH, "rb") as f:
                 tokenizer = pickle.load(f)
                 print("✅ Tokenizer loaded successfully!")
                 
@@ -832,7 +873,7 @@ def safety_check(input_text, OPTIMAL_LSTM_THRESHOLD=0.55,ENGLISH_RATIO_THRESHOLD
     
 
 if __name__ == "__main__":
-    import time
+    
     test_text = """AI for Climate Change: Smarter Solutions for a Sustainable Future
 
 Artificial Intelligence is no longer limited to chatbots and image recognition—it’s playing a vital role in tackling climate change. By combining machine learning, IoT sensors, and predictive modeling, AI systems can help reduce carbon emissions and improve energy efficiency.

@@ -13,3 +13,5 @@ joblib==1.5.1
 scipy==1.15.3
 seaborn
 wordfreq
+djangorestframework
+django-cors-headers
