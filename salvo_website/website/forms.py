@@ -2,7 +2,6 @@ from django import forms
 from django.contrib.auth.hashers import make_password
 from .models import Account, Member, JoinRequest
 
-
 class AccountRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter your password'}))
 
