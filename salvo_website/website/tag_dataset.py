@@ -2256,10 +2256,23 @@ AIdict={ "artificial_intelligence": [
     "objective_function", "parameter_tuning", "slack_term", "decision_score", "prediction_accuracy", "training_algorithm", "svm_implementation", "training_phase", "test_phase", "support_vector_count",
     "svm_kernel", "margin_classifier", "svm_loss", "feature_mapping", "svm_prediction", "training_loss", "classification_margin", "svm_fitting", "model_complexity", "svm_regression",
     "linear_separator", "class_margin", "instance", "hyperplane_equation", "margin_penalty", "svm_output", "separation_margin", "data_instance", "svm_formulation", "margin_violation"
-]
+],
+"generative_ai": [
+    "model", "generator", "discriminator", "network", "architecture", "transformer", "diffusion", "autoencoder", "GAN", "VAE",
+    "language_model", "large_language_model", "text", "image", "audio", "video", "content", "output", "generation", "synthesis",
+    "prompt", "embedding", "token", "sequence", "attention", "layer", "parameter", "weight", "training", "fine_tuning",
+    "dataset", "sample", "input", "output", "prediction", "inference", "pretraining", "context", "tokenization", "decoder",
+    "encoder", "latent_space", "representation", "probability", "distribution", "loss", "optimization", "gradient", "backpropagation", "epoch",
+    "batch", "learning_rate", "hyperparameter", "evaluation", "metric", "perplexity", "BLEU_score", "ROUGE_score", "FID_score", "quality",
+    "coherence", "diversity", "creativity", "hallucination", "bias", "ethics", "fairness", "alignment", "safety", "guardrail",
+    "prompt_engineering", "chain_of_thought", "few_shot", "zero_shot", "in_context_learning", "augmentation", "synthetic_data", "data_generation", "adversarial", "noise",
+    "style_transfer", "text_to_image", "image_to_image", "text_generation", "speech_synthesis", "music_generation", "code_generation", "model_size", "checkpoint", "pretrained_model",
+    "fine_tuned_model", "domain", "task", "application", "chatbot", "dialogue", "conversation", "response", "query", "context_window",
+    "token_limit", "overfitting", "underfitting", "regularization", "dropout", "normalization", "attention_mechanism", "self_attention", "cross_attention", "multimodal"
+  ]
 ,
 "gans": [
-    "GAN",
+    "GAN","Generative_AI","GAN-based", "3D-art", "deepfake", "image_synthesis", "video_synthesis", "text_to_image", "image_to_image", "style_transfer", "super_resolution", "adversarial_training","adversarial_network","adversarial",
     "generator", "discriminator", "latent_vector", "noise", "real_image", "fake_image", "sample", "epoch", "training", "testing",
     "minimax", "loss_function", "binary_crossentropy", "adversarial_loss", "feature_space", "output", "input", "hidden_layer", "activation", "sigmoid",
     "tanh", "convolution", "deconvolution", "batch_norm", "training_step", "discriminator_loss", "generator_loss", "GAN_architecture", "GAN_model", "real_data",
@@ -2489,6 +2502,29 @@ AIdict={ "artificial_intelligence": [
     "robustness", "testbed", "system_setup", "evaluation_function", "data_test", "validation_set", "metrics_comparison", "optimization_result", "accuracy_rate", "scalability_test"
 ]
 ,
+"computer_vision": [
+    "image", "pixel", "frame", "video", "camera", "sensor", "lens", "resolution", "feature", "edge",
+    "corner", "texture", "pattern", "object", "scene", "segmentation", "classification", "detection", "recognition", "tracking",
+    "annotation", "label", "bounding_box", "mask", "dataset", "model", "network", "convolution", "layer", "filter",
+    "kernel", "activation", "pooling", "gradient", "loss", "optimization", "training", "validation", "test", "inference",
+    "architecture", "backbone", "feature_map", "heatmap", "descriptor", "keypoint", "matching", "calibration", "distortion", "perspective",
+    "depth", "stereo", "point_cloud", "3d_model", "reconstruction", "rendering", "augmentation", "preprocessing", "postprocessing", "threshold",
+    "contour", "region", "blob", "histogram", "color_space", "grayscale", "binary_image", "morphology", "transformation", "rotation",
+    "scale", "translation", "homography", "projection", "camera_matrix", "intrinsics", "extrinsics", "epipolar", "disparity", "optical_flow",
+    "motion", "trajectory", "background", "foreground", "segment", "instance", "semantic", "panoptic", "annotation_tool", "ground_truth",
+    "precision", "recall", "accuracy", "f1_score", "metric", "evaluation", "benchmark", "dataset_split", "augmentation_technique", "noise",
+    "illumination", "occlusion", "viewpoint", "pose", "landmark", "face", "gesture", "object_detector", "classifier", "embedding","representation", "self_supervision", "pretext_task", "contrastive_loss", "simclr", "moco", "byol", "dino", "mae", "masked_image",
+    "visual_feature", "unlabeled_data", "generalization", "transfer_learning", "pretraining", "fine_tuning", "data_augmentation", "patch", "image_patch", "reconstruction",
+    "semantic_feature", "context_prediction", "instance_discrimination", "negative_sample", "positive_pair", "similarity", "dissimilarity", "embedding_space", "clustering", "pseudo_label",
+    "autonomous_vehicle", "lidar", "radar", "scene_understanding", "object_recognition", "lane_detection", "obstacle", "traffic_sign", "pedestrian", "depth_estimation",
+    "medical_image", "radiology", "ct_scan", "mri", "ultrasound", "segmentation_mask", "lesion", "tumor", "anomaly_detection", "pathology",
+    "remote_sensing", "satellite_image", "aerial_view", "land_use", "vegetation", "urban_mapping", "hyperspectral", "terrain", "geospatial", "topography",
+    "feature_extraction", "invariance", "equivariance", "augmented_view", "data_efficiency", "label_efficiency", "unsupervised", "weak_supervision", "domain_adaptation", "cross_modal",
+    "visual_token", "attention_map", "self_attention", "transformer_vision", "vit", "swin_transformer", "image_encoder", "feature_hierarchy", "context_aware", "spatial_feature",
+    "robustness", "outlier", "noise_reduction", "image_quality", "low_shot", "zero_shot", "few_shot", "generalized_model", "task_agnostic", "domain_generalization",
+    "pretrained_model", "backbone_network", "vision_transformer", "contrastive_pair", "data_distribution", "representation_learning", "image_completion", "in_distribution", "out_of_distribution", "generalization_gap"
+],
+
 "dataset_release": [
     "dataset", "release", "collection", "version", "data", "training_set", "test_set", "validation_set", "split", "distribution",
     "file", "annotation", "label", "metadata", "source", "access", "public", "download", "license", "format",
