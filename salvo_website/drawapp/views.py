@@ -9,7 +9,7 @@ from django.core.files.base import ContentFile
 from django.conf import settings
 import os, random, json
 import numpy as np
-from PIL import Image
+from PIL import Image   
 from io import BytesIO
 import base64
 import cv2
@@ -777,3 +777,4 @@ def predict(request):
     except Exception as e:
         print("Prediction error:", e)
         return JsonResponse({'error': str(e)}, status=500)
+
