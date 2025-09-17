@@ -40,6 +40,11 @@ def svm_page(request):
     return render(request, 'visualizations/svm.html')
 
 
+def neural_network_page(request):
+    """Main Neural Network visualization page"""
+    return render(request, 'visualizations/neural_network.html')
+
+
 @csrf_exempt
 def server_status(request):
     """Simple endpoint to check if server is online"""
@@ -1919,3 +1924,706 @@ def generate_svm_sample_data(dataset_type='linear_separable'):
     
     datasets[dataset_type]['points'] = points
     return datasets[dataset_type]
+
+
+# ===========================
+# NEURAL NETWORK ENDPOINTS
+# ===========================
+
+@csrf_exempt
+def neural_network_create(request):
+    """API endpoint to create a neural network architecture"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            architecture = data.get('architecture', [2, 4, 1])  # [input, hidden, output]
+            activation = data.get('activation', 'sigmoid')
+            
+            # Create network
+            network = create_neural_network(architecture, activation)
+            
+            return JsonResponse({
+                'network_id': network['id'],
+                'architecture': network['architecture'],
+                'total_parameters': network['total_parameters'],
+                'layers': network['layers'],
+                'connections': network['connections']
+            })
+            
+        except Exception as e:
+            print(f"Error creating neural network: {e}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def neural_network_train(request):
+    """API endpoint to train neural network"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            network_id = data.get('network_id')
+            training_data = data.get('training_data', [])
+            learning_rate = float(data.get('learning_rate', 0.1))
+            epochs = int(data.get('epochs', 100))
+            activation = data.get('activation', 'sigmoid')
+            return_steps = data.get('return_steps', False)
+            
+            if len(training_data) < 2:
+                return JsonResponse({'error': 'Need at least 2 training examples'}, status=400)
+            
+            # Prepare training data
+            X = np.array([point['input'] for point in training_data])
+            y = np.array([point['output'] for point in training_data])
+            
+            # Train network
+            training_result = train_neural_network(
+                X, y, 
+                architecture=data.get('architecture', [2, 4, 1]),
+                learning_rate=learning_rate,
+                epochs=epochs,
+                activation=activation,
+                return_steps=return_steps
+            )
+            
+            return JsonResponse({
+                'training_history': training_result['history'],
+                'final_weights': training_result['final_weights'],
+                'final_biases': training_result['final_biases'],
+                'final_loss': training_result['final_loss'],
+                'final_accuracy': training_result['final_accuracy'],
+                'convergence_epoch': training_result['convergence_epoch'],
+                'training_steps': training_result.get('training_steps', [])
+            })
+            
+        except Exception as e:
+            print(f"Error training neural network: {e}")
+            import traceback
+            traceback.print_exc()
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def neural_network_predict(request):
+    """API endpoint to make predictions with trained network"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            weights = data.get('weights', [])
+            biases = data.get('biases', [])
+            inputs = data.get('inputs', [])
+            activation = data.get('activation', 'sigmoid')
+            return_activations = data.get('return_activations', False)
+            
+            if not weights or not biases or not inputs:
+                return JsonResponse({'error': 'Weights, biases, and inputs required'}, status=400)
+            
+            predictions = []
+            for input_data in inputs:
+                result = forward_propagation(
+                    np.array(input_data), weights, biases, activation, return_activations
+                )
+                
+                if return_activations:
+                    predictions.append({
+                        'input': input_data,
+                        'output': result['output'].tolist(),
+                        'activations': result['activations'],
+                        'z_values': result['z_values']
+                    })
+                else:
+                    predictions.append({
+                        'input': input_data,
+                        'output': result.tolist()
+                    })
+            
+            return JsonResponse({
+                'predictions': predictions
+            })
+            
+        except Exception as e:
+            print(f"Error making predictions: {e}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def neural_network_sample_data(request):
+    """API endpoint to get sample datasets for neural network training"""
+    if request.method == 'GET':
+        try:
+            dataset_type = request.GET.get('type', 'xor')
+            sample_data = generate_nn_sample_data(dataset_type)
+            
+            return JsonResponse({
+                'training_data': sample_data['training_data'],
+                'test_data': sample_data['test_data'],
+                'description': sample_data['description'],
+                'dataset_type': dataset_type,
+                'recommended_architecture': sample_data['recommended_architecture'],
+                'recommended_params': sample_data['recommended_params']
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@csrf_exempt
+def neural_network_activation_demo(request):
+    """API endpoint to demonstrate activation functions"""
+    if request.method == 'GET':
+        try:
+            activation_type = request.GET.get('type', 'sigmoid')
+            
+            # Generate x values
+            x_values = np.linspace(-5, 5, 100)
+            
+            # Calculate activation function values
+            if activation_type == 'sigmoid':
+                y_values = sigmoid(x_values)
+                derivative = sigmoid_derivative(x_values)
+            elif activation_type == 'relu':
+                y_values = relu(x_values)
+                derivative = relu_derivative(x_values)
+            elif activation_type == 'tanh':
+                y_values = np.tanh(x_values)
+                derivative = tanh_derivative(x_values)
+            elif activation_type == 'leaky_relu':
+                y_values = leaky_relu(x_values)
+                derivative = leaky_relu_derivative(x_values)
+            else:
+                return JsonResponse({'error': 'Unknown activation function'}, status=400)
+            
+            return JsonResponse({
+                'x_values': x_values.tolist(),
+                'y_values': y_values.tolist(),
+                'derivative': derivative.tolist(),
+                'properties': get_activation_properties(activation_type)
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+# Helper functions for Neural Network implementation
+
+def create_neural_network(architecture, activation='sigmoid'):
+    """Create a neural network with specified architecture"""
+    network_id = f"nn_{int(time.time() * 1000)}"
+    
+    # Calculate total parameters
+    total_params = 0
+    for i in range(len(architecture) - 1):
+        total_params += architecture[i] * architecture[i + 1] + architecture[i + 1]  # weights + biases
+    
+    # Create layer information
+    layers = []
+    for i, size in enumerate(architecture):
+        layer_type = 'input' if i == 0 else ('output' if i == len(architecture) - 1 else 'hidden')
+        layers.append({
+            'index': i,
+            'size': size,
+            'type': layer_type,
+            'activation': activation if layer_type != 'input' else 'linear'
+        })
+    
+    # Create connection information
+    connections = []
+    for i in range(len(architecture) - 1):
+        connections.append({
+            'from_layer': i,
+            'to_layer': i + 1,
+            'weight_count': architecture[i] * architecture[i + 1]
+        })
+    
+    return {
+        'id': network_id,
+        'architecture': architecture,
+        'total_parameters': total_params,
+        'layers': layers,
+        'connections': connections,
+        'activation': activation
+    }
+
+
+def train_neural_network(X, y, architecture=[2, 4, 1], learning_rate=0.1, epochs=100, 
+                        activation='sigmoid', return_steps=False):
+    """Train a neural network using backpropagation"""
+    
+    # Initialize weights and biases
+    weights, biases = initialize_network(architecture)
+    
+    # Training history
+    loss_history = []
+    accuracy_history = []
+    training_steps = [] if return_steps else None
+    
+    # Training loop
+    for epoch in range(epochs):
+        epoch_loss = 0
+        correct_predictions = 0
+        
+        # Store training step info (more frequent updates for real-time visualization)
+        if return_steps and (epoch % max(1, epochs // 100) == 0 or epoch < 10):
+            step_info = {
+                'epoch': epoch,
+                'weights': [w.tolist() for w in weights],
+                'biases': [b.tolist() for b in biases],
+                'weight_gradients': [],
+                'bias_gradients': [],
+                'predictions': []
+            }
+        
+        # Process each training example
+        for i in range(len(X)):
+            x_sample = X[i]
+            y_sample = y[i]
+            
+            # Forward propagation
+            forward_result = forward_propagation(x_sample, weights, biases, activation, True)
+            prediction = forward_result['output']
+            activations = forward_result['activations']
+            z_values = forward_result['z_values']
+            
+            # Calculate loss
+            loss = mean_squared_error(y_sample, prediction)
+            epoch_loss += loss
+            
+            # Calculate accuracy (for classification)
+            if len(prediction) == 1:  # Binary classification
+                predicted_class = 1 if prediction[0] > 0.5 else 0
+                actual_class = 1 if y_sample[0] > 0.5 else 0
+                if predicted_class == actual_class:
+                    correct_predictions += 1
+            
+            # Store prediction info for animation
+            if return_steps and (epoch % max(1, epochs // 20) == 0 or epoch < 5):
+                step_info['predictions'].append({
+                    'input': x_sample.tolist(),
+                    'target': y_sample.tolist(),
+                    'prediction': prediction.tolist(),
+                    'activations': activations,
+                    'loss': float(loss)
+                })
+            
+            # Backpropagation
+            gradients = backpropagation(x_sample, y_sample, weights, biases, activations, z_values, activation)
+            
+            # Store gradients for visualization
+            if return_steps and (epoch % max(1, epochs // 100) == 0 or epoch < 10):
+                step_info['weight_gradients'] = [g.tolist() for g in gradients['weights']]
+                step_info['bias_gradients'] = [g.tolist() for g in gradients['biases']]
+            
+            # Update weights and biases
+            for j in range(len(weights)):
+                weights[j] -= learning_rate * gradients['weights'][j]
+                biases[j] -= learning_rate * gradients['biases'][j]
+        
+        # Record epoch metrics
+        avg_loss = epoch_loss / len(X)
+        accuracy = correct_predictions / len(X)
+        
+        loss_history.append(float(avg_loss))
+        accuracy_history.append(float(accuracy))
+        
+        if return_steps and (epoch % max(1, epochs // 100) == 0 or epoch < 10):
+            step_info['avg_loss'] = float(avg_loss)
+            step_info['accuracy'] = float(accuracy)
+            # Add weight statistics for visualization
+            step_info['weight_stats'] = []
+            for layer_weights in weights:
+                layer_stats = {
+                    'mean': float(np.mean(layer_weights)),
+                    'std': float(np.std(layer_weights)),
+                    'min': float(np.min(layer_weights)),
+                    'max': float(np.max(layer_weights))
+                }
+                step_info['weight_stats'].append(layer_stats)
+            training_steps.append(step_info)
+        
+        # Early stopping if converged
+        if avg_loss < 0.001:
+            convergence_epoch = epoch
+            break
+    else:
+        convergence_epoch = epochs
+    
+    return {
+        'history': {
+            'loss': loss_history,
+            'accuracy': accuracy_history
+        },
+        'final_weights': [w.tolist() for w in weights],
+        'final_biases': [b.tolist() for b in biases],
+        'final_loss': float(loss_history[-1]),
+        'final_accuracy': float(accuracy_history[-1]),
+        'convergence_epoch': convergence_epoch,
+        'training_steps': training_steps
+    }
+
+
+def initialize_network(architecture):
+    """Initialize network weights and biases"""
+    weights = []
+    biases = []
+    
+    for i in range(len(architecture) - 1):
+        # Xavier initialization
+        w = np.random.randn(architecture[i], architecture[i + 1]) * np.sqrt(2.0 / architecture[i])
+        b = np.zeros((1, architecture[i + 1]))
+        
+        weights.append(w)
+        biases.append(b)
+    
+    return weights, biases
+
+
+def forward_propagation(x, weights, biases, activation='sigmoid', return_intermediate=False):
+    """Forward propagation through the network"""
+    current_input = x.reshape(1, -1)
+    
+    activations = [current_input] if return_intermediate else None
+    z_values = [] if return_intermediate else None
+    
+    for i in range(len(weights)):
+        # Linear transformation
+        z = np.dot(current_input, weights[i]) + biases[i]
+        
+        if return_intermediate:
+            z_values.append(z)
+        
+        # Apply activation function
+        if i == len(weights) - 1:  # Output layer
+            current_input = sigmoid(z)  # Always use sigmoid for output for now
+        else:  # Hidden layers
+            if activation == 'sigmoid':
+                current_input = sigmoid(z)
+            elif activation == 'relu':
+                current_input = relu(z)
+            elif activation == 'tanh':
+                current_input = np.tanh(z)
+            else:
+                current_input = sigmoid(z)  # Default
+        
+        if return_intermediate:
+            activations.append(current_input)
+    
+    if return_intermediate:
+        return {
+            'output': current_input.flatten(),
+            'activations': [a.tolist() for a in activations],
+            'z_values': [z.tolist() for z in z_values]
+        }
+    else:
+        return current_input.flatten()
+
+
+def backpropagation(x, y, weights, biases, activations, z_values, activation='sigmoid'):
+    """Backpropagation algorithm"""
+    m = 1  # Single sample
+    
+    # Convert to numpy arrays
+    activations = [np.array(a) for a in activations]
+    z_values = [np.array(z) for z in z_values]
+    y = np.array(y).reshape(1, -1)
+    
+    # Initialize gradients
+    dW = [np.zeros_like(w) for w in weights]
+    db = [np.zeros_like(b) for b in biases]
+    
+    # Output layer error
+    dA = activations[-1] - y  # Derivative of MSE loss
+    
+    # Backpropagate through layers
+    for i in reversed(range(len(weights))):
+        # Current z values
+        z = z_values[i]
+        
+        # Activation derivative
+        if i == len(weights) - 1:  # Output layer
+            dZ = dA * sigmoid_derivative(z)
+        else:  # Hidden layers
+            if activation == 'sigmoid':
+                dZ = dA * sigmoid_derivative(z)
+            elif activation == 'relu':
+                dZ = dA * relu_derivative(z)
+            elif activation == 'tanh':
+                dZ = dA * tanh_derivative(z)
+            else:
+                dZ = dA * sigmoid_derivative(z)
+        
+        # Weight and bias gradients
+        dW[i] = np.dot(activations[i].T, dZ) / m
+        db[i] = np.sum(dZ, axis=0, keepdims=True) / m
+        
+        # Error for next layer
+        if i > 0:
+            dA = np.dot(dZ, weights[i].T)
+    
+    return {
+        'weights': dW,
+        'biases': db
+    }
+
+
+# Activation functions
+def sigmoid(z):
+    """Sigmoid activation function"""
+    z = np.clip(z, -500, 500)  # Prevent overflow
+    return 1 / (1 + np.exp(-z))
+
+
+def sigmoid_derivative(z):
+    """Derivative of sigmoid function"""
+    s = sigmoid(z)
+    return s * (1 - s)
+
+
+def relu(z):
+    """ReLU activation function"""
+    return np.maximum(0, z)
+
+
+def relu_derivative(z):
+    """Derivative of ReLU function"""
+    return (z > 0).astype(float)
+
+
+def leaky_relu(z, alpha=0.01):
+    """Leaky ReLU activation function"""
+    return np.where(z > 0, z, alpha * z)
+
+
+def leaky_relu_derivative(z, alpha=0.01):
+    """Derivative of Leaky ReLU function"""
+    return np.where(z > 0, 1, alpha)
+
+
+def tanh_derivative(z):
+    """Derivative of tanh function"""
+    return 1 - np.tanh(z) ** 2
+
+
+def mean_squared_error(y_true, y_pred):
+    """Mean squared error loss function"""
+    return np.mean((y_true - y_pred) ** 2)
+
+
+def get_activation_properties(activation_type):
+    """Get properties of activation functions"""
+    properties = {
+        'sigmoid': {
+            'range': '(0, 1)',
+            'derivative_range': '(0, 0.25]',
+            'advantages': ['Smooth gradient', 'Output between 0 and 1'],
+            'disadvantages': ['Vanishing gradient problem', 'Not zero-centered']
+        },
+        'relu': {
+            'range': '[0, ∞)',
+            'derivative_range': '{0, 1}',
+            'advantages': ['Simple computation', 'No vanishing gradient for positive inputs'],
+            'disadvantages': ['Dead neurons problem', 'Not zero-centered']
+        },
+        'tanh': {
+            'range': '(-1, 1)',
+            'derivative_range': '(0, 1]',
+            'advantages': ['Zero-centered output', 'Stronger gradients than sigmoid'],
+            'disadvantages': ['Still suffers from vanishing gradient problem']
+        },
+        'leaky_relu': {
+            'range': '(-∞, ∞)',
+            'derivative_range': '{α, 1}',
+            'advantages': ['Fixes dead neuron problem', 'Simple computation'],
+            'disadvantages': ['Need to tune α parameter']
+        }
+    }
+    return properties.get(activation_type, {})
+
+
+def generate_nn_sample_data(dataset_type='xor'):
+    """Generate sample datasets for neural network training"""
+    np.random.seed(42)
+    
+    datasets = {
+        'xor': {
+            'description': 'XOR problem - classic non-linearly separable pattern',
+            'recommended_architecture': [2, 4, 1],
+            'recommended_params': {'learning_rate': 0.3, 'epochs': 1000}
+        },
+        'spiral': {
+            'description': 'Two interleaved spirals - complex non-linear pattern',
+            'recommended_architecture': [2, 8, 4, 1],
+            'recommended_params': {'learning_rate': 0.1, 'epochs': 2000}
+        },
+        'moons': {
+            'description': 'Two half-moon shapes - moderate non-linear pattern',
+            'recommended_architecture': [2, 6, 1],
+            'recommended_params': {'learning_rate': 0.2, 'epochs': 1500}
+        },
+        'circles': {
+            'description': 'Concentric circles - radial decision boundary',
+            'recommended_architecture': [2, 6, 1],
+            'recommended_params': {'learning_rate': 0.2, 'epochs': 1500}
+        },
+        'linear': {
+            'description': 'Linearly separable data - simple classification',
+            'recommended_architecture': [2, 3, 1],
+            'recommended_params': {'learning_rate': 0.1, 'epochs': 500}
+        }
+    }
+    
+    if dataset_type == 'xor':
+        training_data = [
+            {'input': [0, 0], 'output': [0]},
+            {'input': [0, 1], 'output': [1]},
+            {'input': [1, 0], 'output': [1]},
+            {'input': [1, 1], 'output': [0]}
+        ]
+        test_data = training_data.copy()  # XOR is deterministic
+        
+    elif dataset_type == 'spiral':
+        training_data = []
+        test_data = []
+        
+        n_samples = 100
+        for i in range(n_samples):
+            # Generate spiral pattern
+            r = i / n_samples * 3
+            t = 1.75 * i / n_samples * 2 * np.pi
+            
+            # First spiral (class 0)
+            x1 = r * np.cos(t) + np.random.normal(0, 0.1)
+            y1 = r * np.sin(t) + np.random.normal(0, 0.1)
+            training_data.append({'input': [x1, y1], 'output': [0]})
+            
+            # Second spiral (class 1)
+            x2 = r * np.cos(t + np.pi) + np.random.normal(0, 0.1)
+            y2 = r * np.sin(t + np.pi) + np.random.normal(0, 0.1)
+            training_data.append({'input': [x2, y2], 'output': [1]})
+        
+        # Generate smaller test set
+        for i in range(0, n_samples, 10):
+            r = i / n_samples * 3
+            t = 1.75 * i / n_samples * 2 * np.pi
+            
+            x1 = r * np.cos(t)
+            y1 = r * np.sin(t)
+            test_data.append({'input': [x1, y1], 'output': [0]})
+            
+            x2 = r * np.cos(t + np.pi)
+            y2 = r * np.sin(t + np.pi)
+            test_data.append({'input': [x2, y2], 'output': [1]})
+    
+    elif dataset_type == 'moons':
+        training_data = []
+        test_data = []
+        
+        n_samples = 100
+        for i in range(n_samples):
+            # First moon (class 0)
+            angle = np.pi * i / n_samples
+            x1 = np.cos(angle) + np.random.normal(0, 0.1)
+            y1 = np.sin(angle) + np.random.normal(0, 0.1)
+            training_data.append({'input': [x1, y1], 'output': [0]})
+            
+            # Second moon (class 1)
+            x2 = 1 - np.cos(angle) + np.random.normal(0, 0.1)
+            y2 = 0.5 - np.sin(angle) + np.random.normal(0, 0.1)
+            training_data.append({'input': [x2, y2], 'output': [1]})
+        
+        # Generate test data
+        for i in range(0, n_samples, 10):
+            angle = np.pi * i / n_samples
+            x1 = np.cos(angle)
+            y1 = np.sin(angle)
+            test_data.append({'input': [x1, y1], 'output': [0]})
+            
+            x2 = 1 - np.cos(angle)
+            y2 = 0.5 - np.sin(angle)
+            test_data.append({'input': [x2, y2], 'output': [1]})
+    
+    elif dataset_type == 'circles':
+        training_data = []
+        test_data = []
+        
+        n_samples = 100
+        for i in range(n_samples):
+            # Inner circle (class 0)
+            angle = 2 * np.pi * i / n_samples
+            r1 = 0.5 + np.random.normal(0, 0.1)
+            x1 = r1 * np.cos(angle)
+            y1 = r1 * np.sin(angle)
+            training_data.append({'input': [x1, y1], 'output': [0]})
+            
+            # Outer circle (class 1)
+            r2 = 1.5 + np.random.normal(0, 0.1)
+            x2 = r2 * np.cos(angle)
+            y2 = r2 * np.sin(angle)
+            training_data.append({'input': [x2, y2], 'output': [1]})
+        
+        # Generate test data
+        for i in range(0, n_samples, 10):
+            angle = 2 * np.pi * i / n_samples
+            
+            x1 = 0.5 * np.cos(angle)
+            y1 = 0.5 * np.sin(angle)
+            test_data.append({'input': [x1, y1], 'output': [0]})
+            
+            x2 = 1.5 * np.cos(angle)
+            y2 = 1.5 * np.sin(angle)
+            test_data.append({'input': [x2, y2], 'output': [1]})
+    
+    elif dataset_type == 'linear':
+        training_data = []
+        test_data = []
+        
+        n_samples = 50
+        for i in range(n_samples):
+            # Class 0 (left side)
+            x1 = np.random.normal(-1, 0.5)
+            y1 = np.random.normal(0, 0.5)
+            training_data.append({'input': [x1, y1], 'output': [0]})
+            
+            # Class 1 (right side)
+            x2 = np.random.normal(1, 0.5)
+            y2 = np.random.normal(0, 0.5)
+            training_data.append({'input': [x2, y2], 'output': [1]})
+        
+        # Generate test data
+        for i in range(10):
+            x1 = np.random.normal(-1, 0.3)
+            y1 = np.random.normal(0, 0.3)
+            test_data.append({'input': [x1, y1], 'output': [0]})
+            
+            x2 = np.random.normal(1, 0.3)
+            y2 = np.random.normal(0, 0.3)
+            test_data.append({'input': [x2, y2], 'output': [1]})
+    
+    else:
+        # Default simple dataset
+        training_data = [
+            {'input': [0, 0], 'output': [0]},
+            {'input': [0, 1], 'output': [1]},
+            {'input': [1, 0], 'output': [1]},
+            {'input': [1, 1], 'output': [0]}
+        ]
+        test_data = training_data.copy()
+    
+    datasets[dataset_type]['training_data'] = training_data
+    datasets[dataset_type]['test_data'] = test_data
+    
+    return datasets[dataset_type]
+
+
+# Add time import for network ID generation
+import time

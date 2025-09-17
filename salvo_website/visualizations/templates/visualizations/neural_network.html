@@ -1,0 +1,1654 @@
+{% extends 'base.html' %}
+
+{% block title %}Neural Networks - ML Visualizations{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="background: var(--card-bg); border: 1px solid rgba(0, 212, 255, 0.2); border-radius: 10px; padding: 15px;">
+            <li class="breadcrumb-item">
+                <a href="{% url 'visualizations:visualizations_home' %}" style="color: var(--primary-cyan); text-decoration: none; font-family: 'JetBrains Mono', monospace;">
+                    <i class="fas fa-chart-bar me-2"></i>ML Visualizations
+                </a>
+            </li>
+            <li class="breadcrumb-item active" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
+                <i class="fas fa-brain me-2"></i>Neural Networks
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="neural-card p-4 text-center">
+                <h1 class="neural-title mb-3">
+                    <i class="fas fa-brain me-3" style="color: var(--gradient-purple);"></i>
+                    NEURAL NETWORK VISUALIZER
+                </h1>
+                <p class="neural-subtitle mb-0">
+                    Deep Learning Fundamentals with Backpropagation
+                </p>
+                <div class="neural-divider my-3"></div>
+                <p class="text-muted" style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                    Forward propagation • Backpropagation • Real-time training • Multiple activation functions
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row">
+        <!-- Left Panel: Controls -->
+        <div class="col-lg-4 mb-4">
+            <div class="neural-card p-4 h-100">
+                <h4 class="neural-section-title mb-4">
+                    <i class="fas fa-cogs me-2"></i>NETWORK CONTROLS
+                </h4>
+
+                <!-- Network Architecture -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">NETWORK ARCHITECTURE</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-layer-group me-2"></i>Architecture
+                        </label>
+                        <div class="row">
+                            <div class="col-4">
+                                <input type="number" class="form-control neural-input" id="inputSize" value="2" min="1" max="10" placeholder="Input">
+                                <small class="text-muted">Input</small>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control neural-input" id="hiddenSize" value="4" min="1" max="20" placeholder="Hidden">
+                                <small class="text-muted">Hidden</small>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control neural-input" id="outputSize" value="1" min="1" max="10" placeholder="Output">
+                                <small class="text-muted">Output</small>
+                            </div>
+                        </div>
+                        <button class="btn neural-btn-secondary w-100 mt-2" id="createNetwork">
+                            <i class="fas fa-plus me-2"></i>Create Network
+                        </button>
+                    </div>
+
+                    <!-- Activation Function -->
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-wave-square me-2"></i>Activation Function
+                        </label>
+                        <select class="form-select neural-select" id="activationFunction">
+                            <option value="sigmoid">Sigmoid</option>
+                            <option value="relu">ReLU</option>
+                            <option value="tanh">Tanh</option>
+                            <option value="leaky_relu">Leaky ReLU</option>
+                        </select>
+                        <button class="btn neural-btn-gradient w-100 mt-2" id="showActivationDemo">
+                            <i class="fas fa-chart-line me-2"></i>View Activation Function
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Training Parameters -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">TRAINING PARAMETERS</h6>
+                    
+                    <!-- Learning Rate -->
+                    <div class="mb-3">
+                        <label for="learningRate" class="form-label neural-input-label">
+                            Learning Rate: <span id="learningRateValue" class="neural-value">0.3</span>
+                        </label>
+                        <input type="range" 
+                               class="form-range neural-range" 
+                               id="learningRate" 
+                               min="0.01" 
+                               max="1.0" 
+                               step="0.01" 
+                               value="0.3">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Slow</small>
+                            <small class="text-muted">Fast</small>
+                        </div>
+                    </div>
+
+                    <!-- Epochs -->
+                    <div class="mb-3">
+                        <label for="epochs" class="form-label neural-input-label">
+                            Epochs: <span id="epochsValue" class="neural-value">1000</span>
+                        </label>
+                        <input type="range" 
+                               class="form-range neural-range" 
+                               id="epochs" 
+                               min="100" 
+                               max="5000" 
+                               step="100" 
+                               value="1000">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Quick</small>
+                            <small class="text-muted">Thorough</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dataset Selection -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">DATASET SELECTION</h6>
+                    
+                    <div class="mb-3">
+                        <label class="form-label neural-input-label">
+                            <i class="fas fa-database me-2"></i>Sample Datasets
+                        </label>
+                        <select class="form-select neural-select" id="datasetType">
+                            <option value="xor">XOR Problem</option>
+                            <option value="spiral">Interleaved Spirals</option>
+                            <option value="moons">Half Moons</option>
+                            <option value="circles">Concentric Circles</option>
+                            <option value="linear">Linearly Separable</option>
+                        </select>
+                        <button class="btn neural-btn-secondary w-100 mt-2" id="loadDataset">
+                            <i class="fas fa-download me-2"></i>Load Dataset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Training Actions -->
+                <div class="mb-4">
+                    <h6 class="neural-label mb-3">TRAINING ACTIONS</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn neural-btn-primary" id="trainNetwork" disabled>
+                            <i class="fas fa-play me-2"></i>Start Training
+                        </button>
+                        <button class="btn neural-btn-warning" id="pauseTraining" disabled>
+                            <i class="fas fa-pause me-2"></i>Pause Training
+                        </button>
+                        <button class="btn neural-btn-secondary" id="resetNetwork">
+                            <i class="fas fa-redo me-2"></i>Reset Network
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Network Information -->
+                <div class="neural-info-box" id="networkInfo" style="display: none;">
+                    <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Network Information</h6>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="totalParams">--</div>
+                                <div class="metric-label">Parameters</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="currentEpoch">--</div>
+                                <div class="metric-label">Epoch</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-2">
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="currentLoss">--</div>
+                                <div class="metric-label">Loss</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-item">
+                                <div class="metric-value" id="currentAccuracy">--</div>
+                                <div class="metric-label">Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Training Progress -->
+                <div class="neural-info-box" id="trainingProgress" style="display: none;">
+                    <h6 class="mb-2"><i class="fas fa-chart-line me-2"></i>Training Progress</h6>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <small>Progress</small>
+                            <small id="progressPercent">0%</small>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-gradient" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="training-status">
+                        <div id="trainingStatus">Ready to train</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization -->
+        <div class="col-lg-8">
+            <div class="neural-card p-4 h-100">
+                <!-- Network Visualization -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="neural-section-title mb-0">
+                                <i class="fas fa-eye me-2"></i>NETWORK VISUALIZATION
+                            </h4>
+                            <div class="neural-status" id="networkStatus">
+                                Create network architecture to begin
+                            </div>
+                        </div>
+
+                        <!-- Network Diagram -->
+                        <div class="text-center mb-3">
+                            <div class="network-container" style="display: inline-block; position: relative;">
+                                <svg id="networkSvg" 
+                                     width="600" 
+                                     height="300" 
+                                     style="border: 2px solid var(--primary-cyan); border-radius: 10px; background: #0a0a0a;">
+                                    <defs>
+                                        <!-- Gradients for connections -->
+                                        <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:0.8" />
+                                            <stop offset="100%" style="stop-color:#39ff14;stop-opacity:0.8" />
+                                        </linearGradient>
+                                        
+                                        <!-- Node gradients -->
+                                        <radialGradient id="nodeGradient" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.9" />
+                                            <stop offset="100%" style="stop-color:#4c1d95;stop-opacity:0.9" />
+                                        </radialGradient>
+                                        
+                                        <!-- Active node gradient -->
+                                        <radialGradient id="activeNodeGradient" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" style="stop-color:#39ff14;stop-opacity:0.9" />
+                                            <stop offset="100%" style="stop-color:#22c55e;stop-opacity:0.9" />
+                                        </radialGradient>
+                                    </defs>
+                                    
+                                    <!-- Background grid -->
+                                    <pattern id="networkGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0, 212, 255, 0.05)" stroke-width="1"/>
+                                    </pattern>
+                                    <rect width="100%" height="100%" fill="url(#networkGrid)" />
+                                    
+                                    <!-- Connections -->
+                                    <g id="connections"></g>
+                                    
+                                    <!-- Nodes -->
+                                    <g id="nodes"></g>
+                                    
+                                    <!-- Labels -->
+                                    <g id="labels"></g>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Data Visualization -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="neural-info-box">
+                                    <h6 class="mb-2"><i class="fas fa-scatter-chart me-2"></i>Data Points</h6>
+                                    <div class="text-center">
+                                        <svg id="dataSvg" 
+                                             width="200" 
+                                             height="150" 
+                                             style="border: 1px solid rgba(0, 212, 255, 0.3); border-radius: 8px; background: rgba(0, 0, 0, 0.2);">
+                                            <!-- Data points will be rendered here -->
+                                            <g id="dataPoints"></g>
+                                            <g id="dataAxes"></g>
+                                        </svg>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">Training Data: <span id="dataPointCount">0</span> points</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="neural-info-box">
+                                    <h6 class="mb-2"><i class="fas fa-chart-area me-2"></i>Training Metrics</h6>
+                                    <div class="text-center">
+                                        <canvas id="metricsChart" width="200" height="120"></canvas>
+                                    </div>
+                                    <div class="mt-2 d-flex justify-content-around">
+                                        <small><span style="color: #ff6b6b;">●</span> Loss</small>
+                                        <small><span style="color: #4ecdc4;">●</span> Accuracy</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="neural-info-box" id="weightMatricesBox" style="display: none;">
+                                    <h6 class="mb-2"><i class="fas fa-weight-hanging me-2"></i>Live Weight Updates</h6>
+                                    <div id="weightMatricesContainer" style="max-height: 150px; overflow-y: auto;">
+                                        <!-- Weight matrices will be displayed here -->
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">Layer weights updating in real-time</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Matrices Section -->
+                <div class="row" id="weightMatricesSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="neural-info-box">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0"><i class="fas fa-weight-hanging me-2"></i>Weight Matrices & Gradients</h6>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="weightView" id="viewWeights" checked>
+                                    <label class="btn btn-outline-primary btn-sm" for="viewWeights">Weights</label>
+                                    
+                                    <input type="radio" class="btn-check" name="weightView" id="viewGradients">
+                                    <label class="btn btn-outline-secondary btn-sm" for="viewGradients">Gradients</label>
+                                    
+                                    <input type="radio" class="btn-check" name="weightView" id="viewStats">
+                                    <label class="btn btn-outline-info btn-sm" for="viewStats">Statistics</label>
+                                </div>
+                            </div>
+                            <div id="weightMatricesDisplay">
+                                <!-- Weight matrices will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Activation Function Demo -->
+                <div class="row" id="activationSection" style="display: none;">
+                    <div class="col-12">
+                        <div class="neural-info-box">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0"><i class="fas fa-wave-square me-2"></i>Activation Function: <span id="currentActivationType">Sigmoid</span></h6>
+                                <button class="btn btn-sm btn-outline-secondary" id="closeActivationDemo">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="text-center">
+                                        <canvas id="activationChart" width="250" height="150"></canvas>
+                                        <small class="text-muted d-block mt-1">Function Shape</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="text-center">
+                                        <canvas id="derivativeChart" width="250" height="150"></canvas>
+                                        <small class="text-muted d-block mt-1">Derivative (Gradient)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3" id="activationProperties">
+                                <!-- Activation function properties will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    :root {
+        --card-bg: rgba(15, 23, 42, 0.8);
+        --primary-cyan: #00d4ff;
+        --accent-green: #39ff14;
+        --accent-orange: #ff6b35;
+        --gradient-purple: #8b5cf6;
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.7);
+        --border-color: rgba(0, 212, 255, 0.2);
+    }
+
+    .neural-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+    }
+
+    .neural-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
+        font-size: 2.2rem;
+        color: var(--text-primary);
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
+    }
+
+    .neural-subtitle {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+
+    .neural-section-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--primary-cyan);
+        font-size: 1.1rem;
+    }
+
+    .neural-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 500;
+        color: var(--accent-green);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .neural-input-label {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+    }
+
+    .neural-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        color: var(--accent-orange);
+        font-size: 0.9rem;
+    }
+
+    .neural-input {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        text-align: center;
+    }
+
+    .neural-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .neural-range {
+        accent-color: var(--primary-cyan);
+    }
+
+    .neural-btn-primary {
+        background: linear-gradient(135deg, var(--primary-cyan), #0099cc);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-primary:hover:not(:disabled) {
+        background: linear-gradient(135deg, #00b8e6, #0088bb);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .neural-btn-secondary {
+        background: linear-gradient(135deg, var(--accent-green), #2ed100);
+        border: none;
+        color: #000;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-secondary:hover {
+        background: linear-gradient(135deg, #33e617, #28b800);
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-warning {
+        background: linear-gradient(135deg, var(--accent-orange), #e55b2b);
+        border: none;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-warning:hover:not(:disabled) {
+        background: linear-gradient(135deg, #e55b2b, #d14e21);
+        box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-btn-warning:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .neural-btn-gradient {
+        background: linear-gradient(135deg, var(--gradient-purple), #a855f7);
+        border: none;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        padding: 12px 20px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .neural-btn-gradient:hover {
+        background: linear-gradient(135deg, #9333ea, #9333ea);
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .neural-info-box {
+        background: rgba(0, 212, 255, 0.05);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 10px;
+        padding: 15px;
+        color: var(--text-secondary);
+    }
+
+    .neural-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--accent-green);
+        background: rgba(57, 255, 20, 0.1);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(57, 255, 20, 0.2);
+    }
+
+    .neural-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--gradient-purple), transparent);
+        border: none;
+    }
+
+    .metric-item {
+        padding: 8px;
+    }
+
+    .metric-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-cyan);
+    }
+
+    .metric-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .network-container {
+        position: relative;
+    }
+
+    #networkSvg {
+        transition: all 0.3s ease;
+    }
+
+    #networkSvg:hover {
+        box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+    }
+
+    .training-status {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        text-align: center;
+        padding: 8px;
+        border-radius: 6px;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .progress-bar {
+        background: linear-gradient(90deg, var(--primary-cyan), var(--accent-green)) !important;
+    }
+
+    /* Node animations */
+    .network-node {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .network-node:hover {
+        filter: brightness(1.2);
+    }
+
+    .network-connection {
+        transition: all 0.5s ease;
+    }
+
+    .network-connection.active {
+        stroke: var(--accent-green);
+        stroke-width: 3;
+        filter: drop-shadow(0 0 4px var(--accent-green));
+    }
+
+    /* Training animation */
+    @keyframes pulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+    }
+
+    .training-active {
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Canvas styling */
+    canvas {
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Weight matrix styling */
+    .weight-matrix {
+        display: inline-block;
+        margin: 10px;
+        padding: 10px;
+        background: rgba(139, 92, 246, 0.05);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 8px;
+        font-family: 'JetBrains Mono', monospace;
+        vertical-align: top;
+    }
+
+    .weight-matrix-title {
+        font-size: 0.8rem;
+        color: var(--primary-cyan);
+        text-align: center;
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+
+    .weight-table {
+        display: table;
+        border-collapse: separate;
+        border-spacing: 2px;
+    }
+
+    .weight-row {
+        display: table-row;
+    }
+
+    .weight-cell {
+        display: table-cell;
+        width: 45px;
+        height: 25px;
+        text-align: center;
+        vertical-align: middle;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .weight-cell.positive {
+        background: linear-gradient(135deg, #4ecdc4, #26d0ce);
+    }
+
+    .weight-cell.negative {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    }
+
+    .weight-cell.updating {
+        animation: weightUpdate 0.5s ease-in-out;
+        box-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+    }
+
+    @keyframes weightUpdate {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .weight-stats {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .weight-stat-item {
+        text-align: center;
+        padding: 8px;
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 6px;
+        min-width: 80px;
+    }
+
+    .weight-stat-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--accent-green);
+    }
+
+    .weight-stat-label {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Gradient visualization */
+    .gradient-cell {
+        background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    }
+
+    .gradient-cell.strong-positive {
+        background: linear-gradient(135deg, #39ff14, #22c55e);
+    }
+
+    .gradient-cell.strong-negative {
+        background: linear-gradient(135deg, #ff6b35, #e55b2b);
+    }
+
+    /* Button group styling */
+    .btn-outline-primary:checked + label,
+    .btn-outline-secondary:checked + label,
+    .btn-outline-info:checked + label {
+        background: var(--primary-cyan);
+        color: #000;
+        border-color: var(--primary-cyan);
+    }
+</style>
+
+<!-- JavaScript -->
+<script>
+class NeuralNetworkVisualizer {
+    constructor() {
+        this.networkSvg = document.getElementById('networkSvg');
+        this.dataSvg = document.getElementById('dataSvg');
+        this.svgWidth = 600;
+        this.svgHeight = 300;
+        this.dataWidth = 200;
+        this.dataHeight = 150;
+        
+        this.currentNetwork = null;
+        this.trainingData = [];
+        this.isTraining = false;
+        this.trainingInterval = null;
+        this.currentEpoch = 0;
+        this.maxEpochs = 1000;
+        this.trainingHistory = { loss: [], accuracy: [] };
+        this.currentWeights = null;
+        this.currentGradients = null;
+        this.currentWeightStats = null;
+        
+        this.metricsChart = this.initializeChart('metricsChart');
+        this.activationChart = null;
+        this.derivativeChart = null;
+        
+        this.initializeEventListeners();
+        this.updateParameterDisplays();
+        this.setupDataVisualization();
+    }
+
+    initializeEventListeners() {
+        // Network creation
+        document.getElementById('createNetwork').addEventListener('click', () => this.createNetwork());
+        
+        // Dataset management
+        document.getElementById('loadDataset').addEventListener('click', () => this.loadDataset());
+        
+        // Training controls
+        document.getElementById('trainNetwork').addEventListener('click', () => this.startTraining());
+        document.getElementById('pauseTraining').addEventListener('click', () => this.pauseTraining());
+        document.getElementById('resetNetwork').addEventListener('click', () => this.resetNetwork());
+        
+        // Parameter controls
+        document.getElementById('learningRate').addEventListener('input', () => this.updateParameterDisplays());
+        document.getElementById('epochs').addEventListener('input', () => this.updateParameterDisplays());
+        
+        // Activation function demo
+        document.getElementById('showActivationDemo').addEventListener('click', () => this.showActivationDemo());
+        document.getElementById('closeActivationDemo').addEventListener('click', () => this.closeActivationDemo());
+        document.getElementById('activationFunction').addEventListener('change', () => this.updateActivationDemo());
+        
+        // Weight view controls
+        document.getElementById('viewWeights').addEventListener('change', () => this.updateWeightDisplay());
+        document.getElementById('viewGradients').addEventListener('change', () => this.updateWeightDisplay());
+        document.getElementById('viewStats').addEventListener('change', () => this.updateWeightDisplay());
+    }
+
+    initializeChart(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        return ctx;
+    }
+
+    updateParameterDisplays() {
+        const learningRate = document.getElementById('learningRate').value;
+        const epochs = document.getElementById('epochs').value;
+        
+        document.getElementById('learningRateValue').textContent = learningRate;
+        document.getElementById('epochsValue').textContent = epochs;
+        
+        this.maxEpochs = parseInt(epochs);
+    }
+
+    async createNetwork() {
+        try {
+            const inputSize = parseInt(document.getElementById('inputSize').value);
+            const hiddenSize = parseInt(document.getElementById('hiddenSize').value);
+            const outputSize = parseInt(document.getElementById('outputSize').value);
+            const activation = document.getElementById('activationFunction').value;
+            
+            const architecture = [inputSize, hiddenSize, outputSize];
+            
+            this.updateStatus('Creating neural network...');
+            
+            const response = await fetch('/visualizations/api/neural-network/create/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    architecture: architecture,
+                    activation: activation
+                })
+            });
+
+            const data = await response.json();
+            
+            this.currentNetwork = {
+                architecture: data.architecture,
+                totalParameters: data.total_parameters,
+                layers: data.layers,
+                connections: data.connections,
+                activation: activation,
+                weights: null,
+                biases: null
+            };
+            
+            this.visualizeNetwork();
+            this.updateNetworkInfo();
+            this.updateStatus(`Network created: ${architecture.join('-')} architecture with ${data.total_parameters} parameters`);
+            
+            // Enable training if we have data
+            if (this.trainingData.length > 0) {
+                document.getElementById('trainNetwork').disabled = false;
+            }
+            
+        } catch (error) {
+            console.error('Error creating network:', error);
+            this.updateStatus('Error creating network');
+        }
+    }
+
+    async loadDataset() {
+        try {
+            const datasetType = document.getElementById('datasetType').value;
+            this.updateStatus('Loading dataset...');
+            
+            const response = await fetch(`/visualizations/api/neural-network/sample-data/?type=${datasetType}`);
+            const data = await response.json();
+            
+            this.trainingData = data.training_data;
+            
+            // Update recommended parameters
+            if (data.recommended_architecture) {
+                const arch = data.recommended_architecture;
+                document.getElementById('inputSize').value = arch[0];
+                document.getElementById('hiddenSize').value = arch[1];
+                document.getElementById('outputSize').value = arch[2];
+            }
+            
+            if (data.recommended_params) {
+                if (data.recommended_params.learning_rate) {
+                    document.getElementById('learningRate').value = data.recommended_params.learning_rate;
+                }
+                if (data.recommended_params.epochs) {
+                    document.getElementById('epochs').value = data.recommended_params.epochs;
+                }
+                this.updateParameterDisplays();
+            }
+            
+            this.visualizeData();
+            this.updateStatus(`Loaded ${this.trainingData.length} data points: ${data.description}`);
+            
+            // Enable training if we have a network
+            if (this.currentNetwork) {
+                document.getElementById('trainNetwork').disabled = false;
+            }
+            
+        } catch (error) {
+            console.error('Error loading dataset:', error);
+            this.updateStatus('Error loading dataset');
+        }
+    }
+
+    async startTraining() {
+        if (!this.currentNetwork || this.trainingData.length === 0) {
+            this.updateStatus('Need network and training data to start training');
+            return;
+        }
+
+        if (this.isTraining) {
+            this.updateStatus('Training already in progress');
+            return;
+        }
+
+        try {
+            this.isTraining = true;
+            this.currentEpoch = 0;
+            this.trainingHistory = { loss: [], accuracy: [] };
+            
+            document.getElementById('trainNetwork').disabled = true;
+            document.getElementById('pauseTraining').disabled = false;
+            document.getElementById('trainingProgress').style.display = 'block';
+            
+            const learningRate = parseFloat(document.getElementById('learningRate').value);
+            const epochs = parseInt(document.getElementById('epochs').value);
+            
+            this.updateStatus('Starting neural network training...');
+            
+            const response = await fetch('/visualizations/api/neural-network/train/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    training_data: this.trainingData,
+                    architecture: this.currentNetwork.architecture,
+                    learning_rate: learningRate,
+                    epochs: epochs,
+                    activation: this.currentNetwork.activation,
+                    return_steps: true
+                })
+            });
+
+            const data = await response.json();
+            
+            this.currentNetwork.weights = data.final_weights;
+            this.currentNetwork.biases = data.final_biases;
+            this.trainingHistory = data.training_history;
+            
+            // Animate training process
+            if (data.training_steps && data.training_steps.length > 0) {
+                await this.animateTraining(data.training_steps);
+            }
+            
+            this.updateNetworkInfo();
+            this.updateTrainingProgress(100, data.convergence_epoch, data.final_loss, data.final_accuracy);
+            this.updateMetricsChart();
+            this.updateStatus(`Training completed! Final accuracy: ${(data.final_accuracy * 100).toFixed(1)}%`);
+            
+        } catch (error) {
+            console.error('Error training network:', error);
+            this.updateStatus('Error during training');
+        } finally {
+            this.isTraining = false;
+            document.getElementById('trainNetwork').disabled = false;
+            document.getElementById('pauseTraining').disabled = true;
+        }
+    }
+
+    async animateTraining(trainingSteps) {
+        for (let i = 0; i < trainingSteps.length && this.isTraining; i++) {
+            const step = trainingSteps[i];
+            
+            // Update progress
+            const progress = ((i + 1) / trainingSteps.length) * 100;
+            this.updateTrainingProgress(progress, step.epoch, step.avg_loss, step.accuracy);
+            
+            // Update weight data
+            this.currentWeights = step.weights;
+            this.currentGradients = step.weight_gradients;
+            this.currentWeightStats = step.weight_stats;
+            
+            // Update network visualization with new weights
+            this.animateNetworkUpdate(step.weights);
+            
+            // Update weight matrices display
+            this.updateWeightDisplay();
+            
+            // Update metrics chart
+            this.trainingHistory.loss = this.trainingHistory.loss.concat([step.avg_loss]);
+            this.trainingHistory.accuracy = this.trainingHistory.accuracy.concat([step.accuracy]);
+            this.updateMetricsChart();
+            
+            // Wait for animation
+            await this.sleep(200); // Faster updates for better weight visualization
+        }
+    }
+
+    animateNetworkUpdate(weights) {
+        // Add visual feedback for weight updates
+        const connections = document.querySelectorAll('.network-connection');
+        connections.forEach(conn => {
+            conn.classList.add('active');
+            setTimeout(() => conn.classList.remove('active'), 300);
+        });
+        
+        // Add pulsing effect to nodes
+        const nodes = document.querySelectorAll('.network-node');
+        nodes.forEach(node => {
+            node.classList.add('training-active');
+            setTimeout(() => node.classList.remove('training-active'), 400);
+        });
+    }
+
+    pauseTraining() {
+        this.isTraining = false;
+        document.getElementById('trainNetwork').disabled = false;
+        document.getElementById('pauseTraining').disabled = true;
+        this.updateStatus('Training paused');
+    }
+
+    resetNetwork() {
+        this.isTraining = false;
+        this.currentNetwork = null;
+        this.trainingData = [];
+        this.currentEpoch = 0;
+        this.trainingHistory = { loss: [], accuracy: [] };
+        this.currentWeights = null;
+        this.currentGradients = null;
+        this.currentWeightStats = null;
+        
+        if (this.trainingInterval) {
+            clearInterval(this.trainingInterval);
+            this.trainingInterval = null;
+        }
+        
+        // Reset UI
+        document.getElementById('trainNetwork').disabled = true;
+        document.getElementById('pauseTraining').disabled = true;
+        document.getElementById('networkInfo').style.display = 'none';
+        document.getElementById('trainingProgress').style.display = 'none';
+        document.getElementById('weightMatricesSection').style.display = 'none';
+        
+        // Clear visualizations
+        this.clearNetworkVisualization();
+        this.clearDataVisualization();
+        this.clearMetricsChart();
+        
+        this.updateStatus('Network reset - create new network to begin');
+    }
+
+    visualizeNetwork() {
+        if (!this.currentNetwork) return;
+        
+        this.clearNetworkVisualization();
+        
+        const layers = this.currentNetwork.layers;
+        const layerSpacing = this.svgWidth / (layers.length + 1);
+        const nodeRadius = 15;
+        
+        // Calculate positions for nodes
+        const nodePositions = [];
+        layers.forEach((layer, layerIndex) => {
+            const x = layerSpacing * (layerIndex + 1);
+            const nodeSpacing = this.svgHeight / (layer.size + 1);
+            
+            const layerNodes = [];
+            for (let nodeIndex = 0; nodeIndex < layer.size; nodeIndex++) {
+                const y = nodeSpacing * (nodeIndex + 1);
+                layerNodes.push({ x, y, layerIndex, nodeIndex });
+            }
+            nodePositions.push(layerNodes);
+        });
+        
+        // Draw connections
+        const connectionsGroup = document.getElementById('connections');
+        for (let i = 0; i < nodePositions.length - 1; i++) {
+            const fromLayer = nodePositions[i];
+            const toLayer = nodePositions[i + 1];
+            
+            fromLayer.forEach(fromNode => {
+                toLayer.forEach(toNode => {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', fromNode.x);
+                    line.setAttribute('y1', fromNode.y);
+                    line.setAttribute('x2', toNode.x);
+                    line.setAttribute('y2', toNode.y);
+                    line.setAttribute('stroke', 'url(#connectionGradient)');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('opacity', '0.6');
+                    line.classList.add('network-connection');
+                    
+                    connectionsGroup.appendChild(line);
+                });
+            });
+        }
+        
+        // Draw nodes
+        const nodesGroup = document.getElementById('nodes');
+        const labelsGroup = document.getElementById('labels');
+        
+        nodePositions.forEach((layer, layerIndex) => {
+            layer.forEach((node, nodeIndex) => {
+                // Node circle
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', node.x);
+                circle.setAttribute('cy', node.y);
+                circle.setAttribute('r', nodeRadius);
+                circle.setAttribute('fill', 'url(#nodeGradient)');
+                circle.setAttribute('stroke', '#ffffff');
+                circle.setAttribute('stroke-width', '2');
+                circle.classList.add('network-node');
+                
+                nodesGroup.appendChild(circle);
+                
+                // Node label
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', node.x);
+                text.setAttribute('y', node.y + 5);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', '#ffffff');
+                text.setAttribute('font-family', 'JetBrains Mono');
+                text.setAttribute('font-size', '10');
+                text.setAttribute('font-weight', 'bold');
+                text.textContent = nodeIndex + 1;
+                
+                labelsGroup.appendChild(text);
+            });
+            
+            // Layer labels
+            const layerLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            layerLabel.setAttribute('x', layerSpacing * (layerIndex + 1));
+            layerLabel.setAttribute('y', 20);
+            layerLabel.setAttribute('text-anchor', 'middle');
+            layerLabel.setAttribute('fill', '#00d4ff');
+            layerLabel.setAttribute('font-family', 'JetBrains Mono');
+            layerLabel.setAttribute('font-size', '12');
+            layerLabel.setAttribute('font-weight', 'bold');
+            
+            let labelText = '';
+            if (layerIndex === 0) labelText = 'INPUT';
+            else if (layerIndex === layers.length - 1) labelText = 'OUTPUT';
+            else labelText = 'HIDDEN';
+            
+            layerLabel.textContent = labelText;
+            labelsGroup.appendChild(layerLabel);
+        });
+        
+            // Show network info
+            document.getElementById('networkInfo').style.display = 'block';
+            
+            // Show weight matrices section
+            document.getElementById('weightMatricesSection').style.display = 'block';
+    }
+
+    visualizeData() {
+        if (this.trainingData.length === 0) return;
+        
+        this.clearDataVisualization();
+        
+        // Setup scales
+        const margin = 20;
+        const plotWidth = this.dataWidth - 2 * margin;
+        const plotHeight = this.dataHeight - 2 * margin;
+        
+        // Find data bounds
+        const xValues = this.trainingData.map(d => d.input[0]);
+        const yValues = this.trainingData.map(d => d.input[1]);
+        const xMin = Math.min(...xValues);
+        const xMax = Math.max(...xValues);
+        const yMin = Math.min(...yValues);
+        const yMax = Math.max(...yValues);
+        
+        const xScale = (x) => margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+        const yScale = (y) => this.dataHeight - margin - ((y - yMin) / (yMax - yMin)) * plotHeight;
+        
+        const pointsGroup = document.getElementById('dataPoints');
+        const axesGroup = document.getElementById('dataAxes');
+        
+        // Draw axes
+        const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        xAxis.setAttribute('x1', margin);
+        xAxis.setAttribute('y1', this.dataHeight - margin);
+        xAxis.setAttribute('x2', this.dataWidth - margin);
+        xAxis.setAttribute('y2', this.dataHeight - margin);
+        xAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.3)');
+        xAxis.setAttribute('stroke-width', '1');
+        axesGroup.appendChild(xAxis);
+        
+        const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        yAxis.setAttribute('x1', margin);
+        yAxis.setAttribute('y1', margin);
+        yAxis.setAttribute('x2', margin);
+        yAxis.setAttribute('y2', this.dataHeight - margin);
+        yAxis.setAttribute('stroke', 'rgba(255, 255, 255, 0.3)');
+        yAxis.setAttribute('stroke-width', '1');
+        axesGroup.appendChild(yAxis);
+        
+        // Draw data points
+        this.trainingData.forEach(point => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', xScale(point.input[0]));
+            circle.setAttribute('cy', yScale(point.input[1]));
+            circle.setAttribute('r', 4);
+            circle.setAttribute('fill', point.output[0] > 0.5 ? '#4ecdc4' : '#ff6b6b');
+            circle.setAttribute('stroke', '#ffffff');
+            circle.setAttribute('stroke-width', '1');
+            circle.setAttribute('opacity', '0.8');
+            
+            pointsGroup.appendChild(circle);
+        });
+        
+        document.getElementById('dataPointCount').textContent = this.trainingData.length;
+    }
+
+    updateMetricsChart() {
+        if (!this.metricsChart || this.trainingHistory.loss.length === 0) return;
+        
+        const canvas = document.getElementById('metricsChart');
+        const ctx = this.metricsChart;
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        const margin = 20;
+        const plotWidth = width - 2 * margin;
+        const plotHeight = height - 2 * margin;
+        
+        // Find scales
+        const maxEpochs = this.trainingHistory.loss.length;
+        const maxLoss = Math.max(...this.trainingHistory.loss);
+        const maxAccuracy = Math.max(...this.trainingHistory.accuracy);
+        
+        // Draw loss curve
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        this.trainingHistory.loss.forEach((loss, epoch) => {
+            const x = margin + (epoch / maxEpochs) * plotWidth;
+            const y = height - margin - (loss / maxLoss) * plotHeight;
+            
+            if (epoch === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        
+        // Draw accuracy curve
+        ctx.strokeStyle = '#4ecdc4';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        this.trainingHistory.accuracy.forEach((accuracy, epoch) => {
+            const x = margin + (epoch / maxEpochs) * plotWidth;
+            const y = height - margin - (accuracy / maxAccuracy) * plotHeight;
+            
+            if (epoch === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        
+        // Draw axes
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(margin, margin);
+        ctx.lineTo(margin, height - margin);
+        ctx.lineTo(width - margin, height - margin);
+        ctx.stroke();
+    }
+
+    async showActivationDemo() {
+        const activation = document.getElementById('activationFunction').value;
+        
+        try {
+            const response = await fetch(`/visualizations/api/neural-network/activation-demo/?type=${activation}`);
+            const data = await response.json();
+            
+            document.getElementById('currentActivationType').textContent = 
+                activation.charAt(0).toUpperCase() + activation.slice(1);
+            
+            this.plotActivationFunction(data.x_values, data.y_values, 'activationChart');
+            this.plotActivationFunction(data.x_values, data.derivative, 'derivativeChart');
+            this.displayActivationProperties(data.properties);
+            
+            document.getElementById('activationSection').style.display = 'block';
+            
+        } catch (error) {
+            console.error('Error loading activation demo:', error);
+        }
+    }
+
+    plotActivationFunction(xValues, yValues, canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        const margin = 20;
+        const plotWidth = width - 2 * margin;
+        const plotHeight = height - 2 * margin;
+        
+        // Find scales
+        const xMin = Math.min(...xValues);
+        const xMax = Math.max(...xValues);
+        const yMin = Math.min(...yValues);
+        const yMax = Math.max(...yValues);
+        
+        const xScale = (x) => margin + ((x - xMin) / (xMax - xMin)) * plotWidth;
+        const yScale = (y) => height - margin - ((y - yMin) / (yMax - yMin)) * plotHeight;
+        
+        // Draw function curve
+        ctx.strokeStyle = '#8b5cf6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        xValues.forEach((x, i) => {
+            const plotX = xScale(x);
+            const plotY = yScale(yValues[i]);
+            
+            if (i === 0) ctx.moveTo(plotX, plotY);
+            else ctx.lineTo(plotX, plotY);
+        });
+        ctx.stroke();
+        
+        // Draw axes
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        
+        // Y-axis
+        ctx.moveTo(margin, margin);
+        ctx.lineTo(margin, height - margin);
+        
+        // X-axis
+        ctx.moveTo(margin, height - margin);
+        ctx.lineTo(width - margin, height - margin);
+        
+        // Zero lines
+        if (yMin <= 0 && yMax >= 0) {
+            const zeroY = yScale(0);
+            ctx.moveTo(margin, zeroY);
+            ctx.lineTo(width - margin, zeroY);
+        }
+        
+        if (xMin <= 0 && xMax >= 0) {
+            const zeroX = xScale(0);
+            ctx.moveTo(zeroX, margin);
+            ctx.lineTo(zeroX, height - margin);
+        }
+        
+        ctx.stroke();
+        
+        // Add labels
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '10px JetBrains Mono';
+        ctx.textAlign = 'center';
+        
+        // X-axis labels
+        ctx.fillText(xMin.toFixed(1), margin, height - 5);
+        ctx.fillText(xMax.toFixed(1), width - margin, height - 5);
+        
+        // Y-axis labels
+        ctx.save();
+        ctx.translate(10, margin);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(yMax.toFixed(1), 0, 0);
+        ctx.restore();
+        
+        ctx.save();
+        ctx.translate(10, height - margin);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(yMin.toFixed(1), 0, 0);
+        ctx.restore();
+    }
+
+    displayActivationProperties(properties) {
+        const propertiesDiv = document.getElementById('activationProperties');
+        
+        let html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <small><strong>Range:</strong> ${properties.range}</small><br>
+                    <small><strong>Derivative Range:</strong> ${properties.derivative_range}</small>
+                </div>
+                <div class="col-md-6">
+                    <small><strong>Advantages:</strong></small>
+                    <ul class="small mb-0">
+                        ${properties.advantages?.map(adv => `<li>${adv}</li>`).join('') || ''}
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <small><strong>Disadvantages:</strong></small>
+                    <ul class="small mb-0">
+                        ${properties.disadvantages?.map(dis => `<li>${dis}</li>`).join('') || ''}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        propertiesDiv.innerHTML = html;
+    }
+
+    updateActivationDemo() {
+        if (document.getElementById('activationSection').style.display === 'block') {
+            this.showActivationDemo();
+        }
+    }
+
+    closeActivationDemo() {
+        document.getElementById('activationSection').style.display = 'none';
+    }
+
+    setupDataVisualization() {
+        // Initial setup for data visualization
+        this.clearDataVisualization();
+    }
+
+    clearNetworkVisualization() {
+        document.getElementById('connections').innerHTML = '';
+        document.getElementById('nodes').innerHTML = '';
+        document.getElementById('labels').innerHTML = '';
+    }
+
+    clearDataVisualization() {
+        document.getElementById('dataPoints').innerHTML = '';
+        document.getElementById('dataAxes').innerHTML = '';
+    }
+
+    clearMetricsChart() {
+        if (this.metricsChart) {
+            const canvas = document.getElementById('metricsChart');
+            this.metricsChart.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    updateNetworkInfo() {
+        if (!this.currentNetwork) return;
+        
+        document.getElementById('totalParams').textContent = this.currentNetwork.totalParameters;
+        document.getElementById('currentEpoch').textContent = this.currentEpoch;
+        document.getElementById('currentLoss').textContent = '0.000';
+        document.getElementById('currentAccuracy').textContent = '0%';
+    }
+
+    updateTrainingProgress(percent, epoch, loss, accuracy) {
+        document.getElementById('progressPercent').textContent = `${percent.toFixed(1)}%`;
+        document.getElementById('progressBar').style.width = `${percent}%`;
+        document.getElementById('currentEpoch').textContent = epoch;
+        document.getElementById('currentLoss').textContent = loss.toFixed(3);
+        document.getElementById('currentAccuracy').textContent = `${(accuracy * 100).toFixed(1)}%`;
+        document.getElementById('trainingStatus').textContent = 
+            percent >= 100 ? 'Training completed!' : `Training... Epoch ${epoch}`;
+    }
+
+    updateStatus(message) {
+        document.getElementById('networkStatus').textContent = message;
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    updateWeightDisplay() {
+        if (!this.currentWeights || !this.currentNetwork) return;
+        
+        const container = document.getElementById('weightMatricesDisplay');
+        const viewType = document.querySelector('input[name="weightView"]:checked').id;
+        
+        let html = '';
+        
+        if (viewType === 'viewWeights') {
+            html = this.renderWeightMatrices(this.currentWeights, 'Weight Matrices');
+        } else if (viewType === 'viewGradients' && this.currentGradients) {
+            html = this.renderWeightMatrices(this.currentGradients, 'Gradient Matrices');
+        } else if (viewType === 'viewStats' && this.currentWeightStats) {
+            html = this.renderWeightStats(this.currentWeightStats);
+        }
+        
+        container.innerHTML = html;
+        
+        // Add updating animation to recently changed weights
+        setTimeout(() => {
+            const cells = container.querySelectorAll('.weight-cell');
+            cells.forEach(cell => cell.classList.add('updating'));
+            setTimeout(() => {
+                cells.forEach(cell => cell.classList.remove('updating'));
+            }, 500);
+        }, 50);
+    }
+
+    renderWeightMatrices(matrices, title) {
+        let html = `<div class="d-flex flex-wrap justify-content-center">`;
+        
+        matrices.forEach((matrix, layerIndex) => {
+            html += `
+                <div class="weight-matrix">
+                    <div class="weight-matrix-title">Layer ${layerIndex + 1} ${title}</div>
+                    <div class="weight-table">
+            `;
+            
+            matrix.forEach((row, rowIndex) => {
+                html += '<div class="weight-row">';
+                row.forEach((weight, colIndex) => {
+                    const value = parseFloat(weight);
+                    const absValue = Math.abs(value);
+                    const intensity = Math.min(absValue / 2.0, 1.0); // Normalize for visualization
+                    
+                    let cellClass = 'weight-cell ';
+                    if (value > 0) {
+                        cellClass += 'positive';
+                    } else if (value < 0) {
+                        cellClass += 'negative';
+                    }
+                    
+                    // Add opacity based on magnitude
+                    const opacity = 0.3 + (intensity * 0.7);
+                    
+                    html += `
+                        <div class="${cellClass}" 
+                             style="opacity: ${opacity};"
+                             title="Weight[${rowIndex}][${colIndex}]: ${value.toFixed(4)}">
+                            ${value.toFixed(2)}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            });
+            
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        return html;
+    }
+
+    renderWeightStats(stats) {
+        let html = '<div class="weight-stats">';
+        
+        stats.forEach((layerStats, layerIndex) => {
+            html += `
+                <div class="weight-stat-item">
+                    <div class="weight-stat-value">${layerStats.mean.toFixed(3)}</div>
+                    <div class="weight-stat-label">Layer ${layerIndex + 1} Mean</div>
+                </div>
+                <div class="weight-stat-item">
+                    <div class="weight-stat-value">${layerStats.std.toFixed(3)}</div>
+                    <div class="weight-stat-label">Layer ${layerIndex + 1} Std</div>
+                </div>
+                <div class="weight-stat-item">
+                    <div class="weight-stat-value">${layerStats.min.toFixed(3)}</div>
+                    <div class="weight-stat-label">Layer ${layerIndex + 1} Min</div>
+                </div>
+                <div class="weight-stat-item">
+                    <div class="weight-stat-value">${layerStats.max.toFixed(3)}</div>
+                    <div class="weight-stat-label">Layer ${layerIndex + 1} Max</div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        
+        // Add overall network statistics
+        if (stats.length > 0) {
+            const allMeans = stats.map(s => s.mean);
+            const allStds = stats.map(s => s.std);
+            const overallMean = allMeans.reduce((a, b) => a + b, 0) / allMeans.length;
+            const overallStd = allStds.reduce((a, b) => a + b, 0) / allStds.length;
+            
+            html += `
+                <div class="mt-3 text-center">
+                    <h6 class="neural-label">Network Summary</h6>
+                    <div class="d-flex justify-content-center gap-3">
+                        <small>Avg Mean: <span class="neural-value">${overallMean.toFixed(4)}</span></small>
+                        <small>Avg Std: <span class="neural-value">${overallStd.toFixed(4)}</span></small>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return html;
+    }
+
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+}
+
+// Initialize the visualizer when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    window.nnVisualizer = new NeuralNetworkVisualizer();
+});
+</script>
+{% endblock %}

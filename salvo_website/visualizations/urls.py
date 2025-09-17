@@ -12,6 +12,7 @@ urlpatterns = [
     path('dbscan/', views.dbscan_page, name='dbscan_page'),
     path('linear-regression/', views.linear_regression_page, name='linear_regression_page'),
     path('svm/', views.svm_page, name='svm_page'),
+    path('neural-network/', views.neural_network_page, name='neural_network_page'),
     
     # Decision Tree API endpoints
     path('api/status/', views.server_status, name='server_status'),
@@ -41,4 +42,11 @@ urlpatterns = [
     path('api/svm/predict/', views.svm_predict, name='svm_predict'),
     path('api/svm/sample-data/', views.svm_sample_data, name='svm_sample_data'),
     path('api/svm/kernel-comparison/', views.svm_kernel_comparison, name='svm_kernel_comparison'),
+    
+    # Neural Network API endpoints
+    path('api/neural-network/create/', views.neural_network_create, name='neural_network_create'),
+    path('api/neural-network/train/', views.neural_network_train, name='neural_network_train'),
+    path('api/neural-network/predict/', views.neural_network_predict, name='neural_network_predict'),
+    path('api/neural-network/sample-data/', views.neural_network_sample_data, name='neural_network_sample_data'),
+    path('api/neural-network/activation-demo/', views.neural_network_activation_demo, name='neural_network_activation_demo'),
 ]
