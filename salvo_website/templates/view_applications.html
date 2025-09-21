@@ -42,7 +42,7 @@
         color: var(--dark-bg) !important;
     }
 
-    .status-approved {
+    .status-accepted {
         background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan)) !important;
         color: var(--dark-bg) !important;
     }
@@ -82,6 +82,78 @@
         margin: 1rem 0;
         border: 1px solid var(--border-glow);
     }
+
+    .filter-tabs {
+        display: flex;
+        gap: 1rem;
+        margin: 2rem 0;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        background: var(--code-bg);
+        border: 2px solid var(--border-glow);
+        border-radius: 12px;
+        padding: 12px 20px;
+        text-decoration: none;
+        color: var(--text-primary);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .filter-tab::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .filter-tab:hover {
+        border-color: var(--primary-cyan);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.3);
+        color: var(--primary-cyan);
+    }
+
+    .filter-tab:hover::before {
+        left: 100%;
+    }
+
+    .filter-tab.active {
+        background: linear-gradient(135deg, var(--primary-cyan), var(--primary-blue));
+        border-color: var(--accent-green);
+        color: var(--dark-bg);
+        box-shadow: 0 8px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    .filter-tab.active:hover {
+        color: var(--dark-bg);
+        transform: translateY(-3px);
+    }
+
+    .filter-count {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        margin-left: 8px;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    .filter-tab.active .filter-count {
+        background: rgba(0, 0, 0, 0.3);
+    }
 </style>
 {% endblock %}
 
@@ -92,6 +164,26 @@
             <i class="fas fa-clipboard-list me-2"></i>Recruitment Applications
         </h1>
         <p class="text-secondary fs-5">Review and manage club membership applications</p>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <a href="?status=all" class="filter-tab {% if current_filter == 'all' %}active{% endif %}">
+            <i class="fas fa-list me-2"></i>All Applications
+            <span class="filter-count">{{ status_counts.all }}</span>
+        </a>
+        <a href="?status=pending" class="filter-tab {% if current_filter == 'pending' %}active{% endif %}">
+            <i class="fas fa-clock me-2"></i>Pending
+            <span class="filter-count">{{ status_counts.pending }}</span>
+        </a>
+        <a href="?status=accepted" class="filter-tab {% if current_filter == 'accepted' %}active{% endif %}">
+            <i class="fas fa-check me-2"></i>Accepted
+            <span class="filter-count">{{ status_counts.accepted }}</span>
+        </a>
+        <a href="?status=rejected" class="filter-tab {% if current_filter == 'rejected' %}active{% endif %}">
+            <i class="fas fa-times me-2"></i>Rejected
+            <span class="filter-count">{{ status_counts.rejected }}</span>
+        </a>
     </div>
 
     {% if applications %}
@@ -110,9 +202,9 @@
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="status-badge status-{{ app.status|lower }}">
-                                {% if app.status == 'pending' %}
+                                {% if app.status == 'Pending' %}
                                     <i class="fas fa-clock me-1"></i>
-                                {% elif app.status == 'approved' %}
+                                {% elif app.status == 'Accepted' %}
                                     <i class="fas fa-check me-1"></i>
                                 {% else %}
                                     <i class="fas fa-times me-1"></i>
@@ -150,8 +242,8 @@
                                 <span class="badge" style="background: linear-gradient(45deg, var(--primary-cyan), var(--primary-blue)) !important; padding: 8px 12px;">
                                     {{ app.upvotes.count }} Upvotes
                                 </span>
-                                {% if app.request_id not in user_upvoted_applications %}
-                                    <a href="{% url 'upvote_application' app.request_id %}" class="btn btn-success btn-sm">
+                                {% if app.id not in user_upvoted_applications %}
+                                    <a href="{% url 'upvote_application' app.id %}" class="btn btn-success btn-sm">
                                         <i class="fas fa-thumbs-up me-1"></i>Upvote
                                     </a>
                                 {% else %}
@@ -162,11 +254,11 @@
                             </div>
                         </div>
                         <div class="col-md-6 text-end">
-                            {% if app.status == 'pending' %}
-                                <a href="{% url 'approve_application' app.request_id %}" class="btn btn-success me-2">
+                            {% if app.status == 'Pending' %}
+                                <a href="{% url 'approve_application' app.id %}" class="btn btn-success me-2">
                                     <i class="fas fa-check me-1"></i>Approve
                                 </a>
-                                <a href="{% url 'reject_application' app.request_id %}" class="btn btn-danger">
+                                <a href="{% url 'reject_application' app.id %}" class="btn btn-danger">
                                     <i class="fas fa-times me-1"></i>Reject
                                 </a>
                             {% endif %}
@@ -198,14 +290,25 @@
     {% else %}
         <div class="ai-card animate-on-scroll text-center">
             <i class="fas fa-inbox" style="font-size: 4rem; color: var(--text-secondary); opacity: 0.5; margin-bottom: 20px;"></i>
-            <h4 class="code-font text-secondary">No Applications Yet</h4>
-            <p class="text-secondary">Waiting for new AI enthusiasts to apply...</p>
+            {% if current_filter == 'all' %}
+                <h4 class="code-font text-secondary">No Applications Yet</h4>
+                <p class="text-secondary">Waiting for new AI enthusiasts to apply...</p>
+            {% elif current_filter == 'pending' %}
+                <h4 class="code-font text-secondary">No Pending Applications</h4>
+                <p class="text-secondary">All applications have been reviewed</p>
+            {% elif current_filter == 'accepted' %}
+                <h4 class="code-font text-secondary">No Accepted Applications</h4>
+                <p class="text-secondary">No applications have been accepted yet</p>
+            {% elif current_filter == 'rejected' %}
+                <h4 class="code-font text-secondary">No Rejected Applications</h4>
+                <p class="text-secondary">No applications have been rejected yet</p>
+            {% endif %}
             
             <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
-                    <div><span style="color: var(--neural-orange);">while</span> applications.length == <span style="color: var(--data-yellow);">0</span>:</div>
-                    <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">wait_for_enthusiasts</span>()</div>
-                    <div style="margin-left: 20px;"><span style="color: var(--text-secondary);"># Future AI innovators incoming...</span></div>
+                    <div><span style="color: var(--neural-orange);">if</span> filter == <span style="color: var(--accent-green)">"{{ current_filter }}"</span>:</div>
+                    <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">applications</span> = []</div>
+                    <div style="margin-left: 20px;"><span style="color: var(--text-secondary);"># No matches found for current filter</span></div>
                 </div>
             </div>
         </div>

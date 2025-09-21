@@ -11,9 +11,10 @@
         border: 1px solid rgba(0, 212, 255, 0.2);
         border-radius: 15px;
         padding: 0;
-        backdrop-filter: blur(15px);
+        backdrop-filter: blur(8px);
         overflow: hidden;
-        min-height: 600px;
+        min-height: 700px;
+        height: auto;
     }
 
     .control-panel {
@@ -169,10 +170,12 @@
         background: var(--code-bg);
         border: 1px solid var(--border-glow);
         border-radius: 12px;
-        padding: 20px;
-        min-height: 500px;
+        padding: 15px;
+        min-height: 600px;
+        height: auto;
         overflow: auto;
         position: relative;
+        max-height: 80vh;
     }
 
     .tree-placeholder {
@@ -283,9 +286,11 @@
     /* SVG Tree Styling */
     .tree-svg {
         width: 100%;
-        height: 600px;
+        height: auto;
+        min-height: 600px;
         background: var(--code-bg);
         border-radius: 8px;
+        overflow: visible;
     }
 
     .tree-node {
@@ -352,14 +357,118 @@
         font-weight: bold;
     }
 
+    /* Zoom and Pan Controls */
+    .zoom-controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        gap: 5px;
+        z-index: 10;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid var(--border-glow);
+        border-radius: 8px;
+        padding: 5px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .zoom-btn {
+        background: var(--primary-cyan);
+        color: var(--dark-bg);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .zoom-btn:hover {
+        background: var(--accent-green);
+        transform: translateY(-1px);
+    }
+    
+    .zoom-btn:active {
+        transform: translateY(0);
+    }
+    
+    .zoom-level {
+        background: var(--code-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-glow);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        min-width: 60px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Pan/Drag functionality */
+    .tree-svg {
+        cursor: grab;
+        user-select: none;
+    }
+    
+    .tree-svg.dragging {
+        cursor: grabbing;
+    }
+    
+    /* Reset button */
+    .reset-view-btn {
+        background: var(--neural-orange);
+        color: var(--dark-bg);
+        border: none;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .reset-view-btn:hover {
+        background: #ff8a65;
+        transform: translateY(-1px);
+    }
+
     /* Responsive Design */
+    @media (max-width: 1200px) {
+        .tree-container {
+            min-height: 600px;
+        }
+        
+        .tree-visualization {
+            min-height: 500px;
+            max-height: 70vh;
+        }
+    }
+    
     @media (max-width: 768px) {
         .feature-inputs {
             grid-template-columns: 1fr;
         }
         
         .tree-svg {
-            height: 400px;
+            min-height: 400px;
+        }
+        
+        .tree-container {
+            min-height: 500px;
+        }
+        
+        .tree-visualization {
+            padding: 10px;
+            min-height: 400px;
+            max-height: 60vh;
         }
     }
 </style>
@@ -397,7 +506,7 @@
 
     <div class="row">
         <!-- Left Panel - Controls -->
-        <div class="col-lg-4">
+        <div class="col-xl-3 col-lg-4">
             <!-- Server Status -->
             <div id="serverStatus" class="server-status server-loading animate-on-scroll">
                 <div class="loading-spinner"></div>
@@ -454,7 +563,7 @@
         </div>
 
         <!-- Right Panel - Visualization -->
-        <div class="col-lg-8">
+        <div class="col-xl-9 col-lg-8">
             <div class="tree-container animate-on-scroll">
                 <div class="control-panel">
                     <h3 class="mb-0" style="color: var(--accent-green); font-family: 'JetBrains Mono', monospace;">
@@ -462,12 +571,30 @@
                     </h3>
                 </div>
                 
-                <div class="tree-visualization">
+                <div class="tree-visualization" id="treeVisualizationContainer">
                     <div id="treePlaceholder" class="tree-placeholder">
                         <i class="fas fa-project-diagram"></i>
                         <h4>No Tree Built Yet</h4>
                         <p>Build a decision tree using the panel on the left to see the visualization here.</p>
+                        <p class="text-secondary mt-3" style="font-size: 0.9rem;">
+                            Once built, you can zoom and pan to explore the tree structure.
+                        </p>
                     </div>
+                    
+                    <!-- Zoom and Pan Controls -->
+                    <div id="zoomControls" class="zoom-controls" style="display: none;">
+                        <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <div id="zoomLevel" class="zoom-level">100%</div>
+                        <button id="zoomInBtn" class="zoom-btn" title="Zoom In">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button id="resetViewBtn" class="reset-view-btn" title="Reset View">
+                            <i class="fas fa-home"></i>
+                        </button>
+                    </div>
+                    
                     <svg id="treeSvg" class="tree-svg" style="display: none;"></svg>
                 </div>
                 
@@ -487,6 +614,16 @@
 let currentTreeData = null;
 let serverOnline = false;
 let isLoading = false;
+
+// Zoom and Pan variables
+let currentZoom = 1;
+let panX = 0;
+let panY = 0;
+let isDragging = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let minZoom = 0.1;
+let maxZoom = 3;
 
 // Dataset information
 const datasetInfo = {
@@ -613,40 +750,200 @@ async function buildTree() {
 function renderTree(treeData) {
     const placeholder = document.getElementById('treePlaceholder');
     const svg = document.getElementById('treeSvg');
+    const zoomControls = document.getElementById('zoomControls');
     
     placeholder.style.display = 'none';
     svg.style.display = 'block';
+    zoomControls.style.display = 'flex';
     
     // Clear previous tree
     svg.innerHTML = '';
     
-    // Set SVG dimensions
-    const width = svg.clientWidth || 800;
-    const height = 600;
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    // Reset zoom and pan
+    currentZoom = 1;
+    panX = 0;
+    panY = 0;
+    updateZoomLevel();
     
-    // Render tree recursively
-    renderTreeNode(svg, treeData.tree, width / 2, 60, 0, treeData);
+    // Calculate tree dimensions dynamically
+    const treeDepth = calculateTreeDepth(treeData.tree);
+    const treeWidth = calculateTreeWidth(treeData.tree);
+    
+    // Set dynamic dimensions based on tree size
+    const container = svg.parentElement;
+    const containerWidth = container.clientWidth - 30; // Account for padding
+    const minWidth = 1000;
+    const minHeight = 600;
+    
+    // Better width calculation based on tree width
+    const calculatedWidth = Math.max(minWidth, treeWidth * 200);
+    const width = Math.min(calculatedWidth, containerWidth * 2); // Allow wider than container for scrolling
+    const height = Math.max(minHeight, (treeDepth + 1) * 160);
+    
+    // Set SVG dimensions
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.style.minHeight = `${height}px`;
+    
+    // Create main group for zoom and pan transformations
+    const mainGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    mainGroup.setAttribute('id', 'treeGroup');
+    svg.appendChild(mainGroup);
+    
+    // Calculate optimal node positions to prevent overlaps
+    const nodePositions = calculateNodePositions(treeData.tree);
+    
+    // Assign coordinates based on optimal layout
+    const rootX = width / 2;
+    const rootY = 80;
+    const baseSpacing = Math.max(180, width / (treeWidth + 2)); // Dynamic spacing based on available width
+    assignNodeCoordinates(treeData.tree, nodePositions, rootX, rootY, baseSpacing);
+    
+    // Render tree with calculated positions
+    renderTreeNode(mainGroup, treeData.tree, treeData, nodePositions);
+    
+    // Setup zoom and pan event listeners
+    setupZoomPanListeners(svg);
 }
 
-function renderTreeNode(svg, node, x, y, level, treeData, parentX = null, parentY = null) {
+// Calculate tree depth
+function calculateTreeDepth(node, depth = 0) {
+    if (!node) return depth;
+    
+    if (!node.left && !node.right) {
+        return depth;
+    }
+    
+    const leftDepth = node.left ? calculateTreeDepth(node.left, depth + 1) : depth;
+    const rightDepth = node.right ? calculateTreeDepth(node.right, depth + 1) : depth;
+    
+    return Math.max(leftDepth, rightDepth);
+}
+
+// Calculate tree width (number of leaf nodes)
+function calculateTreeWidth(node) {
+    if (!node) return 0;
+    
+    if (!node.left && !node.right) {
+        return 1;
+    }
+    
+    return calculateTreeWidth(node.left) + calculateTreeWidth(node.right);
+}
+
+// Calculate optimal node positions to prevent overlaps
+function calculateNodePositions(node, level = 0, positions = new Map()) {
+    if (!node) return positions;
+    
+    // Calculate subtree width for this node
+    const leftWidth = node.left ? calculateSubtreeWidth(node.left) : 0;
+    const rightWidth = node.right ? calculateSubtreeWidth(node.right) : 0;
+    const totalWidth = leftWidth + rightWidth + 1;
+    
+    // Store node info
+    positions.set(node, {
+        level: level,
+        subtreeWidth: totalWidth,
+        leftWidth: leftWidth,
+        rightWidth: rightWidth
+    });
+    
+    // Recursively calculate for children
+    if (node.left) {
+        calculateNodePositions(node.left, level + 1, positions);
+    }
+    if (node.right) {
+        calculateNodePositions(node.right, level + 1, positions);
+    }
+    
+    return positions;
+}
+
+function calculateSubtreeWidth(node) {
+    if (!node) return 0;
+    if (!node.left && !node.right) return 1; // Leaf node
+    
+    const leftWidth = node.left ? calculateSubtreeWidth(node.left) : 0;
+    const rightWidth = node.right ? calculateSubtreeWidth(node.right) : 0;
+    
+    return leftWidth + rightWidth + 1;
+}
+
+function assignNodeCoordinates(node, nodePositions, x = 0, y = 80, minSpacing = 180) {
     if (!node) return;
     
-    // Draw connection to parent
-    if (parentX !== null && parentY !== null) {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', parentX);
-        line.setAttribute('y1', parentY + 35);
-        line.setAttribute('x2', x);
-        line.setAttribute('y2', y - 35);
-        line.setAttribute('class', 'tree-branch');
-        svg.appendChild(line);
+    const nodeInfo = nodePositions.get(node);
+    if (!nodeInfo) return;
+    
+    // Assign coordinates to this node
+    node._x = x;
+    node._y = y;
+    
+    const verticalSpacing = 160; // Increased vertical spacing
+    const childY = y + verticalSpacing;
+    
+    if (node.left || node.right) {
+        // Calculate spacing for children based on subtree width
+        const leftSubtreeWidth = node.left ? nodePositions.get(node.left).subtreeWidth : 0;
+        const rightSubtreeWidth = node.right ? nodePositions.get(node.right).subtreeWidth : 0;
+        
+        // Ensure minimum spacing based on subtree sizes
+        const leftSpacing = Math.max(minSpacing, leftSubtreeWidth * minSpacing * 0.6);
+        const rightSpacing = Math.max(minSpacing, rightSubtreeWidth * minSpacing * 0.6);
+        
+        // Calculate positions for children
+        if (node.left && node.right) {
+            // Both children exist - use balanced spacing
+            const totalSpacing = Math.max(minSpacing * 1.5, leftSpacing + rightSpacing);
+            const leftX = x - totalSpacing / 2;
+            const rightX = x + totalSpacing / 2;
+            
+            assignNodeCoordinates(node.left, nodePositions, leftX, childY, minSpacing);
+            assignNodeCoordinates(node.right, nodePositions, rightX, childY, minSpacing);
+        } else if (node.left) {
+            // Only left child
+            const leftX = x - minSpacing * 0.8;
+            assignNodeCoordinates(node.left, nodePositions, leftX, childY, minSpacing);
+        } else if (node.right) {
+            // Only right child
+            const rightX = x + minSpacing * 0.8;
+            assignNodeCoordinates(node.right, nodePositions, rightX, childY, minSpacing);
+        }
     }
+}
+
+function renderTreeNode(svg, node, treeData, nodePositions) {
+    if (!node || !node._x || !node._y) return;
+    
+    const x = node._x;
+    const y = node._y;
     
     // Node dimensions
     const isLeaf = !node.left && !node.right;
     const nodeWidth = isLeaf ? 110 : 150;
     const nodeHeight = isLeaf ? 70 : 90;
+    
+    // Draw connections to children first (so they appear behind nodes)
+    if (node.left && node.left._x && node.left._y) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', y + nodeHeight/2);
+        line.setAttribute('x2', node.left._x);
+        line.setAttribute('y2', node.left._y - nodeHeight/2);
+        line.setAttribute('class', 'tree-branch');
+        svg.appendChild(line);
+    }
+    
+    if (node.right && node.right._x && node.right._y) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x);
+        line.setAttribute('y1', y + nodeHeight/2);
+        line.setAttribute('x2', node.right._x);
+        line.setAttribute('y2', node.right._y - nodeHeight/2);
+        line.setAttribute('class', 'tree-branch');
+        svg.appendChild(line);
+    }
     
     // Create node group
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -658,8 +955,8 @@ function renderTreeNode(svg, node, x, y, level, treeData, parentX = null, parent
     rect.setAttribute('width', nodeWidth);
     rect.setAttribute('height', nodeHeight);
     rect.setAttribute('rx', 12);
-    rect.setAttribute('fill', 'var(--card-bg)');
-    rect.setAttribute('stroke', 'rgba(0, 212, 255, 0.5)');
+    rect.setAttribute('fill', isLeaf ? 'rgba(0, 255, 136, 0.1)' : 'var(--card-bg)');
+    rect.setAttribute('stroke', isLeaf ? 'var(--accent-green)' : 'rgba(0, 212, 255, 0.5)');
     rect.setAttribute('stroke-width', 1.5);
     g.appendChild(rect);
     
@@ -734,16 +1031,12 @@ function renderTreeNode(svg, node, x, y, level, treeData, parentX = null, parent
     
     svg.appendChild(g);
     
-    // Render children
-    const horizontalSpacing = Math.max(180, 400 / (level + 2));
-    const verticalSpacing = 140;
-    
+    // Recursively render children
     if (node.left) {
-        renderTreeNode(svg, node.left, x - horizontalSpacing, y + verticalSpacing, level + 1, treeData, x, y);
+        renderTreeNode(svg, node.left, treeData, nodePositions);
     }
-    
     if (node.right) {
-        renderTreeNode(svg, node.right, x + horizontalSpacing, y + verticalSpacing, level + 1, treeData, x, y);
+        renderTreeNode(svg, node.right, treeData, nodePositions);
     }
 }
 
@@ -956,6 +1249,181 @@ function displaySampleValues(features) {
     sampleDiv.style.display = 'block';
 }
 
+// Zoom and Pan functionality
+function updateTransform() {
+    const treeGroup = document.getElementById('treeGroup');
+    if (treeGroup) {
+        treeGroup.setAttribute('transform', `translate(${panX}, ${panY}) scale(${currentZoom})`);
+    }
+}
+
+function updateZoomLevel() {
+    const zoomLevelElement = document.getElementById('zoomLevel');
+    if (zoomLevelElement) {
+        zoomLevelElement.textContent = `${Math.round(currentZoom * 100)}%`;
+    }
+}
+
+function zoomIn() {
+    if (currentZoom < maxZoom) {
+        currentZoom = Math.min(maxZoom, currentZoom * 1.2);
+        updateTransform();
+        updateZoomLevel();
+    }
+}
+
+function zoomOut() {
+    if (currentZoom > minZoom) {
+        currentZoom = Math.max(minZoom, currentZoom / 1.2);
+        updateTransform();
+        updateZoomLevel();
+    }
+}
+
+function resetView() {
+    currentZoom = 1;
+    panX = 0;
+    panY = 0;
+    updateTransform();
+    updateZoomLevel();
+}
+
+function setupZoomPanListeners(svg) {
+    // Mouse wheel zoom
+    svg.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        
+        const rect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // Calculate zoom center point
+        const zoomCenterX = (mouseX - panX) / currentZoom;
+        const zoomCenterY = (mouseY - panY) / currentZoom;
+        
+        const oldZoom = currentZoom;
+        
+        if (e.deltaY < 0) {
+            // Zoom in
+            currentZoom = Math.min(maxZoom, currentZoom * 1.1);
+        } else {
+            // Zoom out
+            currentZoom = Math.max(minZoom, currentZoom / 1.1);
+        }
+        
+        // Adjust pan to keep zoom centered on mouse position
+        const zoomFactor = currentZoom / oldZoom;
+        panX = mouseX - zoomCenterX * currentZoom;
+        panY = mouseY - zoomCenterY * currentZoom;
+        
+        updateTransform();
+        updateZoomLevel();
+    });
+    
+    // Mouse drag to pan
+    svg.addEventListener('mousedown', function(e) {
+        if (e.button === 0) { // Left mouse button
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            svg.classList.add('dragging');
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            const deltaX = e.clientX - lastMouseX;
+            const deltaY = e.clientY - lastMouseY;
+            
+            panX += deltaX;
+            panY += deltaY;
+            
+            updateTransform();
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        }
+    });
+    
+    document.addEventListener('mouseup', function(e) {
+        if (isDragging) {
+            isDragging = false;
+            svg.classList.remove('dragging');
+        }
+    });
+    
+    // Touch support for mobile
+    let lastTouchDistance = 0;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+    
+    svg.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        
+        if (e.touches.length === 1) {
+            // Single touch - start panning
+            isDragging = true;
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            // Two touches - prepare for pinch zoom
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            lastTouchDistance = Math.sqrt(
+                Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+        }
+    });
+    
+    svg.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        
+        if (e.touches.length === 1 && isDragging) {
+            // Single touch - pan
+            const deltaX = e.touches[0].clientX - lastTouchX;
+            const deltaY = e.touches[0].clientY - lastTouchY;
+            
+            panX += deltaX;
+            panY += deltaY;
+            
+            updateTransform();
+            
+            lastTouchX = e.touches[0].clientX;
+            lastTouchY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            // Two touches - pinch zoom
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            const currentDistance = Math.sqrt(
+                Math.pow(touch2.clientX - touch1.clientX, 2) +
+                Math.pow(touch2.clientY - touch1.clientY, 2)
+            );
+            
+            if (lastTouchDistance > 0) {
+                const zoomFactor = currentDistance / lastTouchDistance;
+                const newZoom = Math.max(minZoom, Math.min(maxZoom, currentZoom * zoomFactor));
+                
+                if (newZoom !== currentZoom) {
+                    currentZoom = newZoom;
+                    updateTransform();
+                    updateZoomLevel();
+                }
+            }
+            
+            lastTouchDistance = currentDistance;
+        }
+    });
+    
+    svg.addEventListener('touchend', function(e) {
+        if (e.touches.length === 0) {
+            isDragging = false;
+            lastTouchDistance = 0;
+        }
+    });
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Check server status on load
@@ -972,6 +1440,34 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Default values button
     document.getElementById('useDefaultsBtn').addEventListener('click', loadDefaultValues);
+    
+    // Zoom control buttons
+    document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
+    document.getElementById('zoomOutBtn').addEventListener('click', zoomOut);
+    document.getElementById('resetViewBtn').addEventListener('click', resetView);
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName.toLowerCase() !== 'input') { // Don't interfere with input fields
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                zoomIn();
+            } else if (e.key === '-') {
+                e.preventDefault();
+                zoomOut();
+            } else if (e.key === '0' || e.key === 'Home') {
+                e.preventDefault();
+                resetView();
+            }
+        }
+    });
+    
+    // Window resize handler
+    window.addEventListener('resize', function() {
+        if (currentTreeData) {
+            setTimeout(() => renderTree(currentTreeData), 100);
+        }
+    });
     
     // Check server status periodically
     setInterval(checkServerStatus, 30000);

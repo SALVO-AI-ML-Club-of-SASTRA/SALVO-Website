@@ -40,7 +40,10 @@ def login(request):
             user = Account.objects.filter(register_no=register_no).first()
             member = Member.objects.filter(register_no=register_no).first()
 
-            if user and check_password(password, user.password):
+            # Check if user exists in either Account or Member table
+            if not user and not member:
+                messages.error(request, "No account found with this register number. Please check your register number or create a new account.")
+            elif user and check_password(password, user.password):
                 request.session['user_type'] = 'account'
                 request.session['register_no'] = user.register_no
                 return redirect(account_dashboard)
@@ -49,7 +52,9 @@ def login(request):
                 request.session['register_no'] = member.register_no
                 return redirect(member_dashboard)
             else:
-                messages.error(request, "Invalid credentials")
+                # User exists but password is wrong
+                user_type = "account" if user else "member account"
+                messages.error(request, f"Incorrect password for this {user_type}. Please check your password and try again.")
     else:
         form = LoginForm()
     return render(request, 'login.html', {'form': form})
@@ -329,13 +334,46 @@ def view_applications(request):
         return redirect('login')
 
     member = Member.objects.get(register_no=request.session['register_no'])
-    applications = JoinRequest.objects.annotate(
+    
+    # Get status filter from request
+    status_filter = request.GET.get('status', 'all').lower()
+    
+    # Base queryset with annotation
+    applications_query = JoinRequest.objects.annotate(
         upvote_count=models.Count('upvotes')
-    ).order_by('-upvote_count')
+    )
+    
+    # Apply status filter
+    if status_filter == 'pending':
+        applications = applications_query.filter(status='Pending')
+    elif status_filter == 'accepted':
+        applications = applications_query.filter(status='Accepted')
+    elif status_filter == 'rejected':
+        applications = applications_query.filter(status='Rejected')
+    else:
+        applications = applications_query  # Show all applications
+    
+    applications = applications.order_by('-upvote_count')
+
+    # Get the applications that the current user has upvoted
+    user_upvoted_applications = list(
+        JoinRequest.objects.filter(upvotes=member).values_list('id', flat=True)
+    )
+    
+    # Get counts for each status for the filter tabs
+    status_counts = {
+        'all': JoinRequest.objects.count(),
+        'pending': JoinRequest.objects.filter(status='Pending').count(),
+        'accepted': JoinRequest.objects.filter(status='Accepted').count(),
+        'rejected': JoinRequest.objects.filter(status='Rejected').count(),
+    }
 
     return render(request, 'view_applications.html', {
         'member': member,
         'applications': applications,
+        'user_upvoted_applications': user_upvoted_applications,
+        'current_filter': status_filter,
+        'status_counts': status_counts,
     })
 
 

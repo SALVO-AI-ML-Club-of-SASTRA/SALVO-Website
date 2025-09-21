@@ -12,12 +12,13 @@
         border-radius: 15px;
         padding: 2rem;
         position: relative;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(15px);
+        transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        backdrop-filter: blur(8px);
         overflow: hidden;
         height: 100%;
         display: flex;
         flex-direction: column;
+        will-change: transform, box-shadow, border-color;
     }
 
     .viz-card::before {
@@ -27,35 +28,42 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+        background: linear-gradient(45deg, transparent, rgba(0, 212, 255, 0.08), transparent);
         transform: translateX(-100%);
-        transition: transform 0.6s ease;
+        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        pointer-events: none;
+        z-index: 0;
     }
 
     .viz-card:hover {
-        transform: translateY(-10px);
+        transform: translateY(-8px);
         border-color: var(--accent-green);
-        box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+        box-shadow: 0 15px 35px rgba(0, 255, 136, 0.15);
     }
 
     .viz-card:hover::before {
         transform: translateX(100%);
     }
 
+    .viz-card > * {
+        position: relative;
+        z-index: 1;
+    }
+
     .viz-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
-        transition: all 0.3s ease;
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         text-align: center;
+        will-change: transform;
     }
 
     .viz-card:hover .viz-icon {
-        transform: scale(1.1) rotate(5deg);
-        filter: drop-shadow(0 0 15px currentColor);
+        transform: scale(1.05) rotate(2deg);
     }
 
     .viz-title {
@@ -103,7 +111,7 @@
     .viz-button {
         background: linear-gradient(45deg, var(--primary-cyan), var(--accent-green));
         border: none;
-        padding: 12px 25px;
+        padding: 15px 25px;
         border-radius: 25px;
         color: var(--dark-bg);
         font-family: 'JetBrains Mono', monospace;
@@ -111,17 +119,30 @@
         text-transform: uppercase;
         letter-spacing: 1px;
         text-decoration: none;
-        transition: all 0.3s ease;
+        transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         text-align: center;
         display: inline-block;
         width: 100%;
+        position: relative;
+        margin-top: auto;
+        will-change: transform, box-shadow;
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .viz-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(0, 212, 255, 0.4);
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
         color: var(--dark-bg);
         text-decoration: none;
+        background: linear-gradient(45deg, #00b8d4, #00e676);
+    }
+
+    .viz-button:active {
+        transform: translateY(0);
+        transition: all 0.1s ease;
     }
 
     .coming-soon-card {
@@ -229,14 +250,53 @@
     .function { color: var(--data-yellow); }
     .variable { color: var(--primary-cyan); }
 
+    /* Prevent hover conflicts and improve performance */
+    .viz-card:not(:hover) {
+        transition-delay: 0.1s;
+    }
+    
+    .viz-card .viz-button {
+        pointer-events: auto;
+        isolation: isolate;
+    }
+    
+    /* Reduce motion for users who prefer it */
+    @media (prefers-reduced-motion: reduce) {
+        .viz-card,
+        .viz-icon,
+        .viz-button,
+        .viz-card::before {
+            transition: none !important;
+            animation: none !important;
+        }
+        
+        .viz-card:hover {
+            transform: none;
+        }
+        
+        .viz-card:hover .viz-icon {
+            transform: none;
+        }
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
         .viz-card {
             margin-bottom: 2rem;
+            padding: 1.5rem;
+        }
+        
+        .viz-card:hover {
+            transform: translateY(-4px);
         }
         
         .stat-number {
             font-size: 2rem;
+        }
+        
+        .viz-button {
+            padding: 12px 20px;
+            min-height: 44px;
         }
     }
 </style>
@@ -501,17 +561,64 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Add hover effects to coming soon cards
+    // Debounce function to prevent rapid hover events
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    // Add stable hover effects to coming soon cards
     const comingSoonCards = document.querySelectorAll('.coming-soon-card');
     comingSoonCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-5px)';
-            this.style.boxShadow = '0 10px 20px rgba(148, 163, 184, 0.2)';
-        });
+        let isHovered = false;
         
-        card.addEventListener('mouseleave', function() {
+        const handleMouseEnter = debounce(function() {
+            if (!isHovered) {
+                isHovered = true;
+                this.style.transform = 'translateY(-3px)';
+                this.style.boxShadow = '0 8px 16px rgba(148, 163, 184, 0.15)';
+                this.style.transition = 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+            }
+        }, 50);
+        
+        const handleMouseLeave = debounce(function() {
+            isHovered = false;
             this.style.transform = 'translateY(0)';
             this.style.boxShadow = 'none';
+        }, 50);
+        
+        card.addEventListener('mouseenter', handleMouseEnter);
+        card.addEventListener('mouseleave', handleMouseLeave);
+    });
+    
+    // Improve button accessibility and click reliability
+    const vizButtons = document.querySelectorAll('.viz-button');
+    vizButtons.forEach(button => {
+        // Add focus outline
+        button.addEventListener('focus', function() {
+            this.style.outline = '2px solid var(--accent-green)';
+            this.style.outlineOffset = '2px';
+        });
+        
+        button.addEventListener('blur', function() {
+            this.style.outline = 'none';
+        });
+        
+        // Ensure button is always clickable
+        button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // Visual feedback on click
+            this.style.transform = 'translateY(1px)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 100);
         });
     });
     

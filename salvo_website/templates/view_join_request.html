@@ -1,71 +1,234 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Your Application</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/home">SALVO</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="container-fluid">
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="/home">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">Learn</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#join">Join</a>
-        </li>
-        <li>
-            <a class="nav-link" href="/play/draw">Play Scribble!</a>
-        </li>
-        </ul>
-        <div class="ms-auto">
-            {% if request.session.user_type %}
-                <a class="btn btn-outline-light me-2" href="/logout">LOGOUT</a>
+{% extends 'base.html' %}
+
+{% block title %}Your Application - SALVO AI Club{% endblock %}
+
+{% block extra_css %}
+<style>
+    .application-status {
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-accepted {
+        background: linear-gradient(45deg, var(--accent-green), var(--primary-cyan));
+        color: var(--dark-bg);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    }
+
+    .status-rejected {
+        background: linear-gradient(45deg, var(--neural-orange), #dc3545);
+        color: white;
+        box-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+    }
+
+    .status-pending {
+        background: linear-gradient(45deg, var(--data-yellow), var(--neural-orange));
+        color: var(--dark-bg);
+        box-shadow: 0 0 20px rgba(255, 210, 63, 0.4);
+    }
+
+    .application-detail {
+        background: var(--code-bg);
+        border: 1px solid var(--border-glow);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .application-detail:hover {
+        border-color: var(--accent-green);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.1);
+    }
+
+    .detail-label {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-accent);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .detail-content {
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .resume-section {
+        background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1));
+        border: 1px solid var(--border-glow);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        margin: 2rem 0;
+    }
+
+    .pulse-animation {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.5);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center mb-4">
+        <h1 class="page-title">
+            <i class="fas fa-file-alt me-2"></i>Application Status
+        </h1>
+        <p class="text-secondary fs-5">Track your membership application progress</p>
+    </div>
+
+    <div class="ai-card animate-on-scroll">
+        <!-- Status Header -->
+        <div class="text-center mb-4">
+            <div class="application-status status-{{ join_request.status|lower }} pulse-animation">
+                {% if join_request.status == "Accepted" %}
+                    <i class="fas fa-check-circle"></i>
+                    {{ join_request.status }}
+                {% elif join_request.status == "Rejected" %}
+                    <i class="fas fa-times-circle"></i>
+                    {{ join_request.status }}
+                {% else %}
+                    <i class="fas fa-clock"></i>
+                    {{ join_request.status }}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Application Details -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="application-detail">
+                    <div class="detail-label">
+                        <i class="fas fa-heart"></i>
+                        Motivation to Join
+                    </div>
+                    <div class="detail-content">{{ join_request.reason_to_join }}</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="application-detail">
+                    <div class="detail-label">
+                        <i class="fas fa-star"></i>
+                        Why Recruit You
+                    </div>
+                    <div class="detail-content">{{ join_request.why_recruit }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="application-detail">
+            <div class="detail-label">
+                <i class="fas fa-users"></i>
+                Other Club Memberships
+            </div>
+            <div class="detail-content">{{ join_request.other_clubs|default:"None specified" }}</div>
+        </div>
+
+        <!-- Resume Section -->
+        <div class="resume-section">
+            <div class="detail-label justify-content-center mb-3">
+                <i class="fas fa-file-pdf"></i>
+                Resume/CV
+            </div>
+            {% if join_request.resume %}
+                <a href="{{ join_request.resume.url }}" class="btn btn-primary btn-lg" target="_blank">
+                    <i class="fas fa-download me-2"></i>Download Resume
+                </a>
             {% else %}
-                <a class="btn btn-outline-light me-2" href="/login">LOGIN</a>
-                <a class="btn btn-outline-light" href="/account_signup">SIGN UP</a>
+                <div class="text-secondary">
+                    <i class="fas fa-file-excel" style="font-size: 2rem; opacity: 0.5; margin-bottom: 10px;"></i>
+                    <div>No resume uploaded</div>
+                </div>
             {% endif %}
         </div>
-        </div>
-        </div>
-    </nav>
-  <div class="container my-5">
-    <div class="card p-4">
-      <h2 class="mb-4">Your Application</h2>
-      <p><strong>Reason to Join:</strong> {{ join_request.reason_to_join }}</p>
-      <p><strong>Why Recruit:</strong> {{ join_request.why_recruit }}</p>
-      <p><strong>Other Clubs:</strong> {{ join_request.other_clubs }}</p>
 
-      {% if join_request.resume %}
-        <p><strong>Resume:</strong> <a href="{{ join_request.resume.url }}" class="btn btn-sm btn-outline-primary">Download</a></p>
-      {% else %}
-        <p><strong>Resume:</strong> <span class="text-muted">Not uploaded</span></p>
-      {% endif %}
+        <!-- AI Code Snippet -->
+        <div class="mt-4 p-3" style="background: var(--code-bg); border-radius: 10px; border: 1px solid var(--border-glow);">
+            <div class="detail-label mb-2">
+                <i class="fas fa-code"></i>
+                Application Data Structure
+            </div>
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;">
+                <div><span style="color: var(--neural-orange);">class</span> <span style="color: var(--data-yellow);">JoinRequest</span>:</div>
+                <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">status</span> = <span style="color: var(--accent-green)">"{{ join_request.status }}"</span></div>
+                <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">motivation</span> = <span style="color: var(--accent-green)">"{{ join_request.reason_to_join|truncatechars:30 }}"</span></div>
+                <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">skills</span> = <span style="color: var(--accent-green)">"{{ join_request.why_recruit|truncatechars:30 }}"</span></div>
+                <div style="margin-left: 20px;"><span style="color: var(--primary-cyan);">resume_uploaded</span> = {% if join_request.resume %}<span style="color: var(--accent-green);">True</span>{% else %}<span style="color: var(--neural-orange);">False</span>{% endif %}</div>
+                <div style="color: var(--text-secondary);"># AI Club application processing...</div>
+            </div>
+        </div>
 
-      <p><strong>Status:</strong>
-        {% if join_request.status == "Accepted" %}
-          <span class="badge bg-success">{{ join_request.status }}</span>
-        {% elif join_request.status == "Rejected" %}
-          <span class="badge bg-danger">{{ join_request.status }}</span>
-        {% else %}
-          <span class="badge bg-warning text-dark">{{ join_request.status }}</span>
-        {% endif %}
-      </p>
+        <!-- Status-specific message -->
+        <div class="mt-4 p-3" style="background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 136, 0.1)); border-radius: 10px; border: 1px solid var(--border-glow);">
+            <div style="font-family: 'JetBrains Mono', monospace;">
+                {% if join_request.status == "Accepted" %}
+                    <div style="color: var(--accent-green); font-weight: bold;">
+                        <i class="fas fa-robot me-2"></i>Application.status = "ACCEPTED"
+                    </div>
+                    <div style="color: var(--text-primary); margin-top: 10px;">
+                        Welcome to the SALVO AI Club! Your neural network journey begins now.
+                    </div>
+                {% elif join_request.status == "Rejected" %}
+                    <div style="color: var(--neural-orange); font-weight: bold;">
+                        <i class="fas fa-times me-2"></i>Application.status = "REJECTED"
+                    </div>
+                    <div style="color: var(--text-primary); margin-top: 10px;">
+                        Don't let this stop your AI journey. Consider reapplying next semester!
+                    </div>
+                {% else %}
+                    <div style="color: var(--data-yellow); font-weight: bold;">
+                        <i class="fas fa-cogs me-2"></i>Application.status = "PROCESSING"
+                    </div>
+                    <div style="color: var(--text-primary); margin-top: 10px;">
+                        Your application is being reviewed by our AI team. Stay tuned!
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="text-center mt-4">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <a href="/home" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-home me-2"></i>Back to Home
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    {% if request.session.user_type == 'account' %}
+                        <a href="{% url 'account_dashboard' %}" class="btn btn-success w-100">
+                            <i class="fas fa-dashboard me-2"></i>My Dashboard
+                        </a>
+                    {% else %}
+                        <a href="/account_signup" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}
